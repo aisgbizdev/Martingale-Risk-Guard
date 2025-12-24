@@ -85,21 +85,201 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
   );
 }
 
-function MetricCard({ icon: Icon, label, value, color }: { 
+// Komponen penjelasan metrik untuk orang awam
+function DetailedMetricCard({ 
+  icon: Icon, 
+  label, 
+  value, 
+  meaning,
+  status,
+  cause,
+  recommendation,
+  statusColor,
+  t
+}: { 
   icon: any; 
   label: string; 
-  value: string; 
-  color: string 
+  value: string;
+  meaning: string;
+  status: string;
+  cause: string;
+  recommendation: string;
+  statusColor: "green" | "yellow" | "red";
+  t: (id: string, en: string) => string;
 }) {
+  const colorMap = {
+    green: {
+      bg: "bg-emerald-500/10 border-emerald-500/20",
+      text: "text-emerald-600 dark:text-emerald-400",
+      badge: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+    },
+    yellow: {
+      bg: "bg-amber-500/10 border-amber-500/20",
+      text: "text-amber-600 dark:text-amber-400",
+      badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30"
+    },
+    red: {
+      bg: "bg-rose-500/10 border-rose-500/20",
+      text: "text-rose-600 dark:text-rose-400",
+      badge: "bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30"
+    }
+  };
+  
+  const colors = colorMap[statusColor];
+  
   return (
-    <div className="bg-muted/50 rounded-md p-3 sm:p-4 text-center">
-      <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 ${color}`} />
-      <div className="text-lg sm:text-xl font-bold text-foreground">{value}</div>
-      <div className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
-        {label}
+    <div className={`rounded-md p-4 border ${colors.bg}`}>
+      <div className="flex items-center gap-3 mb-3">
+        <Icon className={`w-6 h-6 ${colors.text}`} />
+        <div className="flex-1">
+          <div className="text-xl sm:text-2xl font-bold text-foreground">{value}</div>
+          <div className="text-xs text-muted-foreground">{label}</div>
+        </div>
+        <Badge variant="outline" className={`text-[10px] font-medium ${colors.badge}`}>
+          {status}
+        </Badge>
+      </div>
+      
+      <div className="space-y-2 text-xs sm:text-sm">
+        <div className="flex gap-2">
+          <span className="font-medium text-foreground min-w-[60px]">{t("Arti:", "Meaning:")}</span>
+          <span className="text-muted-foreground">{meaning}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="font-medium text-foreground min-w-[60px]">{t("Sebab:", "Cause:")}</span>
+          <span className="text-muted-foreground">{cause}</span>
+        </div>
+        <div className="flex gap-2">
+          <span className="font-medium text-foreground min-w-[60px]">{t("Saran:", "Advice:")}</span>
+          <span className={`${colors.text} font-medium`}>{recommendation}</span>
+        </div>
       </div>
     </div>
   );
+}
+
+// Helper function untuk mendapatkan penjelasan metrik
+function getMetricExplanation(
+  metricType: "pf" | "rom" | "er" | "mc",
+  value: number | string,
+  params: { strategy: string; targetPoin: string; modal: number; maxLayer: string; marketCondition: string },
+  t: (id: string, en: string) => string
+): { meaning: string; status: string; cause: string; recommendation: string; statusColor: "green" | "yellow" | "red" } {
+  
+  if (metricType === "pf") {
+    const pf = typeof value === "string" ? parseFloat(value) : value;
+    if (pf >= 3) {
+      return {
+        meaning: t("Setiap Rp1 kerugian menghasilkan Rp" + pf.toFixed(1) + " keuntungan", "Every $1 loss generates $" + pf.toFixed(1) + " profit"),
+        status: t("Bagus", "Good"),
+        cause: t(`Kombinasi ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition}`, `Combination of ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition`),
+        recommendation: t("Pertahankan parameter ini", "Maintain these parameters"),
+        statusColor: "green"
+      };
+    } else if (pf >= 1) {
+      return {
+        meaning: t("Masih untung, tapi margin keuntungan tipis", "Still profitable, but thin profit margin"),
+        status: t("Hati-hati", "Caution"),
+        cause: t(`Target ${params.targetPoin}pts mungkin terlalu agresif untuk ${params.strategy}`, `Target ${params.targetPoin}pts may be too aggressive for ${params.strategy}`),
+        recommendation: t("Pertimbangkan target lebih rendah (30pts)", "Consider lower target (30pts)"),
+        statusColor: "yellow"
+      };
+    } else {
+      return {
+        meaning: t("Kerugian lebih besar dari keuntungan - RUGI BERSIH", "Losses exceed profits - NET LOSS"),
+        status: t("Buruk", "Poor"),
+        cause: t(`Kombinasi parameter tidak optimal untuk kondisi pasar`, `Parameter combination not optimal for market condition`),
+        recommendation: t("Segera ubah strategi ke Linear Averaging 30pts", "Immediately switch to Linear Averaging 30pts"),
+        statusColor: "red"
+      };
+    }
+  }
+  
+  if (metricType === "rom") {
+    const rom = typeof value === "string" ? parseFloat(value.replace("%", "")) : value;
+    if (rom >= 300) {
+      return {
+        meaning: t(`Modal Anda berpotensi menghasilkan return ${rom.toFixed(0)}%`, `Your capital potentially generates ${rom.toFixed(0)}% return`),
+        status: t("Sangat Baik", "Excellent"),
+        cause: t(`Efisiensi modal tinggi dengan ${params.strategy}`, `High capital efficiency with ${params.strategy}`),
+        recommendation: t("Parameter sudah optimal untuk return", "Parameters already optimal for return"),
+        statusColor: "green"
+      };
+    } else if (rom >= 100) {
+      return {
+        meaning: t("Return cukup baik, modal bekerja dengan wajar", "Decent return, capital working reasonably"),
+        status: t("Cukup", "Adequate"),
+        cause: t(`Modal USD ${params.modal.toLocaleString()} dengan target ${params.targetPoin}pts`, `Capital USD ${params.modal.toLocaleString()} with ${params.targetPoin}pts target`),
+        recommendation: t("Tingkatkan modal jika ingin return lebih tinggi", "Increase capital for higher returns"),
+        statusColor: "yellow"
+      };
+    } else {
+      return {
+        meaning: t("Return rendah - modal tidak bekerja efisien", "Low return - capital not working efficiently"),
+        status: t("Rendah", "Low"),
+        cause: t(`Modal terlalu kecil atau target terlalu rendah`, `Capital too small or target too low`),
+        recommendation: t("Tambah modal atau sesuaikan target", "Increase capital or adjust target"),
+        statusColor: "red"
+      };
+    }
+  }
+  
+  if (metricType === "er") {
+    const er = typeof value === "string" ? parseFloat(value) : value;
+    if (er >= 1) {
+      return {
+        meaning: t("Efisiensi di atas rata-rata - strategi bekerja optimal", "Above average efficiency - strategy working optimally"),
+        status: t("Efisien", "Efficient"),
+        cause: t(`${params.strategy} cocok untuk kondisi ${params.marketCondition}`, `${params.strategy} suitable for ${params.marketCondition} condition`),
+        recommendation: t("Lanjutkan dengan parameter saat ini", "Continue with current parameters"),
+        statusColor: "green"
+      };
+    } else if (er >= 0.7) {
+      return {
+        meaning: t("Efisiensi cukup - masih dalam batas wajar", "Adequate efficiency - still within reasonable limits"),
+        status: t("Sedang", "Moderate"),
+        cause: t(`Kondisi pasar ${params.marketCondition} tidak optimal untuk ${params.strategy}`, `Market condition ${params.marketCondition} not optimal for ${params.strategy}`),
+        recommendation: t("Perhatikan perubahan kondisi pasar", "Monitor market condition changes"),
+        statusColor: "yellow"
+      };
+    } else {
+      return {
+        meaning: t("Efisiensi rendah - banyak modal terbuang sia-sia", "Low efficiency - much capital wasted"),
+        status: t("Tidak Efisien", "Inefficient"),
+        cause: t(`Kombinasi ${params.strategy} + ${params.marketCondition} tidak sesuai`, `${params.strategy} + ${params.marketCondition} combination unsuitable`),
+        recommendation: t("Ganti ke Linear Averaging pada kondisi sideways", "Switch to Linear Averaging in sideways condition"),
+        statusColor: "red"
+      };
+    }
+  }
+  
+  // MC Risk
+  const mcText = typeof value === "string" ? value.toLowerCase() : "";
+  if (mcText.includes("rendah") || mcText.includes("low")) {
+    return {
+      meaning: t("Risiko margin call kecil - modal cukup aman", "Low margin call risk - capital relatively safe"),
+      status: t("Aman", "Safe"),
+      cause: t(`${params.strategy} dengan ${params.maxLayer} layer dan modal USD ${params.modal.toLocaleString()}`, `${params.strategy} with ${params.maxLayer} layers and USD ${params.modal.toLocaleString()} capital`),
+      recommendation: t("Parameter sudah aman, pertahankan disiplin", "Parameters are safe, maintain discipline"),
+      statusColor: "green"
+    };
+  } else if (mcText.includes("sedang") || mcText.includes("medium")) {
+    return {
+      meaning: t("Ada risiko margin call jika pasar bergerak ekstrem", "Margin call risk exists if market moves extremely"),
+      status: t("Waspada", "Alert"),
+      cause: t(`Layer ${params.maxLayer} dengan target ${params.targetPoin}pts membutuhkan modal besar`, `Layer ${params.maxLayer} with ${params.targetPoin}pts target requires large capital`),
+      recommendation: t("Kurangi layer atau tambah modal", "Reduce layers or increase capital"),
+      statusColor: "yellow"
+    };
+  } else {
+    return {
+      meaning: t("BAHAYA! Sangat mungkin terkena margin call", "DANGER! Very likely to face margin call"),
+      status: t("Bahaya", "Danger"),
+      cause: t(`Martingale dengan ${params.maxLayer} layer pada kondisi ${params.marketCondition} sangat berisiko`, `Martingale with ${params.maxLayer} layers in ${params.marketCondition} condition is very risky`),
+      recommendation: t("SEGERA ganti ke Linear Averaging dan kurangi layer", "IMMEDIATELY switch to Linear Averaging and reduce layers"),
+      statusColor: "red"
+    };
+  }
 }
 
 function parseLocalizedText(text: string, language: "id" | "en"): string {
@@ -235,34 +415,75 @@ export default function Result() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <MetricCard 
-                  icon={TrendingUp} 
-                  label="Profit Factor (PF)" 
-                  value={result.metrics.expectedPF} 
-                  color="text-green-500"
-                />
-                <MetricCard 
-                  icon={Percent} 
-                  label="Return on Margin (ROM)" 
-                  value={result.metrics.expectedROM} 
-                  color="text-blue-500"
-                />
-                <MetricCard 
-                  icon={Target} 
-                  label="Efficiency Ratio (ER)" 
-                  value={result.metrics.expectedER} 
-                  color="text-purple-500"
-                />
-                <MetricCard 
-                  icon={AlertTriangle} 
-                  label={t("Risiko Margin Call", "Margin Call Risk")}
-                  value={parseLocalizedText(result.metrics.marginCallRisk, language)} 
-                  color="text-amber-500"
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                {(() => {
+                  const pfExpl = getMetricExplanation("pf", result.metrics.expectedPF, params, t);
+                  return (
+                    <DetailedMetricCard 
+                      icon={TrendingUp} 
+                      label="Profit Factor (PF)" 
+                      value={result.metrics.expectedPF}
+                      meaning={pfExpl.meaning}
+                      status={pfExpl.status}
+                      cause={pfExpl.cause}
+                      recommendation={pfExpl.recommendation}
+                      statusColor={pfExpl.statusColor}
+                      t={t}
+                    />
+                  );
+                })()}
+                {(() => {
+                  const romExpl = getMetricExplanation("rom", result.metrics.expectedROM, params, t);
+                  return (
+                    <DetailedMetricCard 
+                      icon={Percent} 
+                      label="Return on Margin (ROM)" 
+                      value={result.metrics.expectedROM}
+                      meaning={romExpl.meaning}
+                      status={romExpl.status}
+                      cause={romExpl.cause}
+                      recommendation={romExpl.recommendation}
+                      statusColor={romExpl.statusColor}
+                      t={t}
+                    />
+                  );
+                })()}
+                {(() => {
+                  const erExpl = getMetricExplanation("er", result.metrics.expectedER, params, t);
+                  return (
+                    <DetailedMetricCard 
+                      icon={Target} 
+                      label="Efficiency Ratio (ER)" 
+                      value={result.metrics.expectedER}
+                      meaning={erExpl.meaning}
+                      status={erExpl.status}
+                      cause={erExpl.cause}
+                      recommendation={erExpl.recommendation}
+                      statusColor={erExpl.statusColor}
+                      t={t}
+                    />
+                  );
+                })()}
+                {(() => {
+                  const mcValue = parseLocalizedText(result.metrics.marginCallRisk, language);
+                  const mcExpl = getMetricExplanation("mc", mcValue, params, t);
+                  return (
+                    <DetailedMetricCard 
+                      icon={AlertTriangle} 
+                      label={t("Risiko Margin Call", "Margin Call Risk")}
+                      value={mcValue}
+                      meaning={mcExpl.meaning}
+                      status={mcExpl.status}
+                      cause={mcExpl.cause}
+                      recommendation={mcExpl.recommendation}
+                      statusColor={mcExpl.statusColor}
+                      t={t}
+                    />
+                  );
+                })()}
               </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-3 text-center">
-                {t("Data berdasarkan backtesting thesis 2024-2025", "Based on 2024-2025 thesis backtest data")}
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-4 text-center">
+                {t("Data berdasarkan backtesting tesis Iriawan (UNDIP, 2025)", "Based on Iriawan thesis backtesting (UNDIP, 2025)")}
               </p>
             </CardContent>
           </Card>
