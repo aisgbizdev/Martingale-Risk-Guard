@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info } from "lucide-react";
+import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe } from "lucide-react";
 import { riskInputSchema, type RiskInput } from "@shared/schema";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   const form = useForm<RiskInput>({
     resolver: zodResolver(riskInputSchema),
@@ -42,6 +44,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLanguage(language === "id" ? "en" : "id")}
+            className="gap-2"
+            data-testid="button-language-toggle"
+          >
+            <Globe className="w-4 h-4" />
+            {language === "id" ? "EN" : "ID"}
+          </Button>
+        </div>
+
         <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <div className="p-2 sm:p-3 bg-primary/10 rounded-md">
@@ -53,18 +68,16 @@ export default function Home() {
           </div>
           
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-2">
-            <span className="block mb-2">
-              Aplikasi edukasi untuk mengecek risiko strategi <strong>Martingale</strong> vs <strong>Linear Averaging</strong> pada XUL10 (Kontrak Gulir Berkala Emas Loco London).
-            </span>
-            <span className="block text-xs sm:text-sm text-muted-foreground/80">
-              Educational app to check risk levels of Martingale vs Linear Averaging strategies on XUL10 gold rolling contracts.
-            </span>
+            {t(
+              "Aplikasi edukasi untuk mengecek risiko strategi Martingale vs Linear Averaging pada XUL10 (Kontrak Gulir Berkala Emas Loco London).",
+              "Educational app to check risk levels of Martingale vs Linear Averaging strategies on XUL10 gold rolling contracts."
+            )}
           </p>
           
           <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
             <span className="text-xs sm:text-sm text-amber-700 dark:text-amber-300 text-left">
-              Edukasi & mitigasi risiko | For education & risk mitigation only
+              {t("Edukasi & mitigasi risiko", "For education & risk mitigation only")}
             </span>
           </div>
         </div>
@@ -72,10 +85,10 @@ export default function Home() {
         <Card className="max-w-2xl mx-auto">
           <CardHeader className="pb-4 sm:pb-6 px-4 sm:px-6">
             <CardTitle className="text-lg sm:text-xl md:text-2xl">
-              Parameter Transaksi | Trade Parameters
+              {t("Parameter Transaksi", "Trade Parameters")}
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Masukkan parameter untuk mengecek tingkat risiko | Enter parameters to check risk level
+              {t("Masukkan parameter untuk mengecek tingkat risiko", "Enter parameters to check risk level")}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
@@ -84,7 +97,7 @@ export default function Home() {
                 <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />
-                    Parameter Finansial | Financial Parameters
+                    {t("Parameter Finansial", "Financial Parameters")}
                   </h3>
                   
                   <FormField
@@ -92,11 +105,11 @@ export default function Home() {
                     name="modal"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Modal Awal (USD) | Initial Capital</FormLabel>
+                        <FormLabel className="text-sm">{t("Modal Awal (USD)", "Initial Capital (USD)")}</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Contoh / Example: 50000"
+                            placeholder={t("Contoh: 50000", "Example: 50000")}
                             data-testid="input-modal"
                             className="h-10 sm:h-11"
                             min="0"
@@ -109,7 +122,7 @@ export default function Home() {
                         </FormControl>
                         <p className="text-xs text-muted-foreground flex items-start gap-1">
                           <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                          Referensi penelitian: USD 200.000 | Research reference: USD 200,000
+                          {t("Referensi penelitian: USD 200.000", "Research reference: USD 200,000")}
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -121,17 +134,17 @@ export default function Home() {
                     name="targetPoin"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Target Poin per Siklus | Target Points per Cycle</FormLabel>
+                        <FormLabel className="text-sm">{t("Target Poin per Siklus", "Target Points per Cycle")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-target-poin" className="h-10 sm:h-11">
-                              <SelectValue placeholder="Pilih target poin" />
+                              <SelectValue placeholder={t("Pilih target poin", "Select target points")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="30">30 poin - Konservatif / Conservative</SelectItem>
-                            <SelectItem value="40">40 poin - Moderat / Moderate</SelectItem>
-                            <SelectItem value="50">50 poin - Agresif / Aggressive</SelectItem>
+                            <SelectItem value="30">{t("30 poin - Konservatif", "30 points - Conservative")}</SelectItem>
+                            <SelectItem value="40">{t("40 poin - Moderat", "40 points - Moderate")}</SelectItem>
+                            <SelectItem value="50">{t("50 poin - Agresif", "50 points - Aggressive")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -143,7 +156,7 @@ export default function Home() {
                 <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
-                    Parameter Strategi | Strategy Parameters
+                    {t("Parameter Strategi", "Strategy Parameters")}
                   </h3>
 
                   <FormField
@@ -151,11 +164,11 @@ export default function Home() {
                     name="strategy"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Strategi | Strategy</FormLabel>
+                        <FormLabel className="text-sm">{t("Strategi", "Strategy")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-strategy" className="h-10 sm:h-11">
-                              <SelectValue placeholder="Pilih strategi" />
+                              <SelectValue placeholder={t("Pilih strategi", "Select strategy")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -175,18 +188,18 @@ export default function Home() {
                       <FormItem>
                         <FormLabel className="text-sm flex items-center gap-2">
                           <Layers className="w-4 h-4" />
-                          Batas Layer Maks | Max Layer Limit
+                          {t("Batas Layer Maks", "Max Layer Limit")}
                         </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-max-layer" className="h-10 sm:h-11">
-                              <SelectValue placeholder="Pilih batas layer" />
+                              <SelectValue placeholder={t("Pilih batas layer", "Select layer limit")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="3">3 layer - Konservatif / Conservative</SelectItem>
-                            <SelectItem value="4">4 layer - Moderat / Moderate</SelectItem>
-                            <SelectItem value="5">5 layer - Agresif / Aggressive</SelectItem>
+                            <SelectItem value="3">{t("3 layer - Konservatif", "3 layers - Conservative")}</SelectItem>
+                            <SelectItem value="4">{t("4 layer - Moderat", "4 layers - Moderate")}</SelectItem>
+                            <SelectItem value="5">{t("5 layer - Agresif", "5 layers - Aggressive")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -198,7 +211,7 @@ export default function Home() {
                 <div className="space-y-4 sm:space-y-5">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    Profil & Kondisi Pasar | Profile & Market
+                    {t("Profil & Kondisi Pasar", "Profile & Market")}
                   </h3>
 
                   <FormField
@@ -206,16 +219,16 @@ export default function Home() {
                     name="experience"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Pengalaman Trading | Trading Experience</FormLabel>
+                        <FormLabel className="text-sm">{t("Pengalaman Trading", "Trading Experience")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-experience" className="h-10 sm:h-11">
-                              <SelectValue placeholder="Pilih pengalaman" />
+                              <SelectValue placeholder={t("Pilih pengalaman", "Select experience")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Pemula">Pemula / Beginner (&lt;1 tahun / year)</SelectItem>
-                            <SelectItem value="Berpengalaman">Berpengalaman / Experienced (&gt;3 tahun / years)</SelectItem>
+                            <SelectItem value="Pemula">{t("Pemula (<1 tahun)", "Beginner (<1 year)")}</SelectItem>
+                            <SelectItem value="Berpengalaman">{t("Berpengalaman (>3 tahun)", "Experienced (>3 years)")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -228,16 +241,16 @@ export default function Home() {
                     name="marketCondition"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm">Kondisi Pasar | Market Condition</FormLabel>
+                        <FormLabel className="text-sm">{t("Kondisi Pasar", "Market Condition")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-market-condition" className="h-10 sm:h-11">
-                              <SelectValue placeholder="Pilih kondisi pasar" />
+                              <SelectValue placeholder={t("Pilih kondisi pasar", "Select market condition")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="Sideways">Sideways (Range-bound)</SelectItem>
-                            <SelectItem value="Trending">Trending (Strong direction)</SelectItem>
+                            <SelectItem value="Trending">{t("Trending (Arah kuat)", "Trending (Strong direction)")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -254,10 +267,10 @@ export default function Home() {
                   data-testid="button-cek-risiko"
                 >
                   {isLoading ? (
-                    "Menganalisis... | Analyzing..."
+                    t("Menganalisis...", "Analyzing...")
                   ) : (
                     <>
-                      Cek Risiko | Check Risk
+                      {t("Cek Risiko", "Check Risk")}
                       <ChevronRight className="w-5 h-5 ml-2" />
                     </>
                   )}
@@ -269,12 +282,10 @@ export default function Home() {
 
         <div className="mt-6 sm:mt-8 text-center px-4">
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
-            <span className="block mb-1">
-              Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko.
-            </span>
-            <span className="block text-muted-foreground/70">
-              This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.
-            </span>
+            {t(
+              "Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.",
+              "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility."
+            )}
           </p>
         </div>
       </div>

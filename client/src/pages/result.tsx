@@ -18,11 +18,13 @@ import {
   TrendingUp,
   Percent,
   Target,
-  Activity
+  Activity,
+  Globe
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
+import { useLanguage } from "@/lib/language-context";
 
-function RiskScoreMeter({ score, status }: { score: number; status: string }) {
+function RiskScoreMeter({ score, status, t }: { score: number; status: string; t: (id: string, en: string) => string }) {
   return (
     <div className="relative w-full max-w-md mx-auto">
       <div className="h-3 sm:h-4 bg-muted rounded-full overflow-hidden flex">
@@ -38,22 +40,23 @@ function RiskScoreMeter({ score, status }: { score: number; status: string }) {
         }}
       />
       <div className="flex justify-between mt-2 text-[10px] sm:text-xs text-muted-foreground">
-        <span>AMAN / SAFE</span>
-        <span>BERISIKO / RISKY</span>
-        <span>TIDAK LAYAK / NOT VIABLE</span>
+        <span>{t("AMAN", "SAFE")}</span>
+        <span>{t("BERISIKO", "RISKY")}</span>
+        <span>{t("TIDAK LAYAK", "NOT VIABLE")}</span>
       </div>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, t }: { status: string; t: (id: string, en: string) => string }) {
   if (status === "AMAN") {
     return (
       <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-md">
         <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400" />
         <div className="text-left">
-          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700 dark:text-emerald-300 block">AMAN</span>
-          <span className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">SAFE</span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700 dark:text-emerald-300 block">
+            {t("AMAN", "SAFE")}
+          </span>
         </div>
       </div>
     );
@@ -63,8 +66,9 @@ function StatusBadge({ status }: { status: string }) {
       <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-amber-400/10 dark:bg-amber-400/20 border border-amber-400/20 rounded-md">
         <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 dark:text-amber-400" />
         <div className="text-left">
-          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 block">BERISIKO</span>
-          <span className="text-xs sm:text-sm text-amber-500 dark:text-amber-400">RISKY</span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 block">
+            {t("BERISIKO", "RISKY")}
+          </span>
         </div>
       </div>
     );
@@ -73,17 +77,17 @@ function StatusBadge({ status }: { status: string }) {
     <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/20 rounded-md">
       <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 dark:text-rose-400" />
       <div className="text-left">
-        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-300 block">TIDAK LAYAK</span>
-        <span className="text-xs sm:text-sm text-rose-500 dark:text-rose-400">NOT VIABLE</span>
+        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-300 block">
+          {t("TIDAK LAYAK", "NOT VIABLE")}
+        </span>
       </div>
     </div>
   );
 }
 
-function MetricCard({ icon: Icon, label, labelEn, value, color }: { 
+function MetricCard({ icon: Icon, label, value, color }: { 
   icon: any; 
   label: string; 
-  labelEn: string;
   value: string; 
   color: string 
 }) {
@@ -92,14 +96,22 @@ function MetricCard({ icon: Icon, label, labelEn, value, color }: {
       <Icon className={`w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-1 sm:mb-2 ${color}`} />
       <div className="text-lg sm:text-xl font-bold text-foreground">{value}</div>
       <div className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
-        <span className="block">{label}</span>
-        <span className="block text-muted-foreground/70">{labelEn}</span>
+        {label}
       </div>
     </div>
   );
 }
 
+function parseLocalizedText(text: string, language: "id" | "en"): string {
+  if (text.includes(" | ")) {
+    const parts = text.split(" | ");
+    return language === "id" ? parts[0] : parts[1] || parts[0];
+  }
+  return text;
+}
+
 export default function Result() {
+  const { language, setLanguage, t } = useLanguage();
   const searchParams = new URLSearchParams(window.location.search);
   
   const params: RiskInput = {
@@ -132,7 +144,7 @@ export default function Result() {
         <div className="text-center">
           <div className="animate-spin w-10 h-10 sm:w-12 sm:h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-sm sm:text-base text-muted-foreground">
-            Menganalisis risiko... | Analyzing risk...
+            {t("Menganalisis risiko...", "Analyzing risk...")}
           </p>
         </div>
       </div>
@@ -146,15 +158,15 @@ export default function Result() {
           <CardContent className="pt-6 text-center">
             <XCircle className="w-10 h-10 sm:w-12 sm:h-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg sm:text-xl font-semibold mb-2">
-              Terjadi Kesalahan | Error Occurred
+              {t("Terjadi Kesalahan", "Error Occurred")}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Gagal menghitung risiko. | Failed to calculate risk.
+              {t("Gagal menghitung risiko.", "Failed to calculate risk.")}
             </p>
             <Link href="/">
               <Button data-testid="button-kembali-error">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Kembali | Back
+                {t("Kembali", "Back")}
               </Button>
             </Link>
           </CardContent>
@@ -166,37 +178,49 @@ export default function Result() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLanguage(language === "id" ? "en" : "id")}
+            className="gap-2"
+            data-testid="button-language-toggle"
+          >
+            <Globe className="w-4 h-4" />
+            {language === "id" ? "EN" : "ID"}
+          </Button>
+        </div>
+
         <div className="text-center mb-6 sm:mb-8">
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
             <div className="p-2 sm:p-3 bg-primary/10 rounded-md">
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             </div>
             <div className="text-left">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">Hasil Analisis</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Analysis Result</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                {t("Hasil Analisis", "Analysis Result")}
+              </h1>
             </div>
           </div>
           
-          <StatusBadge status={result.status} />
+          <StatusBadge status={result.status} t={t} />
           
           <div className="mt-6 sm:mt-8">
             <div className="text-4xl sm:text-5xl font-mono font-bold text-foreground mb-2" data-testid="text-risk-score">
               {result.score}<span className="text-xl sm:text-2xl text-muted-foreground">/100</span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-              Skor Risiko | Risk Score
+              {t("Skor Risiko", "Risk Score")}
             </p>
-            <RiskScoreMeter score={result.score} status={result.status} />
+            <RiskScoreMeter score={result.score} status={result.status} t={t} />
             
             <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-muted/50 rounded-md">
               <p className="text-xs sm:text-sm text-muted-foreground">
                 <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1.5 -mt-0.5" />
-                <span className="block sm:inline">
-                  Silakan ubah parameter (target poin, layer, atau strategi) untuk melihat bagaimana risiko berubah.
-                </span>
-                <span className="block sm:inline sm:ml-1 text-muted-foreground/70">
-                  Try adjusting parameters to see how risk changes.
-                </span>
+                {t(
+                  "Silakan ubah parameter (target poin, layer, atau strategi) untuk melihat bagaimana risiko berubah.",
+                  "Try adjusting parameters (target points, layers, or strategy) to see how risk changes."
+                )}
               </p>
             </div>
           </div>
@@ -207,42 +231,38 @@ export default function Result() {
             <CardHeader className="pb-3 px-4 sm:px-6">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <Activity className="w-5 h-5 text-primary" />
-                <span>Metrik Produktivitas | Productivity Metrics</span>
+                <span>{t("Metrik Produktivitas", "Productivity Metrics")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <MetricCard 
                   icon={TrendingUp} 
-                  label="Profit Factor" 
-                  labelEn="PF"
+                  label="Profit Factor (PF)" 
                   value={result.metrics.expectedPF} 
                   color="text-green-500"
                 />
                 <MetricCard 
                   icon={Percent} 
-                  label="Return on Margin" 
-                  labelEn="ROM"
+                  label="Return on Margin (ROM)" 
                   value={result.metrics.expectedROM} 
                   color="text-blue-500"
                 />
                 <MetricCard 
                   icon={Target} 
-                  label="Efficiency Ratio" 
-                  labelEn="ER"
+                  label="Efficiency Ratio (ER)" 
                   value={result.metrics.expectedER} 
                   color="text-purple-500"
                 />
                 <MetricCard 
                   icon={AlertTriangle} 
-                  label="Risiko Margin Call" 
-                  labelEn="MC Risk"
-                  value={result.metrics.marginCallRisk} 
+                  label={t("Risiko Margin Call", "Margin Call Risk")}
+                  value={parseLocalizedText(result.metrics.marginCallRisk, language)} 
                   color="text-amber-500"
                 />
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-3 text-center">
-                Data berdasarkan backtesting thesis 2024-2025 | Based on 2024-2025 thesis backtest data
+                {t("Data berdasarkan backtesting thesis 2024-2025", "Based on 2024-2025 thesis backtest data")}
               </p>
             </CardContent>
           </Card>
@@ -253,7 +273,7 @@ export default function Result() {
             <CardHeader className="pb-3 px-4 sm:px-6">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <Info className="w-5 h-5 text-primary" />
-                <span>Ringkasan Alasan | Summary</span>
+                <span>{t("Ringkasan Alasan", "Summary")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
@@ -261,7 +281,7 @@ export default function Result() {
                 {result.reasons.map((reason, index) => (
                   <li key={index} className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
                     <span className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 sm:mt-2 flex-shrink-0" />
-                    <span>{reason}</span>
+                    <span>{parseLocalizedText(reason, language)}</span>
                   </li>
                 ))}
               </ul>
@@ -272,7 +292,7 @@ export default function Result() {
             <CardHeader className="pb-3 px-4 sm:px-6">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <AlertOctagon className="w-5 h-5 text-amber-500" />
-                <span>Peringatan | Warnings</span>
+                <span>{t("Peringatan", "Warnings")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
@@ -280,11 +300,11 @@ export default function Result() {
                 {result.warnings.length > 0 ? result.warnings.map((warning, index) => (
                   <li key={index} className="flex items-start gap-2 text-xs sm:text-sm">
                     <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{warning}</span>
+                    <span className="text-muted-foreground">{parseLocalizedText(warning, language)}</span>
                   </li>
                 )) : (
                   <li className="text-xs sm:text-sm text-muted-foreground">
-                    Tidak ada peringatan khusus. | No specific warnings.
+                    {t("Tidak ada peringatan khusus.", "No specific warnings.")}
                   </li>
                 )}
               </ul>
@@ -296,7 +316,7 @@ export default function Result() {
           <CardHeader className="pb-3 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
               <Brain className="w-5 h-5 text-purple-500" />
-              <span>Catatan Psikologi | Psychology Notes</span>
+              <span>{t("Catatan Psikologi", "Psychology Notes")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
@@ -306,7 +326,7 @@ export default function Result() {
                   <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-500/10 dark:bg-purple-500/20 rounded-md flex items-center justify-center flex-shrink-0">
                     <span className="text-[10px] sm:text-xs font-medium text-purple-600 dark:text-purple-400">{index + 1}</span>
                   </div>
-                  <span className="text-muted-foreground">{note}</span>
+                  <span className="text-muted-foreground">{parseLocalizedText(note, language)}</span>
                 </li>
               ))}
             </ul>
@@ -321,14 +341,12 @@ export default function Result() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <div className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 space-y-2" data-testid="text-disclaimer">
+            <div className="text-xs sm:text-sm text-amber-800 dark:text-amber-200" data-testid="text-disclaimer">
               <p>
-                Aplikasi ini dibuat untuk <strong>edukasi</strong>, <strong>literasi risiko</strong>, dan <strong>mitigasi risiko</strong>. 
-                Keputusan transaksi sepenuhnya tanggung jawab pengguna.
-              </p>
-              <p className="text-amber-700/80 dark:text-amber-300/80">
-                This app is for <strong>education</strong>, <strong>risk literacy</strong>, and <strong>risk mitigation</strong>. 
-                Trading decisions are entirely the user's responsibility.
+                {t(
+                  "Aplikasi ini dibuat untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan transaksi sepenuhnya tanggung jawab pengguna.",
+                  "This app is for education, risk literacy, and risk mitigation. Trading decisions are entirely the user's responsibility."
+                )}
               </p>
             </div>
           </CardContent>
@@ -338,7 +356,7 @@ export default function Result() {
           <Link href="/">
             <Button size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-cek-ulang">
               <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              Cek Ulang | Check Again
+              {t("Cek Ulang", "Check Again")}
             </Button>
           </Link>
         </div>
@@ -347,14 +365,18 @@ export default function Result() {
 
         <div className="text-center">
           <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3">
-            Parameter yang Dianalisis | Analyzed Parameters
+            {t("Parameter yang Dianalisis", "Analyzed Parameters")}
           </h3>
           <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-            <Badge variant="secondary" className="text-[10px] sm:text-xs">Modal: ${params.modal.toLocaleString()}</Badge>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+              {t("Modal", "Capital")}: ${params.modal.toLocaleString()}
+            </Badge>
             <Badge variant="secondary" className="text-[10px] sm:text-xs">Target: {params.targetPoin} pts</Badge>
             <Badge variant="secondary" className="text-[10px] sm:text-xs">{params.strategy}</Badge>
             <Badge variant="secondary" className="text-[10px] sm:text-xs">Layer: {params.maxLayer}</Badge>
-            <Badge variant="secondary" className="text-[10px] sm:text-xs">{params.experience}</Badge>
+            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+              {params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}
+            </Badge>
             <Badge variant="secondary" className="text-[10px] sm:text-xs">{params.marketCondition}</Badge>
           </div>
         </div>
