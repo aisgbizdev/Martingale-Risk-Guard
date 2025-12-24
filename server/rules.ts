@@ -1,214 +1,225 @@
 import type { RiskInput, RiskResult, RiskStatus } from "@shared/schema";
 
-interface ScoreBreakdown {
-  targetPoin: number;
-  strategy: number;
-  layer: number;
-  experience: number;
-  marketCondition: number;
-  modalAdequacy: number;
-  combinationBonus: number;
-}
+const OPTIMAL_MODAL = 200000;
 
-function calculateModalAdequacy(modal: number, strategy: string, maxLayer: string): number {
-  const layerNum = parseInt(maxLayer);
-  
-  const minModalMartingale: Record<number, number> = {
-    3: 2000,
-    4: 4000,
-    5: 8000,
-  };
-  
-  const minModalLinear: Record<number, number> = {
-    3: 1000,
-    4: 2000,
-    5: 4000,
-  };
-  
-  const minRequired = strategy === "Martingale" 
-    ? minModalMartingale[layerNum] 
-    : minModalLinear[layerNum];
-  
-  if (modal >= minRequired * 2) return 0;
-  if (modal >= minRequired * 1.5) return 5;
-  if (modal >= minRequired) return 10;
-  if (modal >= minRequired * 0.5) return 20;
-  return 30;
-}
-
-function calculateCombinationBonus(input: RiskInput): number {
-  let bonus = 0;
-  
-  if (input.strategy === "Martingale" && input.marketCondition === "Trending") {
-    bonus += 15;
-  }
-  
-  if (input.strategy === "Martingale" && input.maxLayer === "5") {
-    bonus += 10;
-  }
-  
-  if (input.targetPoin === "50" && input.experience === "Pemula") {
-    bonus += 10;
-  }
-  
-  if (input.strategy === "Martingale" && input.experience === "Pemula" && input.marketCondition === "Trending") {
-    bonus += 10;
-  }
-  
-  return bonus;
-}
+const THESIS_METRICS: Record<string, Record<string, { pf: number; rom: number; er: number; mcRisk: string }>> = {
+  "Martingale": {
+    "30": { pf: 3.75, rom: 312.86, er: 0.56, mcRisk: "Sangat Tinggi / Very High" },
+    "40": { pf: 6.23, rom: 315.20, er: 0.70, mcRisk: "Tinggi / High" },
+    "50": { pf: 7.82, rom: 447.23, er: 0.78, mcRisk: "Sedang / Medium" },
+  },
+  "Linear Averaging": {
+    "30": { pf: 14.73, rom: 334.19, er: 1.04, mcRisk: "Rendah / Low" },
+    "40": { pf: 3.48, rom: 579.65, er: 1.13, mcRisk: "Sedang / Medium" },
+    "50": { pf: 4.69, rom: 392.13, er: 0.64, mcRisk: "Sedang / Medium" },
+  },
+};
 
 export function calculateRisk(input: RiskInput): RiskResult {
-  const breakdown: ScoreBreakdown = {
-    targetPoin: 0,
-    strategy: 0,
-    layer: 0,
-    experience: 0,
-    marketCondition: 0,
-    modalAdequacy: 0,
-    combinationBonus: 0,
+  let riskScore = 0;
+  const reasons: string[] = [];
+  const warnings: string[] = [];
+  const psychologyNotes: string[] = [];
+
+  const metrics = THESIS_METRICS[input.strategy]?.[input.targetPoin] || {
+    pf: 1.0,
+    rom: 0,
+    er: 0,
+    mcRisk: "Tidak Diketahui / Unknown",
   };
 
-  switch (input.targetPoin) {
-    case "30": breakdown.targetPoin = 5; break;
-    case "40": breakdown.targetPoin = 10; break;
-    case "50": breakdown.targetPoin = 20; break;
+  const modalRatio = input.modal / OPTIMAL_MODAL;
+  if (modalRatio < 0.25) {
+    riskScore += 35;
+    reasons.push(
+      `Modal USD ${input.modal.toLocaleString()} sangat jauh di bawah rekomendasi optimal USD 200.000 (rasio ${(modalRatio * 100).toFixed(1)}%). | Capital USD ${input.modal.toLocaleString()} is far below optimal recommendation of USD 200,000 (ratio ${(modalRatio * 100).toFixed(1)}%).`
+    );
+    warnings.push(
+      "Risiko margin call sangat tinggi dengan modal ini. | Margin call risk is very high with this capital."
+    );
+  } else if (modalRatio < 0.5) {
+    riskScore += 25;
+    reasons.push(
+      `Modal USD ${input.modal.toLocaleString()} masih di bawah 50% dari rekomendasi optimal. | Capital USD ${input.modal.toLocaleString()} is still below 50% of optimal recommendation.`
+    );
+    warnings.push(
+      "Ketahanan modal terbatas untuk menahan drawdown. | Limited capital endurance to withstand drawdown."
+    );
+  } else if (modalRatio < 0.75) {
+    riskScore += 15;
+    reasons.push(
+      `Modal USD ${input.modal.toLocaleString()} mendekati level yang dapat diterima. | Capital USD ${input.modal.toLocaleString()} approaching acceptable level.`
+    );
+  } else if (modalRatio >= 1) {
+    riskScore += 0;
+    reasons.push(
+      `Modal USD ${input.modal.toLocaleString()} memenuhi atau melebihi rekomendasi optimal. | Capital USD ${input.modal.toLocaleString()} meets or exceeds optimal recommendation.`
+    );
+  } else {
+    riskScore += 10;
+    reasons.push(
+      `Modal USD ${input.modal.toLocaleString()} mendekati level optimal. | Capital USD ${input.modal.toLocaleString()} approaching optimal level.`
+    );
   }
 
-  breakdown.strategy = input.strategy === "Martingale" ? 25 : 10;
-
-  switch (input.maxLayer) {
-    case "3": breakdown.layer = 5; break;
-    case "4": breakdown.layer = 10; break;
-    case "5": breakdown.layer = 15; break;
+  if (input.strategy === "Martingale") {
+    riskScore += 20;
+    reasons.push(
+      "Martingale memiliki risiko eksponensial (lot size = L0 x 2^n) yang dapat menghapus seluruh modal. | Martingale has exponential risk (lot size = L0 x 2^n) that can wipe out entire capital."
+    );
+    
+    if (input.marketCondition === "Trending") {
+      riskScore += 25;
+      reasons.push(
+        "KOMBINASI BERBAHAYA: Martingale + pasar trending terbukti GAGAL (margin call) di backtest 2025. | DANGEROUS COMBO: Martingale + trending market PROVEN TO FAIL (margin call) in 2025 backtest."
+      );
+      warnings.push(
+        "Data thesis: Martingale 30pts mengalami margin call pada tren bullish 2025. | Thesis data: Martingale 30pts suffered margin call in 2025 bullish trend."
+      );
+    } else {
+      riskScore += 10;
+      reasons.push(
+        "Martingale lebih cocok pada pasar sideways, namun tetap memiliki risiko eksponensial. | Martingale is more suitable for sideways market, but still has exponential risk."
+      );
+    }
+    
+    psychologyNotes.push(
+      "Overconfidence Bias: Martingale dapat memicu rasa 'pasti untung' padahal risikonya eksponensial. | Overconfidence Bias: Martingale can trigger false sense of 'guaranteed profit' when risk is exponential."
+    );
+  } else {
+    if (input.marketCondition === "Trending") {
+      riskScore += 15;
+      reasons.push(
+        "Linear Averaging pada pasar trending tetap berisiko, namun lebih terkendali dibanding Martingale. | Linear Averaging in trending market is still risky, but more controlled than Martingale."
+      );
+      warnings.push(
+        "Data thesis: Linear 40pts gagal (margin call) pada tren bullish 2025. | Thesis data: Linear 40pts failed (margin call) in 2025 bullish trend."
+      );
+    } else {
+      riskScore += 5;
+      reasons.push(
+        "Linear Averaging pada pasar sideways adalah kombinasi paling stabil (PF 14.73, ER 1.04). | Linear Averaging in sideways market is the most stable combination (PF 14.73, ER 1.04)."
+      );
+    }
   }
 
-  breakdown.experience = input.experience === "Pemula" ? 15 : 5;
+  if (input.targetPoin === "30") {
+    if (input.strategy === "Martingale") {
+      riskScore += 15;
+      reasons.push(
+        "Target 30 poin dengan Martingale sangat berisiko - frekuensi averaging tinggi, margin call lebih cepat. | 30 points target with Martingale is very risky - high averaging frequency, faster margin call."
+      );
+    } else {
+      riskScore += 0;
+      reasons.push(
+        "Target 30 poin dengan Linear Averaging adalah yang paling stabil berdasarkan data thesis. | 30 points target with Linear Averaging is most stable based on thesis data."
+      );
+    }
+  } else if (input.targetPoin === "40") {
+    if (input.strategy === "Martingale") {
+      riskScore += 10;
+      reasons.push(
+        "Target 40 poin dengan Martingale produktif di kondisi ideal, tapi tetap berisiko tinggi. | 40 points target with Martingale is productive in ideal conditions, but still high risk."
+      );
+    } else {
+      riskScore += 10;
+      reasons.push(
+        "Target 40 poin dengan Linear Averaging berisiko sedang. | 40 points target with Linear Averaging has moderate risk."
+      );
+    }
+  } else {
+    if (input.strategy === "Martingale") {
+      riskScore += 5;
+      reasons.push(
+        "Target 50 poin dengan Martingale memberikan ruang koreksi lebih lebar, tapi eksposur modal tetap besar. | 50 points target with Martingale provides wider correction room, but capital exposure remains large."
+      );
+    } else {
+      riskScore += 5;
+      reasons.push(
+        "Target 50 poin dengan Linear Averaging memerlukan pergerakan harga lebih besar. | 50 points target with Linear Averaging requires larger price movement."
+      );
+    }
+  }
 
-  breakdown.marketCondition = input.marketCondition === "Trending" ? 10 : 5;
+  const maxLayer = parseInt(input.maxLayer);
+  if (maxLayer >= 5) {
+    riskScore += 20;
+    reasons.push(
+      "Penggunaan 5 layer memiliki sensitivitas SANGAT TINGGI terhadap margin call. | Using 5 layers has VERY HIGH sensitivity to margin call."
+    );
+    warnings.push(
+      "Layer 4-5 adalah titik kritis - modal harus sangat besar untuk bertahan. | Layers 4-5 are critical points - capital must be very large to survive."
+    );
+    if (input.strategy === "Martingale") {
+      psychologyNotes.push(
+        "Loss Aversion: Ketakutan akan kerugian membuat trader terus menambah layer meski modal sudah tertekan. | Loss Aversion: Fear of loss causes traders to keep adding layers even when capital is under pressure."
+      );
+    }
+  } else if (maxLayer === 4) {
+    riskScore += 12;
+    reasons.push(
+      "4 layer masih memiliki risiko signifikan, terutama jika modal tidak mencukupi. | 4 layers still have significant risk, especially if capital is insufficient."
+    );
+  } else {
+    riskScore += 5;
+    reasons.push(
+      "Pembatasan 3 layer membantu mengendalikan risiko eksponensial. | Limiting to 3 layers helps control exponential risk."
+    );
+  }
 
-  breakdown.modalAdequacy = calculateModalAdequacy(input.modal, input.strategy, input.maxLayer);
+  if (input.experience === "Pemula") {
+    riskScore += 15;
+    reasons.push(
+      "Trader pemula lebih rentan terhadap bias psikologis dalam pengambilan keputusan. | Beginner traders are more susceptible to psychological biases in decision making."
+    );
+    warnings.push(
+      "Pemula disarankan menggunakan parameter konservatif: Linear Averaging, 30pts, 3 layer. | Beginners should use conservative parameters: Linear Averaging, 30pts, 3 layers."
+    );
+    psychologyNotes.push(
+      "Risk Misperception: Mayoritas peserta melihat strategi sebagai 'mudah' tanpa memahami risiko eksponensial. | Risk Misperception: Most participants see strategy as 'easy' without understanding exponential risk."
+    );
+    psychologyNotes.push(
+      "Herding Behaviour: Kecenderungan mengikuti mayoritas tanpa analisis independen dapat memperburuk kerugian. | Herding Behaviour: Tendency to follow the crowd without independent analysis can worsen losses."
+    );
+  } else {
+    riskScore += 5;
+    reasons.push(
+      "Pengalaman trading membantu dalam manajemen risiko dan pengendalian emosi. | Trading experience helps in risk management and emotional control."
+    );
+  }
 
-  breakdown.combinationBonus = calculateCombinationBonus(input);
-
-  let score = 
-    breakdown.targetPoin + 
-    breakdown.strategy + 
-    breakdown.layer + 
-    breakdown.experience + 
-    breakdown.marketCondition + 
-    breakdown.modalAdequacy +
-    breakdown.combinationBonus;
-
-  score = Math.min(100, Math.max(0, score));
+  riskScore = Math.max(0, Math.min(100, riskScore));
 
   let status: RiskStatus;
-  if (score <= 39) {
+  if (riskScore <= 35) {
     status = "AMAN";
-  } else if (score <= 69) {
+  } else if (riskScore <= 60) {
     status = "BERISIKO";
   } else {
     status = "TIDAK LAYAK";
   }
 
-  const reasons = generateReasons(input, breakdown, status);
-  const warnings = generateWarnings(input, status);
-  const psychologyNotes = generatePsychologyNotes(input);
-
-  return {
-    status,
-    score,
-    reasons,
-    warnings,
-    psychologyNotes,
-  };
-}
-
-function generateReasons(input: RiskInput, breakdown: ScoreBreakdown, status: RiskStatus): string[] {
-  const reasons: string[] = [];
-
-  if (input.strategy === "Martingale") {
-    reasons.push("Strategi Martingale memiliki risiko eksponensial karena menggandakan posisi setiap kali rugi.");
-  } else {
-    reasons.push("Strategi Linear Averaging memiliki risiko yang lebih terkendali dibanding Martingale.");
-  }
-
-  if (input.targetPoin === "50") {
-    reasons.push("Target 50 poin per siklus termasuk agresif dan memerlukan pergerakan harga yang lebih besar.");
-  } else if (input.targetPoin === "40") {
-    reasons.push("Target 40 poin per siklus termasuk moderat.");
-  } else {
-    reasons.push("Target 30 poin per siklus termasuk konservatif dan lebih realistis dicapai.");
-  }
-
-  if (input.maxLayer === "5") {
-    reasons.push("Penggunaan 5 layer maksimal meningkatkan eksposur risiko secara signifikan.");
-  }
-
-  if (breakdown.modalAdequacy > 15) {
-    reasons.push("Modal yang tersedia kurang memadai untuk strategi dan parameter yang dipilih.");
-  } else if (breakdown.modalAdequacy > 0) {
-    reasons.push("Modal yang tersedia cukup namun disarankan untuk menambah buffer keamanan.");
-  }
-
-  if (input.marketCondition === "Trending" && input.strategy === "Martingale") {
-    reasons.push("Kombinasi Martingale di pasar trending sangat berbahaya karena tren dapat berlanjut melawan posisi.");
-  }
-
-  return reasons;
-}
-
-function generateWarnings(input: RiskInput, status: RiskStatus): string[] {
-  const warnings: string[] = [];
-
-  if (status === "TIDAK LAYAK") {
-    warnings.push("Parameter yang dipilih memiliki risiko sangat tinggi. Pertimbangkan untuk mengubah strategi atau mengurangi layer.");
-  }
-
-  if (input.strategy === "Martingale") {
-    warnings.push("Martingale dapat menyebabkan margin call dalam kondisi pasar yang tidak menguntungkan.");
-    warnings.push("Tail risk pada Martingale dapat menghapus seluruh modal dalam satu siklus yang gagal.");
-  }
-
-  if (input.maxLayer === "5") {
-    warnings.push("Penggunaan 5 layer memerlukan modal besar dan toleransi risiko tinggi.");
-  }
-
-  if (input.experience === "Pemula") {
-    warnings.push("Trader pemula disarankan menggunakan parameter yang lebih konservatif.");
-  }
-
-  if (input.marketCondition === "Trending") {
-    warnings.push("Pasar trending dapat membuat averaging strategy sulit untuk recover.");
-  }
-
-  return warnings;
-}
-
-function generatePsychologyNotes(input: RiskInput): string[] {
-  const notes: string[] = [];
-
-  notes.push(
-    "Overconfidence Bias: Jangan terlalu percaya diri setelah beberapa kali berhasil. " +
-    "Keberhasilan masa lalu tidak menjamin keberhasilan di masa depan."
-  );
-
-  notes.push(
-    "Loss Aversion: Kecenderungan untuk menghindari kerugian lebih kuat daripada keinginan mendapat keuntungan. " +
-    "Ini bisa membuat Anda menahan posisi rugi terlalu lama."
-  );
-
-  if (input.strategy === "Martingale") {
-    notes.push(
-      "Gambler's Fallacy: Jangan berasumsi bahwa setelah beberapa kali kalah, pasti akan menang. " +
-      "Setiap trade adalah independent event."
+  if (psychologyNotes.length === 0) {
+    psychologyNotes.push(
+      "Tetap waspadai bias psikologis: jangan biarkan emosi mendikte keputusan trading. | Stay aware of psychological biases: don't let emotions dictate trading decisions."
     );
   }
 
-  notes.push(
-    "Risk Misperception: Manusia cenderung meremehkan probabilitas kejadian langka (tail risk). " +
-    "Margin call mungkin jarang terjadi, tapi dampaknya bisa menghancurkan."
+  psychologyNotes.push(
+    "Herding Behaviour: Jangan ikut-ikutan tanpa analisis sendiri. Banyak trader gagal karena mengikuti arus. | Herding Behaviour: Don't follow the crowd without your own analysis. Many traders fail by following the herd."
   );
 
-  return notes;
+  return {
+    status,
+    score: riskScore,
+    reasons,
+    warnings,
+    psychologyNotes,
+    metrics: {
+      expectedPF: metrics.pf.toFixed(2),
+      expectedROM: `${metrics.rom.toFixed(2)}%`,
+      expectedER: metrics.er.toFixed(2),
+      marginCallRisk: metrics.mcRisk,
+    },
+  };
 }
