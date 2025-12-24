@@ -155,9 +155,7 @@ export function calculateRisk(input: RiskInput): RiskResult {
       );
     }
     
-    // Bias Perilaku Keuangan untuk Martingale - kontekstual berdasarkan parameter
-    psychologyNotes.push(getBiasNote("overconfidence", input));
-    psychologyNotes.push(getBiasNote("riskMisperception", input));
+    // Bias Martingale akan ditambahkan di section Behavioral Finance di bawah
   } else {
     // Linear Averaging Analysis
     if (input.marketCondition === "Trending") {
@@ -224,9 +222,7 @@ export function calculateRisk(input: RiskInput): RiskResult {
     warnings.push(
       "Temuan Tesis: Layer 4-5 adalah zona kritis margin call. Capital requirement meningkat secara non-linear untuk bertahan. | Thesis Finding: Layers 4-5 are margin call critical zone. Capital requirement increases non-linearly to survive."
     );
-    if (input.strategy === "Martingale") {
-      psychologyNotes.push(getBiasNote("lossAversion", input));
-    }
+    // Bias layer tinggi akan ditambahkan di section Behavioral Finance di bawah
   } else if (maxLayer === 4) {
     riskScore += 12;
     reasons.push(
@@ -248,8 +244,6 @@ export function calculateRisk(input: RiskInput): RiskResult {
     warnings.push(
       "Rekomendasi Tesis: Pemula sebaiknya menggunakan parameter konservatif (Linear Averaging, 30pts, 3 layer) untuk meminimalkan eksposur risiko. | Thesis Recommendation: Beginners should use conservative parameters (Linear Averaging, 30pts, 3 layers) to minimize risk exposure."
     );
-    psychologyNotes.push(getBiasNote("herding", input));
-    psychologyNotes.push(getBiasNote("anchoring", input));
   } else {
     riskScore += 5;
     reasons.push(
@@ -268,16 +262,56 @@ export function calculateRisk(input: RiskInput): RiskResult {
     status = "TIDAK LAYAK";
   }
 
-  // Tambahan catatan perilaku keuangan berdasarkan framework tesis
-  if (psychologyNotes.length === 0) {
-    psychologyNotes.push(getBiasNote("recency", input));
+  // ============================================================================
+  // ANALISIS BEHAVIORAL FINANCE - SEMUA BIAS RELEVAN DARI TESIS
+  // Setiap bias ditampilkan jika kondisi parameter user memenuhi kriteria
+  // ============================================================================
+  
+  // 1. Overconfidence Bias - relevan untuk Martingale atau modal tinggi
+  if (input.strategy === "Martingale" || modalRatio >= 1) {
+    psychologyNotes.push(getBiasNote("overconfidence", input));
   }
+  
+  // 2. Risk Misperception - relevan untuk Martingale atau layer tinggi
+  if (input.strategy === "Martingale" || maxLayer >= 4) {
+    psychologyNotes.push(getBiasNote("riskMisperception", input));
+  }
+  
+  // 3. Loss Aversion - relevan untuk layer tinggi atau kondisi trending
+  if (maxLayer >= 4 || input.marketCondition === "Trending") {
+    psychologyNotes.push(getBiasNote("lossAversion", input));
+  }
+  
+  // 4. Herding Behaviour - relevan untuk semua, terutama pemula
+  psychologyNotes.push(getBiasNote("herding", input));
+  
+  // 5. Anchoring Bias - relevan untuk kondisi pasar apapun
+  psychologyNotes.push(getBiasNote("anchoring", input));
+  
+  // 6. Recency Bias - relevan untuk semua trader
+  psychologyNotes.push(getBiasNote("recency", input));
+  
+  // 7. Sunk Cost Fallacy - relevan untuk layer tinggi atau modal besar
+  if (maxLayer >= 4 || input.modal >= 150000) {
+    const sunkCostNote = `Sunk Cost Fallacy: Dengan ${input.maxLayer} layer dan modal USD ${input.modal.toLocaleString()}, waspadai kecenderungan mempertahankan posisi rugi karena sudah "terlanjur" invest banyak. Tesis menegaskan: cut loss adalah keputusan rasional. | Sunk Cost Fallacy: With ${input.maxLayer} layers and USD ${input.modal.toLocaleString()} capital, beware of tendency to hold losing positions because you've already invested much. Thesis affirms: cut loss is a rational decision.`;
+    psychologyNotes.push(sunkCostNote);
+  }
+  
+  // 8. Gambler's Fallacy - khusus untuk Martingale
+  if (input.strategy === "Martingale") {
+    const gamblerNote = `Gambler's Fallacy: Pengguna ${input.strategy} sering percaya "setelah loss beruntun, pasti akan profit". Data tesis 2024-2025 membuktikan pasar tidak memiliki "memori" - setiap transaksi independen. | Gambler's Fallacy: ${input.strategy} users often believe "after consecutive losses, profit is certain". Thesis data 2024-2025 proves markets have no "memory" - each transaction is independent.`;
+    psychologyNotes.push(gamblerNote);
+  }
+  
+  // 9. Disposition Effect - relevan untuk semua
+  const dispositionNote = `Disposition Effect: Trader cenderung menjual posisi profit terlalu cepat dan menahan posisi rugi terlalu lama. Dengan ${input.strategy} + ${input.targetPoin}pts, patuhi target take profit dan stop loss yang sudah ditetapkan. | Disposition Effect: Traders tend to sell winning positions too quickly and hold losing positions too long. With ${input.strategy} + ${input.targetPoin}pts, adhere to predetermined take profit and stop loss targets.`;
+  psychologyNotes.push(dispositionNote);
 
   // Kesimpulan kontekstual dari temuan tesis
   const riskLevel = riskScore <= 35 ? "rendah" : riskScore <= 60 ? "sedang" : "tinggi";
   const riskLevelEn = riskScore <= 35 ? "low" : riskScore <= 60 ? "moderate" : "high";
   psychologyNotes.push(
-    `Kesimpulan Behavioral Finance: Dengan skor risiko ${riskScore} (${riskLevel}), parameter ${input.strategy} + ${input.targetPoin}pts + ${input.maxLayer} layer memerlukan kesadaran tinggi terhadap bias kognitif untuk menghindari keputusan emosional. | Behavioral Finance Conclusion: With risk score ${riskScore} (${riskLevelEn}), ${input.strategy} + ${input.targetPoin}pts + ${input.maxLayer} layer parameters require high awareness of cognitive biases to avoid emotional decisions.`
+    `Temuan Utama Tesis (Iriawan, UNDIP 2025): Dengan parameter Anda (${input.strategy}, ${input.targetPoin}pts, ${input.maxLayer} layer, modal USD ${input.modal.toLocaleString()}, kondisi ${input.marketCondition}), skor risiko ${riskScore} (${riskLevel}). Hingga 95% kerugian trader ritel bersumber dari bias kognitif, bukan strategi teknikal. | Key Thesis Finding (Iriawan, UNDIP 2025): With your parameters (${input.strategy}, ${input.targetPoin}pts, ${input.maxLayer} layers, USD ${input.modal.toLocaleString()} capital, ${input.marketCondition} condition), risk score ${riskScore} (${riskLevelEn}). Up to 95% of retail trader losses stem from cognitive biases, not technical strategy.`
   );
 
   return {
