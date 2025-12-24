@@ -11,16 +11,26 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("language") as Language) || "id";
-    }
-    return "id";
-  });
+  const [language, setLanguageState] = useState<Language>("id");
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("language", language);
-  }, [language]);
+    const stored = localStorage.getItem("language") as Language;
+    if (stored === "id" || stored === "en") {
+      setLanguageState(stored);
+    }
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem("language", language);
+    }
+  }, [language, isHydrated]);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+  };
 
   const t = (id: string, en: string) => (language === "id" ? id : en);
 
