@@ -572,6 +572,9 @@ export default function Result() {
                 <Activity className="w-5 h-5 text-primary" />
                 <span>{t("Metrik Produktivitas", "Productivity Metrics")}</span>
               </CardTitle>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                {t("Metrik untuk hasil analisis saat ini", "Metrics for current analysis result")}
+              </p>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
               <div className="grid gap-4 md:grid-cols-2">
