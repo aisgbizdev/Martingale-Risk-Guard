@@ -224,26 +224,27 @@ export default function Home() {
           </div>
         </div>
 
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader className="pb-4 sm:pb-6 px-4 sm:px-6">
-            <CardTitle className="text-lg sm:text-xl md:text-2xl">
-              {t("Parameter Transaksi", "Trade Parameters")}
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              {t("Ubah parameter dan lihat perubahan risiko secara langsung", "Adjust parameters and see risk changes in real-time")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6">
-            <div className="mb-6">
-              <LiveRiskPreview 
-                score={liveScore} 
-                status={liveStatus} 
-                isCalculating={isCalculating}
-                t={t}
-              />
-            </div>
+        <div className="max-w-2xl mx-auto">
+          <div className="sticky top-0 z-50 bg-background pb-4">
+            <LiveRiskPreview 
+              score={liveScore} 
+              status={liveStatus} 
+              isCalculating={isCalculating}
+              t={t}
+            />
+          </div>
 
-            <Form {...form}>
+          <Card>
+            <CardHeader className="pb-4 sm:pb-6 px-4 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl md:text-2xl">
+                {t("Parameter Transaksi", "Trade Parameters")}
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                {t("Ubah parameter dan lihat perubahan risiko secara langsung", "Adjust parameters and see risk changes in real-time")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 sm:px-6">
+              <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
                 <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
@@ -429,7 +430,8 @@ export default function Home() {
               </form>
             </Form>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
 
         <div className="mt-6 sm:mt-8 text-center px-4">
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
