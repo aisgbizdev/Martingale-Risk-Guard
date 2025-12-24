@@ -99,8 +99,12 @@ export default function Home() {
                             placeholder="Contoh / Example: 50000"
                             data-testid="input-modal"
                             className="h-10 sm:h-11"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            min="0"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val === "" ? 0 : parseFloat(val));
+                            }}
                           />
                         </FormControl>
                         <p className="text-xs text-muted-foreground flex items-start gap-1">
