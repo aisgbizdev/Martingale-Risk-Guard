@@ -60,7 +60,7 @@ export function calculateRisk(input: RiskInput): RiskResult {
   const warnings: string[] = [];
   const psychologyNotes: string[] = [];
 
-  const metrics = THESIS_METRICS[input.strategy]?.[input.targetPoin] || {
+  const baseMetrics = THESIS_METRICS[input.strategy]?.[input.targetPoin] || {
     pf: 1.0,
     rom: 0,
     er: 0,
@@ -68,6 +68,37 @@ export function calculateRisk(input: RiskInput): RiskResult {
   };
 
   const modalRatio = input.modal / OPTIMAL_MODAL;
+  
+  // Adjust ROM berdasarkan modal (ROM = Return / Modal × 100%)
+  // Data tesis menggunakan modal USD 200,000 sebagai referensi
+  // ROM_adjusted = ROM_base × (OPTIMAL_MODAL / user_modal)
+  const adjustedROM = baseMetrics.rom * (OPTIMAL_MODAL / input.modal);
+  
+  // MC Risk disesuaikan berdasarkan modal
+  let adjustedMCRisk = baseMetrics.mcRisk;
+  if (modalRatio >= 2) {
+    // Modal 2x+ dari optimal = risiko MC sangat rendah
+    adjustedMCRisk = "Sangat Rendah / Very Low";
+  } else if (modalRatio >= 1) {
+    // Modal >= optimal = risiko MC rendah
+    adjustedMCRisk = "Rendah / Low";
+  } else if (modalRatio >= 0.5) {
+    // Modal 50-100% optimal = risiko MC sedang
+    adjustedMCRisk = "Sedang / Medium";
+  } else if (modalRatio >= 0.25) {
+    // Modal 25-50% optimal = risiko MC tinggi
+    adjustedMCRisk = "Tinggi / High";
+  } else {
+    // Modal < 25% optimal = risiko MC sangat tinggi
+    adjustedMCRisk = "Sangat Tinggi / Very High";
+  }
+  
+  const metrics = {
+    pf: baseMetrics.pf, // PF tetap (rasio profit/loss tidak bergantung modal)
+    rom: adjustedROM,   // ROM disesuaikan dengan modal
+    er: baseMetrics.er, // ER tetap (efisiensi strategi)
+    mcRisk: adjustedMCRisk, // MC Risk disesuaikan dengan modal
+  };
   if (modalRatio < 0.25) {
     riskScore += 35;
     reasons.push(
