@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +20,23 @@ import {
   Percent,
   Target,
   Activity,
-  Globe
+  Globe,
+  Save,
+  GitCompare,
+  Trash2,
+  X
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
+
+// Interface untuk skenario tersimpan
+interface SavedScenario {
+  id: string;
+  nameKey: "conservative" | "aggressive"; // Key untuk bilingual
+  params: RiskInput;
+  result: RiskResult;
+  savedAt: number;
+}
 
 function RiskScoreMeter({ score, status, t }: { score: number; status: string; t: (id: string, en: string) => string }) {
   return (
@@ -294,6 +308,31 @@ export default function Result() {
   const { language, setLanguage, t } = useLanguage();
   const searchParams = new URLSearchParams(window.location.search);
   
+  // State untuk fitur Compare Scenarios
+  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const [showCompare, setShowCompare] = useState(false);
+  
+  // Load saved scenarios dari localStorage saat mount
+  useEffect(() => {
+    const saved = localStorage.getItem("riskcheck_scenarios");
+    if (saved) {
+      try {
+        setSavedScenarios(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to load scenarios");
+      }
+    }
+  }, []);
+  
+  // Save ke localStorage ketika scenarios berubah
+  useEffect(() => {
+    if (savedScenarios.length > 0) {
+      localStorage.setItem("riskcheck_scenarios", JSON.stringify(savedScenarios));
+    } else {
+      localStorage.removeItem("riskcheck_scenarios");
+    }
+  }, [savedScenarios]);
+  
   const params: RiskInput = {
     modal: parseFloat(searchParams.get("modal") || "0"),
     targetPoin: (searchParams.get("targetPoin") as "30" | "40" | "50") || "30",
@@ -317,6 +356,52 @@ export default function Result() {
       return response.json();
     },
   });
+
+  // Helper untuk translate nama skenario
+  const getScenarioName = (key: "conservative" | "aggressive") => {
+    return key === "conservative" 
+      ? t("Skenario Konservatif", "Conservative Scenario")
+      : t("Skenario Agresif", "Aggressive Scenario");
+  };
+  
+  // Helper untuk translate status
+  const getStatusLabel = (status: string) => {
+    if (status === "AMAN") return t("AMAN", "SAFE");
+    if (status === "BERISIKO") return t("BERISIKO", "RISKY");
+    return t("TIDAK LAYAK", "NOT VIABLE");
+  };
+
+  // Helper functions untuk scenario management
+  const saveScenario = (nameKey: "conservative" | "aggressive") => {
+    if (!result) return;
+    if (savedScenarios.length >= 2) {
+      // Hapus yang paling lama jika sudah ada 2
+      setSavedScenarios(prev => [...prev.slice(1), {
+        id: Date.now().toString(),
+        nameKey,
+        params,
+        result,
+        savedAt: Date.now()
+      }]);
+    } else {
+      setSavedScenarios(prev => [...prev, {
+        id: Date.now().toString(),
+        nameKey,
+        params,
+        result,
+        savedAt: Date.now()
+      }]);
+    }
+  };
+
+  const deleteScenario = (id: string) => {
+    setSavedScenarios(prev => prev.filter(s => s.id !== id));
+  };
+
+  const clearAllScenarios = () => {
+    setSavedScenarios([]);
+    setShowCompare(false);
+  };
 
   if (isLoading) {
     return (
@@ -385,6 +470,15 @@ export default function Result() {
           
           <StatusBadge status={result.status} t={t} />
           
+          {result.status === "AMAN" && (
+            <p className="mt-3 text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 rounded-md px-3 py-2 max-w-md mx-auto">
+              {t(
+                "Status AMAN tidak berarti bebas risiko. Tetap disiplin dan pahami batas eksposur.",
+                "Safe status doesn't mean risk-free. Stay disciplined and understand exposure limits."
+              )}
+            </p>
+          )}
+          
           <div className="mt-6 sm:mt-8">
             <div className="text-4xl sm:text-5xl font-mono font-bold text-foreground mb-2" data-testid="text-risk-score">
               {result.score}<span className="text-xl sm:text-2xl text-muted-foreground">/100</span>
@@ -403,6 +497,71 @@ export default function Result() {
                 )}
               </p>
             </div>
+            
+            {/* Tombol Simpan & Bandingkan Skenario */}
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const nameKey = savedScenarios.length === 0 ? "conservative" : "aggressive";
+                  saveScenario(nameKey);
+                }}
+                className="gap-2"
+                data-testid="button-save-scenario"
+              >
+                <Save className="w-4 h-4" />
+                {t("Simpan Skenario", "Save Scenario")} ({savedScenarios.length}/2)
+              </Button>
+              
+              {savedScenarios.length >= 2 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowCompare(true)}
+                  className="gap-2"
+                  data-testid="button-compare-scenarios"
+                >
+                  <GitCompare className="w-4 h-4" />
+                  {t("Bandingkan", "Compare")}
+                </Button>
+              )}
+              
+              {savedScenarios.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllScenarios}
+                  className="gap-2 text-muted-foreground"
+                  data-testid="button-clear-scenarios"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t("Hapus Semua", "Clear All")}
+                </Button>
+              )}
+            </div>
+            
+            {/* Indikator skenario tersimpan */}
+            {savedScenarios.length > 0 && (
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {savedScenarios.map((scenario, idx) => (
+                  <Badge 
+                    key={scenario.id} 
+                    variant="secondary" 
+                    className="text-xs gap-1"
+                  >
+                    {getScenarioName(scenario.nameKey)}: {scenario.result.score}/100
+                    <button 
+                      onClick={() => deleteScenario(scenario.id)}
+                      className="ml-1 opacity-60 hover:opacity-100"
+                      data-testid={`button-delete-scenario-${idx}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -635,6 +794,128 @@ export default function Result() {
           </div>
         </div>
       </div>
+      
+      {/* Modal Perbandingan Skenario */}
+      {showCompare && savedScenarios.length >= 2 && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <GitCompare className="w-5 h-5 text-primary" />
+                {t("Perbandingan Skenario", "Scenario Comparison")}
+              </CardTitle>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={() => setShowCompare(false)}
+                data-testid="button-close-compare"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {savedScenarios.map((scenario, idx) => {
+                  const bgClass = scenario.result.status === "AMAN" 
+                    ? "bg-emerald-500/5 border-emerald-500/20" 
+                    : scenario.result.status === "BERISIKO" 
+                      ? "bg-amber-500/5 border-amber-500/20" 
+                      : "bg-rose-500/5 border-rose-500/20";
+                  
+                  const badgeClass = scenario.result.status === "AMAN"
+                    ? "text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : scenario.result.status === "BERISIKO"
+                      ? "text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      : "text-rose-600 dark:text-rose-400 border-rose-500/30";
+                  
+                  return (
+                    <div 
+                      key={scenario.id} 
+                      className={`p-4 rounded-md border ${bgClass}`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-foreground">{getScenarioName(scenario.nameKey)}</h3>
+                        <Badge 
+                          variant="outline" 
+                          className={badgeClass}
+                        >
+                          {getStatusLabel(scenario.result.status)}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-3xl font-mono font-bold text-foreground mb-3">
+                        {scenario.result.score}<span className="text-lg text-muted-foreground">/100</span>
+                      </div>
+                      
+                      <Separator className="my-3" />
+                      
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t("Strategi", "Strategy")}:</span>
+                          <span className="font-medium">{scenario.params.strategy}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Target:</span>
+                          <span className="font-medium">{scenario.params.targetPoin} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Layer:</span>
+                          <span className="font-medium">{scenario.params.maxLayer}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t("Modal", "Capital")}:</span>
+                          <span className="font-medium">${scenario.params.modal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t("Kondisi Pasar", "Market")}:</span>
+                          <span className="font-medium">{scenario.params.marketCondition}</span>
+                        </div>
+                        
+                        {scenario.result.metrics && (
+                          <>
+                            <Separator className="my-2" />
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">PF:</span>
+                              <span className="font-medium">{scenario.result.metrics.expectedPF}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">ROM:</span>
+                              <span className="font-medium">{scenario.result.metrics.expectedROM}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">ER:</span>
+                              <span className="font-medium">{scenario.result.metrics.expectedER}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Kesimpulan perbandingan */}
+              <div className="mt-4 p-4 bg-muted/50 rounded-md">
+                <h4 className="font-medium text-sm mb-2">{t("Kesimpulan", "Conclusion")}</h4>
+                <p className="text-xs text-muted-foreground">
+                  {(() => {
+                    const s1 = savedScenarios[0];
+                    const s2 = savedScenarios[1];
+                    const better = s1.result.score <= s2.result.score ? s1 : s2;
+                    const diff = Math.abs(s1.result.score - s2.result.score);
+                    const betterName = getScenarioName(better.nameKey);
+                    
+                    return t(
+                      `${betterName} memiliki risiko lebih rendah dengan selisih ${diff} poin. Pertimbangkan parameter ini untuk manajemen risiko yang lebih baik.`,
+                      `${betterName} has lower risk with a ${diff} point difference. Consider these parameters for better risk management.`
+                    );
+                  })()}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
