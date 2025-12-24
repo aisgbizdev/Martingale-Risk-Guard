@@ -109,7 +109,7 @@ export default function Home() {
                         </FormControl>
                         <p className="text-xs text-muted-foreground flex items-start gap-1">
                           <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                          Rekomendasi optimal: USD 200.000 | Optimal: USD 200,000
+                          Referensi penelitian: USD 200.000 | Research reference: USD 200,000
                         </p>
                         <FormMessage />
                       </FormItem>

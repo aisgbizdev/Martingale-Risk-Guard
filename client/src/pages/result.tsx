@@ -26,15 +26,15 @@ function RiskScoreMeter({ score, status }: { score: number; status: string }) {
   return (
     <div className="relative w-full max-w-md mx-auto">
       <div className="h-3 sm:h-4 bg-muted rounded-full overflow-hidden flex">
-        <div className="flex-1 bg-green-500/20 dark:bg-green-500/30" />
-        <div className="flex-1 bg-amber-500/20 dark:bg-amber-500/30" />
-        <div className="flex-1 bg-red-500/20 dark:bg-red-500/30" />
+        <div className="flex-1 bg-emerald-400/20 dark:bg-emerald-400/30" />
+        <div className="flex-1 bg-amber-400/20 dark:bg-amber-400/30" />
+        <div className="flex-1 bg-rose-400/20 dark:bg-rose-400/30" />
       </div>
       <div 
         className="absolute top-0 h-3 sm:h-4 rounded-full transition-all duration-700 ease-out"
         style={{ 
           width: `${score}%`,
-          background: status === "AMAN" ? 'rgb(34 197 94)' : status === "BERISIKO" ? 'rgb(245 158 11)' : 'rgb(239 68 68)'
+          background: status === "AMAN" ? 'rgb(52 211 153)' : status === "BERISIKO" ? 'rgb(251 191 36)' : 'rgb(251 113 133)'
         }}
       />
       <div className="flex justify-between mt-2 text-[10px] sm:text-xs text-muted-foreground">
@@ -49,32 +49,32 @@ function RiskScoreMeter({ score, status }: { score: number; status: string }) {
 function StatusBadge({ status }: { status: string }) {
   if (status === "AMAN") {
     return (
-      <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-green-500/10 dark:bg-green-500/20 border border-green-500/20 rounded-md">
-        <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
+      <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-md">
+        <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400" />
         <div className="text-left">
-          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700 dark:text-green-300 block">AMAN</span>
-          <span className="text-xs sm:text-sm text-green-600 dark:text-green-400">SAFE</span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700 dark:text-emerald-300 block">AMAN</span>
+          <span className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">SAFE</span>
         </div>
       </div>
     );
   }
   if (status === "BERISIKO") {
     return (
-      <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
-        <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-600 dark:text-amber-400" />
+      <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-amber-400/10 dark:bg-amber-400/20 border border-amber-400/20 rounded-md">
+        <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 dark:text-amber-400" />
         <div className="text-left">
-          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-300 block">BERISIKO</span>
-          <span className="text-xs sm:text-sm text-amber-600 dark:text-amber-400">RISKY</span>
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 block">BERISIKO</span>
+          <span className="text-xs sm:text-sm text-amber-500 dark:text-amber-400">RISKY</span>
         </div>
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 rounded-md">
-      <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" />
+    <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/20 rounded-md">
+      <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 dark:text-rose-400" />
       <div className="text-left">
-        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-red-700 dark:text-red-300 block">TIDAK LAYAK</span>
-        <span className="text-xs sm:text-sm text-red-600 dark:text-red-400">NOT VIABLE</span>
+        <span className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-300 block">TIDAK LAYAK</span>
+        <span className="text-xs sm:text-sm text-rose-500 dark:text-rose-400">NOT VIABLE</span>
       </div>
     </div>
   );
@@ -187,6 +187,18 @@ export default function Result() {
               Skor Risiko | Risk Score
             </p>
             <RiskScoreMeter score={result.score} status={result.status} />
+            
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-muted/50 rounded-md">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1.5 -mt-0.5" />
+                <span className="block sm:inline">
+                  Silakan ubah parameter (target poin, layer, atau strategi) untuk melihat bagaimana risiko berubah.
+                </span>
+                <span className="block sm:inline sm:ml-1 text-muted-foreground/70">
+                  Try adjusting parameters to see how risk changes.
+                </span>
+              </p>
+            </div>
           </div>
         </div>
 
