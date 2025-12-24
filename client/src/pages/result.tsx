@@ -184,26 +184,44 @@ function getMetricExplanation(
     const pf = typeof value === "string" ? parseFloat(value) : value;
     if (pf >= 3) {
       return {
-        meaning: t("Setiap Rp1 kerugian menghasilkan Rp" + pf.toFixed(1) + " keuntungan", "Every $1 loss generates $" + pf.toFixed(1) + " profit"),
+        meaning: t(
+          `Dengan ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition}, setiap Rp1 kerugian menghasilkan Rp${pf.toFixed(1)} keuntungan`, 
+          `With ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition, every $1 loss generates $${pf.toFixed(1)} profit`
+        ),
         status: t("Bagus", "Good"),
-        cause: t(`Kombinasi ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition}`, `Combination of ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition`),
-        recommendation: t("Pertahankan parameter ini", "Maintain these parameters"),
+        cause: t(
+          `Data backtesting tesis menunjukkan kombinasi ini produktif pada kondisi ${params.marketCondition}`, 
+          `Thesis backtest data shows this combination is productive in ${params.marketCondition} condition`
+        ),
+        recommendation: t("Pertahankan parameter - jangan ubah tanpa alasan kuat", "Maintain parameters - don't change without strong reason"),
         statusColor: "green"
       };
     } else if (pf >= 1) {
       return {
-        meaning: t("Masih untung, tapi margin keuntungan tipis", "Still profitable, but thin profit margin"),
+        meaning: t(
+          `${params.strategy} + ${params.targetPoin}pts masih untung tipis (PF ${pf.toFixed(2)}) - margin error kecil`, 
+          `${params.strategy} + ${params.targetPoin}pts still slightly profitable (PF ${pf.toFixed(2)}) - small margin of error`
+        ),
         status: t("Hati-hati", "Caution"),
-        cause: t(`Target ${params.targetPoin}pts mungkin terlalu agresif untuk ${params.strategy}`, `Target ${params.targetPoin}pts may be too aggressive for ${params.strategy}`),
-        recommendation: t("Pertimbangkan target lebih rendah (30pts)", "Consider lower target (30pts)"),
+        cause: t(
+          `Target ${params.targetPoin}pts dengan ${params.strategy} pada kondisi ${params.marketCondition} kurang optimal`, 
+          `${params.targetPoin}pts target with ${params.strategy} in ${params.marketCondition} condition is suboptimal`
+        ),
+        recommendation: t("Pertimbangkan Linear Averaging + 30pts untuk stabilitas", "Consider Linear Averaging + 30pts for stability"),
         statusColor: "yellow"
       };
     } else {
       return {
-        meaning: t("Kerugian lebih besar dari keuntungan - RUGI BERSIH", "Losses exceed profits - NET LOSS"),
+        meaning: t(
+          `RUGI BERSIH: ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} menghasilkan kerugian lebih besar dari keuntungan`, 
+          `NET LOSS: ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition generates losses exceeding profits`
+        ),
         status: t("Buruk", "Poor"),
-        cause: t(`Kombinasi parameter tidak optimal untuk kondisi pasar`, `Parameter combination not optimal for market condition`),
-        recommendation: t("Segera ubah strategi ke Linear Averaging 30pts", "Immediately switch to Linear Averaging 30pts"),
+        cause: t(
+          `Kombinasi parameter Anda tidak sesuai data backtesting tesis untuk kondisi pasar ini`, 
+          `Your parameter combination doesn't match thesis backtest data for this market condition`
+        ),
+        recommendation: t("SEGERA ganti ke Linear Averaging + 30pts + Sideways", "IMMEDIATELY switch to Linear Averaging + 30pts + Sideways"),
         statusColor: "red"
       };
     }
@@ -211,28 +229,47 @@ function getMetricExplanation(
   
   if (metricType === "rom") {
     const rom = typeof value === "string" ? parseFloat(value.replace("%", "")) : value;
+    const modalRatio = params.modal / 200000;
     if (rom >= 300) {
       return {
-        meaning: t(`Modal Anda berpotensi menghasilkan return ${rom.toFixed(0)}%`, `Your capital potentially generates ${rom.toFixed(0)}% return`),
+        meaning: t(
+          `Modal USD ${params.modal.toLocaleString()} dengan ${params.strategy} + ${params.targetPoin}pts berpotensi return ${rom.toFixed(0)}%`, 
+          `USD ${params.modal.toLocaleString()} capital with ${params.strategy} + ${params.targetPoin}pts potentially returns ${rom.toFixed(0)}%`
+        ),
         status: t("Sangat Baik", "Excellent"),
-        cause: t(`Efisiensi modal tinggi dengan ${params.strategy}`, `High capital efficiency with ${params.strategy}`),
-        recommendation: t("Parameter sudah optimal untuk return", "Parameters already optimal for return"),
+        cause: t(
+          `Rasio modal ${(modalRatio * 100).toFixed(0)}% dari optimal (USD 200.000) memberikan efisiensi tinggi`, 
+          `${(modalRatio * 100).toFixed(0)}% capital ratio from optimal (USD 200,000) provides high efficiency`
+        ),
+        recommendation: t("Pertahankan - kombinasi modal dan strategi Anda sudah efisien", "Maintain - your capital and strategy combination is efficient"),
         statusColor: "green"
       };
     } else if (rom >= 100) {
       return {
-        meaning: t("Return cukup baik, modal bekerja dengan wajar", "Decent return, capital working reasonably"),
+        meaning: t(
+          `Return ${rom.toFixed(0)}% dengan modal USD ${params.modal.toLocaleString()} - masih wajar untuk ${params.strategy}`, 
+          `${rom.toFixed(0)}% return with USD ${params.modal.toLocaleString()} capital - still reasonable for ${params.strategy}`
+        ),
         status: t("Cukup", "Adequate"),
-        cause: t(`Modal USD ${params.modal.toLocaleString()} dengan target ${params.targetPoin}pts`, `Capital USD ${params.modal.toLocaleString()} with ${params.targetPoin}pts target`),
-        recommendation: t("Tingkatkan modal jika ingin return lebih tinggi", "Increase capital for higher returns"),
+        cause: t(
+          `Modal ${(modalRatio * 100).toFixed(0)}% dari optimal membatasi potensi return`, 
+          `${(modalRatio * 100).toFixed(0)}% of optimal capital limits return potential`
+        ),
+        recommendation: t("Tambah modal ke USD 200.000 untuk memaksimalkan ROM", "Increase capital to USD 200,000 to maximize ROM"),
         statusColor: "yellow"
       };
     } else {
       return {
-        meaning: t("Return rendah - modal tidak bekerja efisien", "Low return - capital not working efficiently"),
+        meaning: t(
+          `Return hanya ${rom.toFixed(0)}% - modal USD ${params.modal.toLocaleString()} tidak bekerja efisien untuk ${params.strategy}`, 
+          `Only ${rom.toFixed(0)}% return - USD ${params.modal.toLocaleString()} capital not working efficiently for ${params.strategy}`
+        ),
         status: t("Rendah", "Low"),
-        cause: t(`Modal terlalu kecil atau target terlalu rendah`, `Capital too small or target too low`),
-        recommendation: t("Tambah modal atau sesuaikan target", "Increase capital or adjust target"),
+        cause: t(
+          `Modal terlalu jauh dari optimal (hanya ${(modalRatio * 100).toFixed(0)}%)`, 
+          `Capital too far from optimal (only ${(modalRatio * 100).toFixed(0)}%)`
+        ),
+        recommendation: t("Tambah modal signifikan atau ganti ke strategi lebih hemat modal", "Add significant capital or switch to more capital-efficient strategy"),
         statusColor: "red"
       };
     }
@@ -242,26 +279,44 @@ function getMetricExplanation(
     const er = typeof value === "string" ? parseFloat(value) : value;
     if (er >= 1) {
       return {
-        meaning: t("Efisiensi di atas rata-rata - strategi bekerja optimal", "Above average efficiency - strategy working optimally"),
+        meaning: t(
+          `${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} bekerja di atas rata-rata (ER ${er.toFixed(2)})`, 
+          `${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition works above average (ER ${er.toFixed(2)})`
+        ),
         status: t("Efisien", "Efficient"),
-        cause: t(`${params.strategy} cocok untuk kondisi ${params.marketCondition}`, `${params.strategy} suitable for ${params.marketCondition} condition`),
-        recommendation: t("Lanjutkan dengan parameter saat ini", "Continue with current parameters"),
+        cause: t(
+          `Data backtesting tesis menunjukkan kombinasi ini optimal untuk kondisi ${params.marketCondition}`, 
+          `Thesis backtest data shows this combination is optimal for ${params.marketCondition} condition`
+        ),
+        recommendation: t("Lanjutkan parameter - sudah sesuai rekomendasi tesis", "Continue parameters - already matches thesis recommendation"),
         statusColor: "green"
       };
     } else if (er >= 0.7) {
       return {
-        meaning: t("Efisiensi cukup - masih dalam batas wajar", "Adequate efficiency - still within reasonable limits"),
+        meaning: t(
+          `Efisiensi ${params.strategy} + ${params.targetPoin}pts masih wajar (ER ${er.toFixed(2)}) tapi bisa ditingkatkan`, 
+          `${params.strategy} + ${params.targetPoin}pts efficiency still reasonable (ER ${er.toFixed(2)}) but can be improved`
+        ),
         status: t("Sedang", "Moderate"),
-        cause: t(`Kondisi pasar ${params.marketCondition} tidak optimal untuk ${params.strategy}`, `Market condition ${params.marketCondition} not optimal for ${params.strategy}`),
-        recommendation: t("Perhatikan perubahan kondisi pasar", "Monitor market condition changes"),
+        cause: t(
+          `Kondisi ${params.marketCondition} tidak sepenuhnya optimal untuk ${params.strategy} berdasarkan data tesis`, 
+          `${params.marketCondition} condition not fully optimal for ${params.strategy} based on thesis data`
+        ),
+        recommendation: t("Pertimbangkan kondisi Sideways untuk efisiensi lebih tinggi", "Consider Sideways condition for higher efficiency"),
         statusColor: "yellow"
       };
     } else {
       return {
-        meaning: t("Efisiensi rendah - banyak modal terbuang sia-sia", "Low efficiency - much capital wasted"),
+        meaning: t(
+          `${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} sangat tidak efisien (ER ${er.toFixed(2)})`, 
+          `${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition is very inefficient (ER ${er.toFixed(2)})`
+        ),
         status: t("Tidak Efisien", "Inefficient"),
-        cause: t(`Kombinasi ${params.strategy} + ${params.marketCondition} tidak sesuai`, `${params.strategy} + ${params.marketCondition} combination unsuitable`),
-        recommendation: t("Ganti ke Linear Averaging pada kondisi sideways", "Switch to Linear Averaging in sideways condition"),
+        cause: t(
+          `Data tesis menunjukkan kombinasi parameter Anda tidak cocok untuk kondisi pasar ini`, 
+          `Thesis data shows your parameter combination doesn't match this market condition`
+        ),
+        recommendation: t("Ganti ke Linear Averaging + 30pts + Sideways sesuai rekomendasi tesis", "Switch to Linear Averaging + 30pts + Sideways per thesis recommendation"),
         statusColor: "red"
       };
     }
@@ -269,28 +324,47 @@ function getMetricExplanation(
   
   // MC Risk
   const mcText = typeof value === "string" ? value.toLowerCase() : "";
-  if (mcText.includes("rendah") || mcText.includes("low")) {
+  const modalRatioMc = params.modal / 200000;
+  if (mcText.includes("rendah") || mcText.includes("low") || mcText.includes("very low")) {
     return {
-      meaning: t("Risiko margin call kecil - modal cukup aman", "Low margin call risk - capital relatively safe"),
+      meaning: t(
+        `Modal USD ${params.modal.toLocaleString()} dengan ${params.maxLayer} layer cukup aman dari margin call`, 
+        `USD ${params.modal.toLocaleString()} capital with ${params.maxLayer} layers is relatively safe from margin call`
+      ),
       status: t("Aman", "Safe"),
-      cause: t(`${params.strategy} dengan ${params.maxLayer} layer dan modal USD ${params.modal.toLocaleString()}`, `${params.strategy} with ${params.maxLayer} layers and USD ${params.modal.toLocaleString()} capital`),
-      recommendation: t("Parameter sudah aman, pertahankan disiplin", "Parameters are safe, maintain discipline"),
+      cause: t(
+        `Rasio modal ${(modalRatioMc * 100).toFixed(0)}% dari optimal memberikan buffer yang cukup untuk ${params.strategy}`, 
+        `${(modalRatioMc * 100).toFixed(0)}% capital ratio from optimal provides sufficient buffer for ${params.strategy}`
+      ),
+      recommendation: t("Pertahankan disiplin - jangan tambah layer melebihi batas", "Maintain discipline - don't add layers beyond limit"),
       statusColor: "green"
     };
   } else if (mcText.includes("sedang") || mcText.includes("medium")) {
     return {
-      meaning: t("Ada risiko margin call jika pasar bergerak ekstrem", "Margin call risk exists if market moves extremely"),
+      meaning: t(
+        `Modal USD ${params.modal.toLocaleString()} dengan ${params.strategy} + ${params.maxLayer} layer berisiko margin call jika pasar bergerak ekstrem`, 
+        `USD ${params.modal.toLocaleString()} with ${params.strategy} + ${params.maxLayer} layers risks margin call if market moves extremely`
+      ),
       status: t("Waspada", "Alert"),
-      cause: t(`Layer ${params.maxLayer} dengan target ${params.targetPoin}pts membutuhkan modal besar`, `Layer ${params.maxLayer} with ${params.targetPoin}pts target requires large capital`),
-      recommendation: t("Kurangi layer atau tambah modal", "Reduce layers or increase capital"),
+      cause: t(
+        `${params.maxLayer} layer memerlukan modal lebih besar untuk floating loss maksimum`, 
+        `${params.maxLayer} layers require larger capital for maximum floating loss`
+      ),
+      recommendation: t(`Kurangi ke ${parseInt(params.maxLayer) - 1} layer atau tambah modal ke USD 200.000`, `Reduce to ${parseInt(params.maxLayer) - 1} layers or increase capital to USD 200,000`),
       statusColor: "yellow"
     };
   } else {
     return {
-      meaning: t("BAHAYA! Sangat mungkin terkena margin call", "DANGER! Very likely to face margin call"),
+      meaning: t(
+        `BAHAYA: ${params.strategy} dengan ${params.maxLayer} layer dan modal USD ${params.modal.toLocaleString()} sangat rentan margin call`, 
+        `DANGER: ${params.strategy} with ${params.maxLayer} layers and USD ${params.modal.toLocaleString()} capital is very vulnerable to margin call`
+      ),
       status: t("Bahaya", "Danger"),
-      cause: t(`Martingale dengan ${params.maxLayer} layer pada kondisi ${params.marketCondition} sangat berisiko`, `Martingale with ${params.maxLayer} layers in ${params.marketCondition} condition is very risky`),
-      recommendation: t("SEGERA ganti ke Linear Averaging dan kurangi layer", "IMMEDIATELY switch to Linear Averaging and reduce layers"),
+      cause: t(
+        `Data tesis menunjukkan kombinasi ${params.strategy} + ${params.maxLayer} layer + kondisi ${params.marketCondition} pernah mengalami margin call`, 
+        `Thesis data shows ${params.strategy} + ${params.maxLayer} layers + ${params.marketCondition} condition has experienced margin call`
+      ),
+      recommendation: t("SEGERA: Ganti ke Linear Averaging + 3 layer + tambah modal", "IMMEDIATELY: Switch to Linear Averaging + 3 layers + increase capital"),
       statusColor: "red"
     };
   }

@@ -26,33 +26,34 @@ const THESIS_METRICS: Record<string, Record<string, { pf: number; rom: number; e
   },
 };
 
-// Definisi Bias Perilaku Keuangan (Behavioral Finance) dari Tesis
-const BEHAVIORAL_BIASES = {
-  overconfidence: {
-    id: "Overconfidence Bias: Kecenderungan trader melebih-lebihkan kemampuan analisis atau prediksi pasar, sehingga mengabaikan risiko eksponensial Martingale.",
-    en: "Overconfidence Bias: Tendency to overestimate analytical abilities or market predictions, thus ignoring Martingale's exponential risk."
-  },
-  lossAversion: {
-    id: "Loss Aversion: Ketakutan terhadap kerugian lebih besar daripada keinginan memperoleh keuntungan. Mendorong trader menahan posisi rugi terlalu lama.",
-    en: "Loss Aversion: Fear of loss exceeds desire for gain. Drives traders to hold losing positions too long."
-  },
-  herding: {
-    id: "Herding Behaviour: Kecenderungan mengikuti keputusan mayoritas pasar tanpa analisis independen. Hingga 95% kerugian trader ritel bersumber dari bias ini.",
-    en: "Herding Behaviour: Tendency to follow market majority without independent analysis. Up to 95% of retail trader losses stem from this bias."
-  },
-  anchoring: {
-    id: "Anchoring Bias: Terpaku pada informasi awal atau referensi harga tertentu (entry price) sebagai acuan keputusan, mengabaikan kondisi pasar aktual.",
-    en: "Anchoring Bias: Fixating on initial information or specific price references (entry price) as decision basis, ignoring actual market conditions."
-  },
-  recency: {
-    id: "Recency Bias: Lebih memercayai informasi atau pengalaman terbaru, mengabaikan pola historis jangka panjang dari data backtesting.",
-    en: "Recency Bias: Over-trusting recent information/experience, ignoring long-term historical patterns from backtesting data."
-  },
-  riskMisperception: {
-    id: "Risk Misperception: Mayoritas trader melihat strategi Martingale sebagai 'mudah' dan 'pasti untung' tanpa memahami risiko eksponensial (L₀ × 2ⁿ).",
-    en: "Risk Misperception: Most traders see Martingale as 'easy' and 'guaranteed profit' without understanding exponential risk (L₀ × 2ⁿ)."
+// Template Bias Perilaku Keuangan (Behavioral Finance) dari Tesis
+// Akan di-customize berdasarkan parameter user
+function getBiasNote(biasType: string, input: RiskInput): string {
+  const { strategy, targetPoin, maxLayer, experience, marketCondition, modal } = input;
+  
+  switch (biasType) {
+    case "overconfidence":
+      return `Overconfidence Bias: Dengan pilihan ${strategy} dan target ${targetPoin}pts, waspadai kecenderungan melebih-lebihkan kemampuan analisis. Data tesis menunjukkan strategi ini memerlukan disiplin ketat. | Overconfidence Bias: With ${strategy} and ${targetPoin}pts target choice, beware of overestimating analytical abilities. Thesis data shows this strategy requires strict discipline.`;
+    
+    case "lossAversion":
+      return `Loss Aversion: Pada layer ${maxLayer}, floating loss bisa sangat besar. Hindari menahan posisi rugi terlalu lama karena takut realisasi kerugian. | Loss Aversion: At layer ${maxLayer}, floating loss can be very large. Avoid holding losing positions too long due to fear of realizing losses.`;
+    
+    case "herding":
+      return `Herding Behaviour: Sebagai trader ${experience === "Pemula" ? "pemula" : "berpengalaman"}, waspadai kecenderungan mengikuti "sinyal" atau rekomendasi tanpa analisis independen. | Herding Behaviour: As a ${experience === "Pemula" ? "beginner" : "experienced"} trader, beware of following "signals" or recommendations without independent analysis.`;
+    
+    case "anchoring":
+      return `Anchoring Bias: Dengan kondisi pasar ${marketCondition}, jangan terpaku pada harga entry. Pasar bisa bergerak jauh dari ekspektasi awal Anda. | Anchoring Bias: In ${marketCondition} market condition, don't fixate on entry price. Market can move far from your initial expectations.`;
+    
+    case "recency":
+      return `Recency Bias: Jangan hanya mengandalkan pengalaman trading terbaru. Data backtesting tesis 2024-2025 menunjukkan pola yang mungkin berbeda dari kondisi saat ini. | Recency Bias: Don't rely only on recent trading experience. Thesis backtest data 2024-2025 shows patterns that may differ from current conditions.`;
+    
+    case "riskMisperception":
+      return `Risk Misperception: ${strategy} dengan ${maxLayer} layer dan modal USD ${modal.toLocaleString()} memiliki risiko yang mungkin tidak sesuai persepsi awal Anda. Pelajari rumus L₀ × 2ⁿ untuk memahami amplifikasi risiko. | Risk Misperception: ${strategy} with ${maxLayer} layers and USD ${modal.toLocaleString()} capital has risks that may not match your initial perception. Study L₀ × 2ⁿ formula to understand risk amplification.`;
+    
+    default:
+      return "";
   }
-};
+}
 
 export function calculateRisk(input: RiskInput): RiskResult {
   let riskScore = 0;
@@ -154,9 +155,9 @@ export function calculateRisk(input: RiskInput): RiskResult {
       );
     }
     
-    // Bias Perilaku Keuangan untuk Martingale
-    psychologyNotes.push(`${BEHAVIORAL_BIASES.overconfidence.id} | ${BEHAVIORAL_BIASES.overconfidence.en}`);
-    psychologyNotes.push(`${BEHAVIORAL_BIASES.riskMisperception.id} | ${BEHAVIORAL_BIASES.riskMisperception.en}`);
+    // Bias Perilaku Keuangan untuk Martingale - kontekstual berdasarkan parameter
+    psychologyNotes.push(getBiasNote("overconfidence", input));
+    psychologyNotes.push(getBiasNote("riskMisperception", input));
   } else {
     // Linear Averaging Analysis
     if (input.marketCondition === "Trending") {
@@ -224,7 +225,7 @@ export function calculateRisk(input: RiskInput): RiskResult {
       "Temuan Tesis: Layer 4-5 adalah zona kritis margin call. Capital requirement meningkat secara non-linear untuk bertahan. | Thesis Finding: Layers 4-5 are margin call critical zone. Capital requirement increases non-linearly to survive."
     );
     if (input.strategy === "Martingale") {
-      psychologyNotes.push(`${BEHAVIORAL_BIASES.lossAversion.id} | ${BEHAVIORAL_BIASES.lossAversion.en}`);
+      psychologyNotes.push(getBiasNote("lossAversion", input));
     }
   } else if (maxLayer === 4) {
     riskScore += 12;
@@ -247,8 +248,8 @@ export function calculateRisk(input: RiskInput): RiskResult {
     warnings.push(
       "Rekomendasi Tesis: Pemula sebaiknya menggunakan parameter konservatif (Linear Averaging, 30pts, 3 layer) untuk meminimalkan eksposur risiko. | Thesis Recommendation: Beginners should use conservative parameters (Linear Averaging, 30pts, 3 layers) to minimize risk exposure."
     );
-    psychologyNotes.push(`${BEHAVIORAL_BIASES.herding.id} | ${BEHAVIORAL_BIASES.herding.en}`);
-    psychologyNotes.push(`${BEHAVIORAL_BIASES.anchoring.id} | ${BEHAVIORAL_BIASES.anchoring.en}`);
+    psychologyNotes.push(getBiasNote("herding", input));
+    psychologyNotes.push(getBiasNote("anchoring", input));
   } else {
     riskScore += 5;
     reasons.push(
@@ -269,12 +270,14 @@ export function calculateRisk(input: RiskInput): RiskResult {
 
   // Tambahan catatan perilaku keuangan berdasarkan framework tesis
   if (psychologyNotes.length === 0) {
-    psychologyNotes.push(`${BEHAVIORAL_BIASES.recency.id} | ${BEHAVIORAL_BIASES.recency.en}`);
+    psychologyNotes.push(getBiasNote("recency", input));
   }
 
-  // Peringatan universal dari temuan tesis
+  // Kesimpulan kontekstual dari temuan tesis
+  const riskLevel = riskScore <= 35 ? "rendah" : riskScore <= 60 ? "sedang" : "tinggi";
+  const riskLevelEn = riskScore <= 35 ? "low" : riskScore <= 60 ? "moderate" : "high";
   psychologyNotes.push(
-    "Temuan Tesis: Hingga 95% kerugian trader ritel bersumber dari bias kognitif dan ketidakdisiplinan emosional, bukan ketiadaan strategi teknikal. | Thesis Finding: Up to 95% of retail trader losses stem from cognitive biases and emotional indiscipline, not lack of technical strategy."
+    `Kesimpulan Behavioral Finance: Dengan skor risiko ${riskScore} (${riskLevel}), parameter ${input.strategy} + ${input.targetPoin}pts + ${input.maxLayer} layer memerlukan kesadaran tinggi terhadap bias kognitif untuk menghindari keputusan emosional. | Behavioral Finance Conclusion: With risk score ${riskScore} (${riskLevelEn}), ${input.strategy} + ${input.targetPoin}pts + ${input.maxLayer} layer parameters require high awareness of cognitive biases to avoid emotional decisions.`
   );
 
   return {
