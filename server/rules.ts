@@ -1,7 +1,18 @@
 import type { RiskInput, RiskResult, RiskStatus } from "@shared/schema";
 
+// ============================================================================
+// FRAMEWORK TESIS IRIAWAN WIDADI, S.T. (UNDIP, 2025)
+// "Analisis Produktivitas Model Martingale dalam Transaksi Kontrak Gulir 
+// Berkala Emas Loco London (XUL10) pada Sistem Perdagangan Alternatif (SPA)"
+// ============================================================================
+
 const OPTIMAL_MODAL = 200000;
 
+// Metrik Produktivitas dari Backtesting Tesis 2024-2025
+// PF = Profit Factor (Total Profit / Total Loss)
+// ROM = Return on Margin (%)
+// ER = Efficiency Ratio
+// MC Risk = Margin Call Risk Level
 const THESIS_METRICS: Record<string, Record<string, { pf: number; rom: number; er: number; mcRisk: string }>> = {
   "Martingale": {
     "30": { pf: 3.75, rom: 312.86, er: 0.56, mcRisk: "Sangat Tinggi / Very High" },
@@ -13,6 +24,34 @@ const THESIS_METRICS: Record<string, Record<string, { pf: number; rom: number; e
     "40": { pf: 3.48, rom: 579.65, er: 1.13, mcRisk: "Sedang / Medium" },
     "50": { pf: 4.69, rom: 392.13, er: 0.64, mcRisk: "Sedang / Medium" },
   },
+};
+
+// Definisi Bias Perilaku Keuangan (Behavioral Finance) dari Tesis
+const BEHAVIORAL_BIASES = {
+  overconfidence: {
+    id: "Overconfidence Bias: Kecenderungan trader melebih-lebihkan kemampuan analisis atau prediksi pasar, sehingga mengabaikan risiko eksponensial Martingale.",
+    en: "Overconfidence Bias: Tendency to overestimate analytical abilities or market predictions, thus ignoring Martingale's exponential risk."
+  },
+  lossAversion: {
+    id: "Loss Aversion: Ketakutan terhadap kerugian lebih besar daripada keinginan memperoleh keuntungan. Mendorong trader menahan posisi rugi terlalu lama.",
+    en: "Loss Aversion: Fear of loss exceeds desire for gain. Drives traders to hold losing positions too long."
+  },
+  herding: {
+    id: "Herding Behaviour: Kecenderungan mengikuti keputusan mayoritas pasar tanpa analisis independen. Hingga 95% kerugian trader ritel bersumber dari bias ini.",
+    en: "Herding Behaviour: Tendency to follow market majority without independent analysis. Up to 95% of retail trader losses stem from this bias."
+  },
+  anchoring: {
+    id: "Anchoring Bias: Terpaku pada informasi awal atau referensi harga tertentu (entry price) sebagai acuan keputusan, mengabaikan kondisi pasar aktual.",
+    en: "Anchoring Bias: Fixating on initial information or specific price references (entry price) as decision basis, ignoring actual market conditions."
+  },
+  recency: {
+    id: "Recency Bias: Lebih memercayai informasi atau pengalaman terbaru, mengabaikan pola historis jangka panjang dari data backtesting.",
+    en: "Recency Bias: Over-trusting recent information/experience, ignoring long-term historical patterns from backtesting data."
+  },
+  riskMisperception: {
+    id: "Risk Misperception: Mayoritas trader melihat strategi Martingale sebagai 'mudah' dan 'pasti untung' tanpa memahami risiko eksponensial (L₀ × 2ⁿ).",
+    en: "Risk Misperception: Most traders see Martingale as 'easy' and 'guaranteed profit' without understanding exponential risk (L₀ × 2ⁿ)."
+  }
 };
 
 export function calculateRisk(input: RiskInput): RiskResult {
@@ -62,43 +101,45 @@ export function calculateRisk(input: RiskInput): RiskResult {
     );
   }
 
+  // ANALISIS STRATEGI (Financial Engineering Framework)
   if (input.strategy === "Martingale") {
     riskScore += 20;
     reasons.push(
-      "Martingale memiliki risiko eksponensial (lot size = L0 x 2^n) yang dapat menghapus seluruh modal. | Martingale has exponential risk (lot size = L0 x 2^n) that can wipe out entire capital."
+      "Model Martingale menggunakan position sizing eksponensial (Lₙ = L₀ × 2ⁿ) yang mengamplifikasi tail risk dan maximum drawdown secara deterministik. | Martingale model uses exponential position sizing (Lₙ = L₀ × 2ⁿ) which amplifies tail risk and maximum drawdown deterministically."
     );
     
     if (input.marketCondition === "Trending") {
       riskScore += 25;
       reasons.push(
-        "KOMBINASI BERBAHAYA: Martingale + pasar trending terbukti GAGAL (margin call) di backtest 2025. | DANGEROUS COMBO: Martingale + trending market PROVEN TO FAIL (margin call) in 2025 backtest."
+        "TEMUAN EMPIRIS: Kombinasi Martingale + pasar trending menghasilkan margin call pada backtesting periode bullish 2025 (data tesis Iriawan, UNDIP). | EMPIRICAL FINDING: Martingale + trending market combination resulted in margin call during 2025 bullish backtesting period (Iriawan thesis, UNDIP)."
       );
       warnings.push(
-        "Data thesis: Martingale 30pts mengalami margin call pada tren bullish 2025. | Thesis data: Martingale 30pts suffered margin call in 2025 bullish trend."
+        "Data Backtesting Tesis: Martingale 30pts mengalami margin call total pada tren bullish 2025. Sensitivitas layer 4-5 sangat tinggi. | Thesis Backtest Data: Martingale 30pts suffered total margin call in 2025 bullish trend. Layer 4-5 sensitivity is very high."
       );
     } else {
       riskScore += 10;
       reasons.push(
-        "Martingale lebih cocok pada pasar sideways, namun tetap memiliki risiko eksponensial. | Martingale is more suitable for sideways market, but still has exponential risk."
+        "Martingale pada pasar sideways menunjukkan PF positif, namun risiko tail event tetap signifikan karena pola amplifikasi risiko deterministik. | Martingale in sideways market shows positive PF, but tail event risk remains significant due to deterministic risk amplification pattern."
       );
     }
     
-    psychologyNotes.push(
-      "Overconfidence Bias: Martingale dapat memicu rasa 'pasti untung' padahal risikonya eksponensial. | Overconfidence Bias: Martingale can trigger false sense of 'guaranteed profit' when risk is exponential."
-    );
+    // Bias Perilaku Keuangan untuk Martingale
+    psychologyNotes.push(`${BEHAVIORAL_BIASES.overconfidence.id} | ${BEHAVIORAL_BIASES.overconfidence.en}`);
+    psychologyNotes.push(`${BEHAVIORAL_BIASES.riskMisperception.id} | ${BEHAVIORAL_BIASES.riskMisperception.en}`);
   } else {
+    // Linear Averaging Analysis
     if (input.marketCondition === "Trending") {
       riskScore += 15;
       reasons.push(
-        "Linear Averaging pada pasar trending tetap berisiko, namun lebih terkendali dibanding Martingale. | Linear Averaging in trending market is still risky, but more controlled than Martingale."
+        "Linear Averaging pada pasar trending memiliki eksposur risiko lebih terkendali (penambahan lot tetap), namun tetap rentan terhadap volatilitas tinggi. | Linear Averaging in trending market has more controlled risk exposure (fixed lot addition), but remains vulnerable to high volatility."
       );
       warnings.push(
-        "Data thesis: Linear 40pts gagal (margin call) pada tren bullish 2025. | Thesis data: Linear 40pts failed (margin call) in 2025 bullish trend."
+        "Data Backtesting Tesis: Linear 40pts mengalami margin call pada periode bullish 2025. Rekomendasi: target 30pts lebih stabil. | Thesis Backtest Data: Linear 40pts suffered margin call in 2025 bullish period. Recommendation: 30pts target is more stable."
       );
     } else {
       riskScore += 5;
       reasons.push(
-        "Linear Averaging pada pasar sideways adalah kombinasi paling stabil (PF 14.73, ER 1.04). | Linear Averaging in sideways market is the most stable combination (PF 14.73, ER 1.04)."
+        "KOMBINASI OPTIMAL: Linear Averaging + sideways menghasilkan metrik produktivitas terbaik (PF 14.73, ROM 334.19%, ER 1.04) berdasarkan data backtesting tesis. | OPTIMAL COMBINATION: Linear Averaging + sideways yields best productivity metrics (PF 14.73, ROM 334.19%, ER 1.04) based on thesis backtest data."
       );
     }
   }
@@ -141,50 +182,46 @@ export function calculateRisk(input: RiskInput): RiskResult {
     }
   }
 
+  // ANALISIS LAYER (Sensitivity Analysis dari Tesis)
   const maxLayer = parseInt(input.maxLayer);
   if (maxLayer >= 5) {
     riskScore += 20;
     reasons.push(
-      "Penggunaan 5 layer memiliki sensitivitas SANGAT TINGGI terhadap margin call. | Using 5 layers has VERY HIGH sensitivity to margin call."
+      "SENSITIVITAS LAYER KRITIS: Layer 5 merupakan titik amplifikasi risiko maksimum. Pada Martingale, lot layer 5 = 16× lot awal (L₀ × 2⁴). | CRITICAL LAYER SENSITIVITY: Layer 5 is maximum risk amplification point. For Martingale, layer 5 lot = 16× initial lot (L₀ × 2⁴)."
     );
     warnings.push(
-      "Layer 4-5 adalah titik kritis - modal harus sangat besar untuk bertahan. | Layers 4-5 are critical points - capital must be very large to survive."
+      "Temuan Tesis: Layer 4-5 adalah zona kritis margin call. Capital requirement meningkat secara non-linear untuk bertahan. | Thesis Finding: Layers 4-5 are margin call critical zone. Capital requirement increases non-linearly to survive."
     );
     if (input.strategy === "Martingale") {
-      psychologyNotes.push(
-        "Loss Aversion: Ketakutan akan kerugian membuat trader terus menambah layer meski modal sudah tertekan. | Loss Aversion: Fear of loss causes traders to keep adding layers even when capital is under pressure."
-      );
+      psychologyNotes.push(`${BEHAVIORAL_BIASES.lossAversion.id} | ${BEHAVIORAL_BIASES.lossAversion.en}`);
     }
   } else if (maxLayer === 4) {
     riskScore += 12;
     reasons.push(
-      "4 layer masih memiliki risiko signifikan, terutama jika modal tidak mencukupi. | 4 layers still have significant risk, especially if capital is insufficient."
+      "Layer 4 memiliki eksposur risiko signifikan (lot = 8× lot awal pada Martingale). Modal harus memperhitungkan floating drawdown maksimum. | Layer 4 has significant risk exposure (lot = 8× initial lot for Martingale). Capital must account for maximum floating drawdown."
     );
   } else {
     riskScore += 5;
     reasons.push(
-      "Pembatasan 3 layer membantu mengendalikan risiko eksponensial. | Limiting to 3 layers helps control exponential risk."
+      "Pembatasan 3 layer merupakan strategi mitigasi risiko yang efektif untuk membatasi amplifikasi eksponensial. | Limiting to 3 layers is effective risk mitigation strategy to constrain exponential amplification."
     );
   }
 
+  // ANALISIS PENGALAMAN (Behavioral Finance Framework)
   if (input.experience === "Pemula") {
     riskScore += 15;
     reasons.push(
-      "Trader pemula lebih rentan terhadap bias psikologis dalam pengambilan keputusan. | Beginner traders are more susceptible to psychological biases in decision making."
+      "Trader pemula memiliki kerentanan tinggi terhadap bias kognitif dan emosional dalam pengambilan keputusan (studi behavioral finance). | Beginner traders have high vulnerability to cognitive and emotional biases in decision making (behavioral finance studies)."
     );
     warnings.push(
-      "Pemula disarankan menggunakan parameter konservatif: Linear Averaging, 30pts, 3 layer. | Beginners should use conservative parameters: Linear Averaging, 30pts, 3 layers."
+      "Rekomendasi Tesis: Pemula sebaiknya menggunakan parameter konservatif (Linear Averaging, 30pts, 3 layer) untuk meminimalkan eksposur risiko. | Thesis Recommendation: Beginners should use conservative parameters (Linear Averaging, 30pts, 3 layers) to minimize risk exposure."
     );
-    psychologyNotes.push(
-      "Risk Misperception: Mayoritas peserta melihat strategi sebagai 'mudah' tanpa memahami risiko eksponensial. | Risk Misperception: Most participants see strategy as 'easy' without understanding exponential risk."
-    );
-    psychologyNotes.push(
-      "Herding Behaviour: Kecenderungan mengikuti mayoritas tanpa analisis independen dapat memperburuk kerugian. | Herding Behaviour: Tendency to follow the crowd without independent analysis can worsen losses."
-    );
+    psychologyNotes.push(`${BEHAVIORAL_BIASES.herding.id} | ${BEHAVIORAL_BIASES.herding.en}`);
+    psychologyNotes.push(`${BEHAVIORAL_BIASES.anchoring.id} | ${BEHAVIORAL_BIASES.anchoring.en}`);
   } else {
     riskScore += 5;
     reasons.push(
-      "Pengalaman trading membantu dalam manajemen risiko dan pengendalian emosi. | Trading experience helps in risk management and emotional control."
+      "Pengalaman trading berkontribusi pada manajemen risiko dan pengendalian emosional yang lebih baik, namun tetap rentan terhadap bias kognitif. | Trading experience contributes to better risk management and emotional control, but remains susceptible to cognitive biases."
     );
   }
 
@@ -199,14 +236,14 @@ export function calculateRisk(input: RiskInput): RiskResult {
     status = "TIDAK LAYAK";
   }
 
+  // Tambahan catatan perilaku keuangan berdasarkan framework tesis
   if (psychologyNotes.length === 0) {
-    psychologyNotes.push(
-      "Tetap waspadai bias psikologis: jangan biarkan emosi mendikte keputusan trading. | Stay aware of psychological biases: don't let emotions dictate trading decisions."
-    );
+    psychologyNotes.push(`${BEHAVIORAL_BIASES.recency.id} | ${BEHAVIORAL_BIASES.recency.en}`);
   }
 
+  // Peringatan universal dari temuan tesis
   psychologyNotes.push(
-    "Herding Behaviour: Jangan ikut-ikutan tanpa analisis sendiri. Banyak trader gagal karena mengikuti arus. | Herding Behaviour: Don't follow the crowd without your own analysis. Many traders fail by following the herd."
+    "Temuan Tesis: Hingga 95% kerugian trader ritel bersumber dari bias kognitif dan ketidakdisiplinan emosional, bukan ketiadaan strategi teknikal. | Thesis Finding: Up to 95% of retail trader losses stem from cognitive biases and emotional indiscipline, not lack of technical strategy."
   );
 
   return {

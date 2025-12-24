@@ -268,67 +268,100 @@ export default function Result() {
           </Card>
         )}
 
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-          <Card>
+        {/* ANALISIS TEMUAN - Financial Engineering Framework */}
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Info className="w-5 h-5 text-primary" />
+              <span>{t("Analisis Temuan", "Analysis Findings")}</span>
+            </CardTitle>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {t("Berdasarkan framework Financial Engineering dari Tesis Iriawan (UNDIP, 2025)", "Based on Financial Engineering framework from Iriawan Thesis (UNDIP, 2025)")}
+            </p>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6">
+            <ul className="space-y-3 sm:space-y-4" data-testid="list-reasons">
+              {result.reasons.map((reason, index) => {
+                const text = parseLocalizedText(reason, language);
+                const isEmpirical = text.includes("TEMUAN") || text.includes("EMPIRICAL") || text.includes("OPTIMAL") || text.includes("KRITIS") || text.includes("CRITICAL");
+                return (
+                  <li key={index} className={`flex items-start gap-2 sm:gap-3 text-xs sm:text-sm p-2 sm:p-3 rounded-md ${isEmpirical ? 'bg-primary/5 border border-primary/10' : 'bg-muted/30'}`}>
+                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${isEmpirical ? 'bg-primary/10' : 'bg-muted'}`}>
+                      <span className={`text-[10px] sm:text-xs font-mono font-bold ${isEmpirical ? 'text-primary' : 'text-muted-foreground'}`}>{index + 1}</span>
+                    </div>
+                    <span className="text-muted-foreground leading-relaxed">{text}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+
+        {/* PERINGATAN EMPIRIS - Data Backtesting */}
+        {result.warnings.length > 0 && (
+          <Card className="mb-4 sm:mb-6 border-amber-500/20">
             <CardHeader className="pb-3 px-4 sm:px-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Info className="w-5 h-5 text-primary" />
-                <span>{t("Ringkasan Alasan", "Summary")}</span>
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertOctagon className="w-5 h-5" />
+                <span>{t("Peringatan Empiris", "Empirical Warnings")}</span>
               </CardTitle>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                {t("Data historis dari backtesting tesis 2024-2025", "Historical data from 2024-2025 thesis backtesting")}
+              </p>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
-              <ul className="space-y-2 sm:space-y-3" data-testid="list-reasons">
-                {result.reasons.map((reason, index) => (
-                  <li key={index} className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
-                    <span className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 sm:mt-2 flex-shrink-0" />
-                    <span>{parseLocalizedText(reason, language)}</span>
+              <ul className="space-y-3" data-testid="list-warnings">
+                {result.warnings.map((warning, index) => (
+                  <li key={index} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm p-2 sm:p-3 bg-amber-500/5 border border-amber-500/10 rounded-md">
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-muted-foreground leading-relaxed">{parseLocalizedText(warning, language)}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
+        )}
 
-          <Card>
-            <CardHeader className="pb-3 px-4 sm:px-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <AlertOctagon className="w-5 h-5 text-amber-500" />
-                <span>{t("Peringatan", "Warnings")}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <ul className="space-y-2 sm:space-y-3" data-testid="list-warnings">
-                {result.warnings.length > 0 ? result.warnings.map((warning, index) => (
-                  <li key={index} className="flex items-start gap-2 text-xs sm:text-sm">
-                    <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{parseLocalizedText(warning, language)}</span>
-                  </li>
-                )) : (
-                  <li className="text-xs sm:text-sm text-muted-foreground">
-                    {t("Tidak ada peringatan khusus.", "No specific warnings.")}
-                  </li>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mt-4 sm:mt-6">
+        {/* BEHAVIORAL FINANCE - Bias Psikologis */}
+        <Card className="mt-4 sm:mt-6 border-purple-500/20">
           <CardHeader className="pb-3 px-4 sm:px-6">
-            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-500" />
-              <span>{t("Catatan Psikologi", "Psychology Notes")}</span>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-purple-600 dark:text-purple-400">
+              <Brain className="w-5 h-5" />
+              <span>{t("Analisis Behavioral Finance", "Behavioral Finance Analysis")}</span>
             </CardTitle>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+              {t("Bias kognitif dan emosional yang memengaruhi keputusan trading", "Cognitive and emotional biases affecting trading decisions")}
+            </p>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
-            <ul className="space-y-3" data-testid="list-psychology">
-              {result.psychologyNotes.map((note, index) => (
-                <li key={index} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm">
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-purple-500/10 dark:bg-purple-500/20 rounded-md flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] sm:text-xs font-medium text-purple-600 dark:text-purple-400">{index + 1}</span>
-                  </div>
-                  <span className="text-muted-foreground">{parseLocalizedText(note, language)}</span>
-                </li>
-              ))}
+            <ul className="space-y-3 sm:space-y-4" data-testid="list-psychology">
+              {result.psychologyNotes.map((note, index) => {
+                const text = parseLocalizedText(note, language);
+                const biasMatch = text.match(/^([A-Za-z\s]+):/);
+                const biasName = biasMatch ? biasMatch[1] : null;
+                const biasDescription = biasMatch ? text.replace(biasMatch[0], '').trim() : text;
+                
+                return (
+                  <li key={index} className="p-3 sm:p-4 bg-purple-500/5 border border-purple-500/10 rounded-md">
+                    {biasName ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-[10px] sm:text-xs font-mono bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400">
+                            {biasName.trim()}
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                          {biasDescription}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        {text}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>
