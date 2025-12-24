@@ -1,4 +1,4 @@
-import { useLocation, Link } from "wouter";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,8 +100,7 @@ function MetricCard({ icon: Icon, label, labelEn, value, color }: {
 }
 
 export default function Result() {
-  const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const searchParams = new URLSearchParams(window.location.search);
   
   const params: RiskInput = {
     modal: parseFloat(searchParams.get("modal") || "0"),
