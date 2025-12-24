@@ -566,89 +566,115 @@ export default function Result() {
         </div>
 
         {result.metrics && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3 px-4 sm:px-6">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Activity className="w-5 h-5 text-primary" />
-                <span>{t("Metrik Produktivitas", "Productivity Metrics")}</span>
-              </CardTitle>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                {t("Metrik untuk hasil analisis saat ini", "Metrics for current analysis result")}
-              </p>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                {(() => {
-                  const pfExpl = getMetricExplanation("pf", result.metrics.expectedPF, params, t);
-                  return (
-                    <DetailedMetricCard 
-                      icon={TrendingUp} 
-                      label="Profit Factor (PF)" 
-                      value={result.metrics.expectedPF}
-                      meaning={pfExpl.meaning}
-                      status={pfExpl.status}
-                      cause={pfExpl.cause}
-                      recommendation={pfExpl.recommendation}
-                      statusColor={pfExpl.statusColor}
-                      t={t}
-                    />
-                  );
-                })()}
-                {(() => {
-                  const romExpl = getMetricExplanation("rom", result.metrics.expectedROM, params, t);
-                  return (
-                    <DetailedMetricCard 
-                      icon={Percent} 
-                      label="Return on Margin (ROM)" 
-                      value={result.metrics.expectedROM}
-                      meaning={romExpl.meaning}
-                      status={romExpl.status}
-                      cause={romExpl.cause}
-                      recommendation={romExpl.recommendation}
-                      statusColor={romExpl.statusColor}
-                      t={t}
-                    />
-                  );
-                })()}
-                {(() => {
-                  const erExpl = getMetricExplanation("er", result.metrics.expectedER, params, t);
-                  return (
-                    <DetailedMetricCard 
-                      icon={Target} 
-                      label="Efficiency Ratio (ER)" 
-                      value={result.metrics.expectedER}
-                      meaning={erExpl.meaning}
-                      status={erExpl.status}
-                      cause={erExpl.cause}
-                      recommendation={erExpl.recommendation}
-                      statusColor={erExpl.statusColor}
-                      t={t}
-                    />
-                  );
-                })()}
-                {(() => {
-                  const mcValue = parseLocalizedText(result.metrics.marginCallRisk, language);
-                  const mcExpl = getMetricExplanation("mc", mcValue, params, t);
-                  return (
-                    <DetailedMetricCard 
-                      icon={AlertTriangle} 
-                      label={t("Risiko Margin Call", "Margin Call Risk")}
-                      value={mcValue}
-                      meaning={mcExpl.meaning}
-                      status={mcExpl.status}
-                      cause={mcExpl.cause}
-                      recommendation={mcExpl.recommendation}
-                      statusColor={mcExpl.statusColor}
-                      t={t}
-                    />
-                  );
-                })()}
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-4 text-center">
-                {t("Data berdasarkan backtesting tesis Iriawan (UNDIP, 2025)", "Based on Iriawan thesis backtesting (UNDIP, 2025)")}
-              </p>
-            </CardContent>
-          </Card>
+          <>
+            {/* BENCHMARK TESIS - PF & ER (tetap untuk kombinasi strategi + target) */}
+            <Card className="mb-4">
+              <CardHeader className="pb-3 px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <span>{t("Benchmark Tesis", "Thesis Benchmark")}</span>
+                </CardTitle>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  {t(
+                    `Metrik tetap untuk ${params.strategy} + ${params.targetPoin}pts (data backtesting)`,
+                    `Fixed metrics for ${params.strategy} + ${params.targetPoin}pts (backtest data)`
+                  )}
+                </p>
+              </CardHeader>
+              <CardContent className="px-4 sm:px-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {(() => {
+                    const pfExpl = getMetricExplanation("pf", result.metrics.expectedPF, params, t);
+                    return (
+                      <DetailedMetricCard 
+                        icon={TrendingUp} 
+                        label="Profit Factor (PF)" 
+                        value={result.metrics.expectedPF}
+                        meaning={pfExpl.meaning}
+                        status={pfExpl.status}
+                        cause={pfExpl.cause}
+                        recommendation={pfExpl.recommendation}
+                        statusColor={pfExpl.statusColor}
+                        t={t}
+                      />
+                    );
+                  })()}
+                  {(() => {
+                    const erExpl = getMetricExplanation("er", result.metrics.expectedER, params, t);
+                    return (
+                      <DetailedMetricCard 
+                        icon={Target} 
+                        label="Efficiency Ratio (ER)" 
+                        value={result.metrics.expectedER}
+                        meaning={erExpl.meaning}
+                        status={erExpl.status}
+                        cause={erExpl.cause}
+                        recommendation={erExpl.recommendation}
+                        statusColor={erExpl.statusColor}
+                        t={t}
+                      />
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* METRIK DISESUAIKAN MODAL - ROM & MC Risk (berubah berdasarkan modal) */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3 px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  <span>{t("Metrik Berdasarkan Modal", "Capital-Based Metrics")}</span>
+                </CardTitle>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  {t(
+                    `Disesuaikan dengan modal USD ${params.modal.toLocaleString()} (berubah jika modal berbeda)`,
+                    `Adjusted to USD ${params.modal.toLocaleString()} capital (changes with different capital)`
+                  )}
+                </p>
+              </CardHeader>
+              <CardContent className="px-4 sm:px-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {(() => {
+                    const romExpl = getMetricExplanation("rom", result.metrics.expectedROM, params, t);
+                    return (
+                      <DetailedMetricCard 
+                        icon={Percent} 
+                        label="Return on Margin (ROM)" 
+                        value={result.metrics.expectedROM}
+                        meaning={romExpl.meaning}
+                        status={romExpl.status}
+                        cause={romExpl.cause}
+                        recommendation={romExpl.recommendation}
+                        statusColor={romExpl.statusColor}
+                        t={t}
+                      />
+                    );
+                  })()}
+                  {(() => {
+                    const mcValue = parseLocalizedText(result.metrics.marginCallRisk, language);
+                    const mcExpl = getMetricExplanation("mc", mcValue, params, t);
+                    return (
+                      <DetailedMetricCard 
+                        icon={AlertTriangle} 
+                        label={t("Risiko Margin Call", "Margin Call Risk")}
+                        value={mcValue}
+                        meaning={mcExpl.meaning}
+                        status={mcExpl.status}
+                        cause={mcExpl.cause}
+                        recommendation={mcExpl.recommendation}
+                        statusColor={mcExpl.statusColor}
+                        t={t}
+                      />
+                    );
+                  })()}
+                </div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-4 text-center">
+                  {t("Referensi optimal: USD 200.000 (Tesis Iriawan, UNDIP 2025)", "Optimal reference: USD 200,000 (Iriawan Thesis, UNDIP 2025)")}
+                </p>
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {/* ANALISIS TEMUAN - Financial Engineering Framework */}
