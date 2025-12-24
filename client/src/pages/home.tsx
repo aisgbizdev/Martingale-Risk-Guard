@@ -211,8 +211,8 @@ export default function Home() {
           
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-2">
             {t(
-              "Aplikasi edukasi untuk mengecek risiko strategi Martingale vs Linear Averaging pada XUL10 (Kontrak Gulir Berkala Emas Loco London).",
-              "Educational app to check risk levels of Martingale vs Linear Averaging strategies on XUL10 gold rolling contracts."
+              "Asesmen risiko berbasis framework Financial Engineering dan Behavioral Finance untuk strategi Martingale vs Linear Averaging pada XUL10.",
+              "Risk assessment based on Financial Engineering and Behavioral Finance frameworks for Martingale vs Linear Averaging strategies on XUL10."
             )}
           </p>
           
