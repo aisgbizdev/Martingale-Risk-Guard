@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/language-context";
 import Home from "@/pages/home";
 import Result from "@/pages/result";
+import Literasi from "@/pages/literasi";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/result" component={Result} />
+      <Route path="/literasi" component={Literasi} />
       <Route component={NotFound} />
     </Switch>
   );

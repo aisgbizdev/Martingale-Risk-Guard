@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,13 +7,92 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe } from "lucide-react";
-import { riskInputSchema, type RiskInput } from "@shared/schema";
+import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe, BookOpen, CheckCircle, XCircle } from "lucide-react";
+import { riskInputSchema, type RiskInput, type RiskResult } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
+
+function LiveRiskPreview({ score, status, isCalculating, t }: { 
+  score: number | null; 
+  status: string | null; 
+  isCalculating: boolean;
+  t: (id: string, en: string) => string;
+}) {
+  if (isCalculating) {
+    return (
+      <div className="p-4 bg-muted/50 rounded-md border border-border">
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-muted-foreground">{t("Menghitung...", "Calculating...")}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (score === null || status === null) {
+    return (
+      <div className="p-4 bg-muted/30 rounded-md border border-dashed border-border">
+        <p className="text-sm text-muted-foreground text-center">
+          {t("Masukkan modal untuk melihat preview risiko", "Enter capital to see risk preview")}
+        </p>
+      </div>
+    );
+  }
+
+  const getStatusColor = () => {
+    if (status === "AMAN") return "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300";
+    if (status === "BERISIKO") return "bg-amber-400/10 border-amber-400/20 text-amber-600 dark:text-amber-300";
+    return "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-300";
+  };
+
+  const getStatusIcon = () => {
+    if (status === "AMAN") return <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" />;
+    if (status === "BERISIKO") return <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 dark:text-amber-400" />;
+    return <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-500 dark:text-rose-400" />;
+  };
+
+  const getStatusLabel = () => {
+    if (status === "AMAN") return t("AMAN", "SAFE");
+    if (status === "BERISIKO") return t("BERISIKO", "RISKY");
+    return t("TIDAK LAYAK", "NOT VIABLE");
+  };
+
+  return (
+    <div className={`p-4 rounded-md border ${getStatusColor()}`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {getStatusIcon()}
+          <div>
+            <div className="text-lg sm:text-xl font-bold">{getStatusLabel()}</div>
+            <div className="text-xs text-muted-foreground">{t("Preview Risiko", "Risk Preview")}</div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl sm:text-3xl font-mono font-bold">{score}</div>
+          <div className="text-xs text-muted-foreground">/100</div>
+        </div>
+      </div>
+      <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden flex">
+        <div className="flex-1 bg-emerald-400/30" />
+        <div className="flex-1 bg-amber-400/30" />
+        <div className="flex-1 bg-rose-400/30" />
+      </div>
+      <div 
+        className="h-2 rounded-full -mt-2 transition-all duration-500"
+        style={{ 
+          width: `${score}%`,
+          background: status === "AMAN" ? 'rgb(52 211 153)' : status === "BERISIKO" ? 'rgb(251 191 36)' : 'rgb(251 113 133)'
+        }}
+      />
+    </div>
+  );
+}
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [liveScore, setLiveScore] = useState<number | null>(null);
+  const [liveStatus, setLiveStatus] = useState<string | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
   const { language, setLanguage, t } = useLanguage();
 
   const form = useForm<RiskInput>({
@@ -27,6 +106,63 @@ export default function Home() {
       marketCondition: "Sideways",
     },
   });
+
+  const watchedValues = form.watch();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (watchedValues.modal <= 0) {
+      setLiveScore(null);
+      setLiveStatus(null);
+      setIsCalculating(false);
+      return;
+    }
+
+    const currentRequestId = ++requestIdRef.current;
+    
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    const calculateLiveRisk = async () => {
+      setIsCalculating(true);
+      try {
+        const response = await fetch("/api/calculate-risk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(watchedValues),
+          signal: abortControllerRef.current?.signal,
+        });
+        
+        if (currentRequestId !== requestIdRef.current) return;
+        
+        if (response.ok) {
+          const result: RiskResult = await response.json();
+          if (currentRequestId === requestIdRef.current) {
+            setLiveScore(result.score);
+            setLiveStatus(result.status);
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        console.error("Error calculating live risk:", error);
+      } finally {
+        if (currentRequestId === requestIdRef.current) {
+          setIsCalculating(false);
+        }
+      }
+    };
+
+    const debounceTimer = setTimeout(calculateLiveRisk, 300);
+    return () => {
+      clearTimeout(debounceTimer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [watchedValues.modal, watchedValues.targetPoin, watchedValues.strategy, watchedValues.maxLayer, watchedValues.experience, watchedValues.marketCondition]);
 
   const onSubmit = async (data: RiskInput) => {
     setIsLoading(true);
@@ -44,7 +180,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <Link href="/literasi">
+            <Button variant="ghost" size="sm" className="gap-2" data-testid="link-literasi">
+              <BookOpen className="w-4 h-4" />
+              {t("Literasi Risiko", "Risk Literacy")}
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"
@@ -88,10 +230,19 @@ export default function Home() {
               {t("Parameter Transaksi", "Trade Parameters")}
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              {t("Masukkan parameter untuk mengecek tingkat risiko", "Enter parameters to check risk level")}
+              {t("Ubah parameter dan lihat perubahan risiko secara langsung", "Adjust parameters and see risk changes in real-time")}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
+            <div className="mb-6">
+              <LiveRiskPreview 
+                score={liveScore} 
+                status={liveStatus} 
+                isCalculating={isCalculating}
+                t={t}
+              />
+            </div>
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
                 <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
@@ -270,7 +421,7 @@ export default function Home() {
                     t("Menganalisis...", "Analyzing...")
                   ) : (
                     <>
-                      {t("Cek Risiko", "Check Risk")}
+                      {t("Lihat Detail Lengkap", "View Full Details")}
                       <ChevronRight className="w-5 h-5 ml-2" />
                     </>
                   )}
