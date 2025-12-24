@@ -641,6 +641,47 @@ export default function Result() {
 
         {result.metrics && (
           <>
+            {/* PARAMETER ANALISIS ANDA - Ringkasan input dari home page */}
+            <Card className="mb-4 border-primary/30 bg-primary/5">
+              <CardHeader className="pb-2 px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Info className="w-5 h-5 text-primary" />
+                  <span>{t("Parameter Analisis Anda", "Your Analysis Parameters")}</span>
+                </CardTitle>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  {t("Hasil di bawah ini berdasarkan parameter yang Anda input:", "Results below are based on your input parameters:")}
+                </p>
+              </CardHeader>
+              <CardContent className="px-4 sm:px-6 pt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs sm:text-sm">
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Modal", "Capital")}</div>
+                    <div className="font-semibold">USD {params.modal.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Strategi", "Strategy")}</div>
+                    <div className="font-semibold">{params.strategy}</div>
+                  </div>
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Target", "Target")}</div>
+                    <div className="font-semibold">{params.targetPoin} pts</div>
+                  </div>
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Maks Layer", "Max Layer")}</div>
+                    <div className="font-semibold">{params.maxLayer} layer</div>
+                  </div>
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Kondisi Pasar", "Market Condition")}</div>
+                    <div className="font-semibold">{params.marketCondition}</div>
+                  </div>
+                  <div className="bg-background rounded-md p-2 border">
+                    <div className="text-muted-foreground text-[10px]">{t("Pengalaman", "Experience")}</div>
+                    <div className="font-semibold">{params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* BENCHMARK TESIS - PF & ER (tetap untuk kombinasi strategi + target) */}
             <Card className="mb-4">
               <CardHeader className="pb-3 px-4 sm:px-6">
@@ -650,8 +691,8 @@ export default function Result() {
                 </CardTitle>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {t(
-                    `Metrik tetap untuk ${params.strategy} + ${params.targetPoin}pts (data backtesting)`,
-                    `Fixed metrics for ${params.strategy} + ${params.targetPoin}pts (backtest data)`
+                    `Metrik produktivitas untuk ${params.strategy} + ${params.targetPoin}pts (data backtesting tesis 2024-2025)`,
+                    `Productivity metrics for ${params.strategy} + ${params.targetPoin}pts (thesis backtest data 2024-2025)`
                   )}
                 </p>
               </CardHeader>
@@ -698,12 +739,12 @@ export default function Result() {
               <CardHeader className="pb-3 px-4 sm:px-6">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  <span>{t("Metrik Berdasarkan Modal", "Capital-Based Metrics")}</span>
+                  <span>{t("Metrik Berdasarkan Modal Anda", "Your Capital-Based Metrics")}</span>
                 </CardTitle>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {t(
-                    `Disesuaikan dengan modal USD ${params.modal.toLocaleString()} (berubah jika modal berbeda)`,
-                    `Adjusted to USD ${params.modal.toLocaleString()} capital (changes with different capital)`
+                    `Disesuaikan dengan modal USD ${params.modal.toLocaleString()} (referensi optimal tesis: USD 200.000)`,
+                    `Adjusted for USD ${params.modal.toLocaleString()} capital (thesis optimal reference: USD 200,000)`
                   )}
                 </p>
               </CardHeader>
