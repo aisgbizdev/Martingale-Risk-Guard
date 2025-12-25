@@ -1,0 +1,163 @@
+Rere, mohon dibantu pengembangan lanjutan aplikasi berikut.
+
+NAMA APLIKASI
+Martingale Risk Guard
+
+==================================================
+KONTEKS PENTING (MOHON DIBACA DULU)
+==================================================
+
+Aplikasi ini adalah alat EDUKASI & MITIGASI RISIKO.
+Bukan aplikasi trading, bukan robot, bukan sinyal transaksi.
+
+Aplikasi ini dibuat berdasarkan tesis akademik dan ditujukan
+untuk literasi risiko strategi Martingale vs Linear Averaging
+pada XUL10 (SPA PBK).
+
+==================================================
+PENJELASAN TARGET USER (INI PENTING)
+==================================================
+
+1) PUBLIK
+   - Masyarakat umum / trader pemula
+   - Tujuan: sadar risiko sebelum mencoba strategi
+   - Bahasa: awam, sederhana, tidak teknis
+
+2) WPB (WAKIL PIALANG BERJANGKA) / INTERNAL
+   - WPB = pihak resmi broker yang berinteraksi langsung dengan nasabah
+   - Mereka BUKAN trader, tapi fasilitator & edukator risiko
+   - Tujuan mode ini:
+     - Membantu WPB menjelaskan risiko ke nasabah
+     - Digunakan saat edukasi / onboarding
+   - Bahasa: lebih teknis, tapi tetap edukatif
+   - Tetap BUKAN alat trading
+
+3) REGULATOR / EDUKASI AKADEMIK
+   - Pihak pengawas / compliance / akademisi
+   - Tujuan:
+     - Presentasi literasi risiko
+     - Perlindungan nasabah
+     - Edukasi berbasis data & perilaku
+   - Bahasa: netral, formal, compliance-friendly
+   - Fokus pada:
+     - mitigasi risiko
+     - bias psikologis
+     - dampak eksponensial Martingale
+
+==================================================
+KONSEP ARSITEKTUR APLIKASI (WAJIB)
+==================================================
+
+- SATU aplikasi
+- SATU mesin logika perhitungan risiko
+- BUKAN 3 aplikasi terpisah
+
+Yang berbeda hanya:
+- Bahasa penjelasan
+- Istilah yang digunakan
+- Kedalaman narasi
+
+❗ HASIL PERHITUNGAN HARUS IDENTIK DI SEMUA MODE
+
+==================================================
+MODE DALAM SATU APLIKASI
+==================================================
+
+Gunakan MODE (bukan role user dulu):
+
+mode = 'public' | 'internal' | 'regulator'
+
+Mode bisa diatur via:
+- query param (?mode=public | internal | regulator)
+ATAU
+- toggle menu sederhana
+
+Default: public
+
+--------------------------------------------------
+MODE PUBLIC
+--------------------------------------------------
+- Bahasa awam
+- Untuk user umum
+- Menampilkan:
+  - Status Risiko (AMAN / BERISIKO / TIDAK LAYAK)
+  - Skor Risiko (0–100)
+  - Ringkasan alasan sederhana
+  - Peringatan risiko
+  - Catatan psikologi trading
+- Tidak ada istilah teknis berat
+- Tidak ada kesan alat profesional trading
+
+--------------------------------------------------
+MODE INTERNAL (WPB)
+--------------------------------------------------
+- Untuk Wakil Pialang Berjangka (edukasi nasabah)
+- Menampilkan hasil yang SAMA dengan mode public
+- Tambahan:
+  - Penjelasan lebih teknis (margin, drawdown, eksposur risiko)
+  - Bahasa edukatif-profesional
+- Tetap tanpa sinyal & tanpa rekomendasi transaksi
+
+--------------------------------------------------
+MODE REGULATOR
+--------------------------------------------------
+- Untuk edukasi & presentasi
+- Bahasa formal & netral
+- Fokus:
+  - perlindungan nasabah
+  - mitigasi risiko
+  - behavioral finance
+- Hindari kata:
+  - cuan
+  - strategi unggul
+  - profit cepat
+
+==================================================
+LOGIKA PERHITUNGAN (TIDAK BOLEH DIGANDAKAN)
+==================================================
+
+Gunakan satu risk engine:
+evaluateRisk(input)
+
+Output:
+- Risk Score (0–100)
+- Status:
+  - 0–39   = AMAN
+  - 40–69  = BERISIKO
+  - 70–100 = TIDAK LAYAK
+
+❗ Hasil angka & status WAJIB SAMA di semua mode.
+
+==================================================
+FITUR PENGEMBANGAN (PRIORITAS)
+==================================================
+
+1) Interaktif Parameter
+   - User bisa ubah:
+     - target poin
+     - layer
+     - strategi
+   - Sistem langsung update skor & status
+
+2) Edukasi REM
+   Tambahkan kalimat:
+   “Status AMAN tidak berarti bebas risiko.
+    Silakan ubah parameter untuk melihat bagaimana risiko berubah.”
+
+==================================================
+BATASAN MUTLAK
+==================================================
+
+- Tidak boleh ada:
+  - sinyal trading
+  - rekomendasi entry / exit
+  - ajakan transaksi
+- Semua output bersifat edukasi & mitigasi risiko
+
+==================================================
+FILOSOFI PRODUK
+==================================================
+
+Martingale Risk Guard adalah ALAT REM, bukan GAS.
+Tujuannya bukan membuat orang berani trading,
+tapi membuat orang sadar risiko sebelum salah langkah.
