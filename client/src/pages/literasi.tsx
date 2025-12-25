@@ -552,34 +552,46 @@ export default function Literasi() {
               </p>
               <div className="space-y-2 text-muted-foreground">
                 <p className="font-medium text-foreground">
-                  {t("Tesis Magister Manajemen", "Master of Management Thesis")}
+                  {t("Tesis Program Magister", "Master's Thesis")}
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t("Judul", "Title")}: </span>
                   <span className="italic">
-                    "Analisis Perbandingan Strategi Martingale dan Linear Averaging pada Transaksi Gold Rolling Contract XUL10 (SPA PBK) Menggunakan Pendekatan Financial Engineering dan Behavioral Finance"
+                    {t(
+                      "Analisis Produktivitas Model Martingale dalam Transaksi Kontrak Gulir Berkala Emas Loco London (XUL10) pada Sistem Perdagangan Alternatif (SPA) di Industri Perdagangan Berjangka Komoditi (PBK)",
+                      "Productivity Analysis of the Martingale Model in Rolling Contract of Loco London Gold (XUL10) Transactions in the Alternative Trading System (ATS) in the Commodity Futures Trading (CFT) Industry"
+                    )}
                   </span>
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t("Penulis", "Author")}: </span>
-                  <span className="font-medium">Iriawan Widadi, S.Kom</span>
+                  <span className="font-medium">Iriawan Widadi, S.T.</span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">NIM: </span>
+                  21070123420033
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t("Program Studi", "Program")}: </span>
-                  Magister Manajemen
+                  {t("Magister Teknik dan Manajemen Industri", "Master of Industrial Engineering and Management")}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Fakultas", "Faculty")}: </span>
+                  {t("Fakultas Teknik", "Faculty of Engineering")}
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t("Universitas", "University")}: </span>
-                  <span className="font-medium">Universitas Diponegoro (UNDIP)</span>
-                </p>
-                <p>
-                  <span className="text-muted-foreground">{t("Lokasi", "Location")}: </span>
-                  Semarang, Jawa Tengah, Indonesia
+                  <span className="font-medium">Universitas Diponegoro, Semarang</span>
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t("Tahun", "Year")}: </span>
                   2025
                 </p>
+                <div className="pt-2 border-t border-border/50 mt-3">
+                  <p className="text-xs text-muted-foreground mb-1">{t("Dosen Pembimbing", "Thesis Supervisors")}:</p>
+                  <p className="text-sm">Prof. Dr. Ratna Purwaningsih, S.T., M.T., IPU</p>
+                  <p className="text-sm">Dr. Singgih Saptadi, S.T., M.T.</p>
+                </div>
               </div>
             </div>
 
