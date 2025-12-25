@@ -25,7 +25,8 @@ import {
   GitCompare,
   Trash2,
   X,
-  Edit
+  Edit,
+  Plus
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
@@ -590,6 +591,19 @@ export default function Result() {
                 {t("Simpan Skenario", "Save Scenario")} ({savedScenarios.length}/2)
               </Button>
               
+              {savedScenarios.length === 1 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setLocation("/")}
+                  className="gap-2"
+                  data-testid="button-add-next-scenario"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t("Tambah Skenario Berikutnya", "Add Next Scenario")}
+                </Button>
+              )}
+              
               {savedScenarios.length >= 2 && (
                 <Button
                   variant="default"
@@ -1001,6 +1015,13 @@ export default function Result() {
                       <Separator className="my-3" />
                       
                       <div className="space-y-2 text-xs">
+                        <p className="font-semibold text-muted-foreground uppercase text-[10px] tracking-wide mb-1">
+                          {t("Parameter", "Parameters")}
+                        </p>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t("Modal", "Capital")}:</span>
+                          <span className="font-medium">USD {scenario.params.modal.toLocaleString()}</span>
+                        </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">{t("Strategi", "Strategy")}:</span>
                           <span className="font-medium">{scenario.params.strategy}</span>
@@ -1014,12 +1035,12 @@ export default function Result() {
                           <span className="font-medium">{scenario.params.maxLayer}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t("Modal", "Capital")}:</span>
-                          <span className="font-medium">${scenario.params.modal.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
                           <span className="text-muted-foreground">{t("Kondisi Pasar", "Market")}:</span>
                           <span className="font-medium">{scenario.params.marketCondition}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t("Pengalaman", "Experience")}:</span>
+                          <span className="font-medium">{scenario.params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</span>
                         </div>
                         
                         {scenario.result.metrics && (
