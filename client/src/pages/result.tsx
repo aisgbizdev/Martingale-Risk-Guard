@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,8 @@ import {
   Save,
   GitCompare,
   Trash2,
-  X
+  X,
+  Edit
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
@@ -379,6 +380,7 @@ function parseLocalizedText(text: string, language: "id" | "en"): string {
 }
 
 export default function Result() {
+  const [, setLocation] = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const searchParams = new URLSearchParams(window.location.search);
   
@@ -641,15 +643,20 @@ export default function Result() {
 
         {result.metrics && (
           <>
-            {/* PARAMETER ANALISIS ANDA - Ringkasan input dari home page */}
-            <Card className="mb-4 border-primary/30 bg-primary/5">
+            {/* PARAMETER ANALISIS ANDA - Ringkasan input dari home page, clickable */}
+            <Card 
+              className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
+              onClick={() => setLocation("/")}
+              data-testid="card-parameters-edit"
+            >
               <CardHeader className="pb-2 px-4 sm:px-6">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Info className="w-5 h-5 text-primary" />
                   <span>{t("Parameter Analisis Anda", "Your Analysis Parameters")}</span>
+                  <Edit className="w-4 h-4 text-muted-foreground ml-auto" />
                 </CardTitle>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  {t("Hasil di bawah ini berdasarkan parameter yang Anda input:", "Results below are based on your input parameters:")}
+                  {t("Klik untuk mengubah parameter", "Click to edit parameters")}
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pt-0">
