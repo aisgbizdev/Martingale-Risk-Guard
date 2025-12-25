@@ -11,9 +11,17 @@ import {
   Globe,
   Layers,
   Target,
-  XCircle
+  XCircle,
+  BarChart3,
+  CheckCircle,
+  Percent,
+  Activity,
+  CircleDollarSign,
+  FileText,
+  Download
 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import thesisPdfUrl from "@assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf";
 
 function ExponentialTable({ t }: { t: (id: string, en: string) => string }) {
   const layers = [
@@ -71,14 +79,13 @@ export default function Literasi() {
             </Button>
           </Link>
           <Button
-            variant="outline"
-            size="sm"
+            variant="default"
             onClick={() => setLanguage(language === "id" ? "en" : "id")}
             className="gap-2"
             data-testid="button-language-toggle"
           >
             <Globe className="w-4 h-4" />
-            {language === "id" ? "EN" : "ID"}
+            {language === "id" ? "English" : "Indonesia"}
           </Button>
         </div>
 
@@ -100,6 +107,43 @@ export default function Literasi() {
         </div>
 
         <div className="space-y-6">
+          {/* SECTION 1: XUL10 - Instrumen yang diteliti */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <CircleDollarSign className="w-5 h-5 text-amber-500" />
+                {t("Apa itu XUL10 (SPA PBK)?", "What is XUL10 (SPA PBK)?")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm sm:text-base text-muted-foreground">
+              <p>
+                {t(
+                  "XUL10 adalah Gold Rolling Contract yang diperdagangkan di Bursa Berjangka Jakarta (BBJ) melalui platform SPA PBK (Sistem Perdagangan Alternatif Perdagangan Berjangka Komoditi).",
+                  "XUL10 is a Gold Rolling Contract traded on the Jakarta Futures Exchange (BBJ) through the SPA PBK platform (Alternative Trading System for Commodity Futures Trading)."
+                )}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <p className="font-medium text-foreground text-sm mb-1">{t("Karakteristik", "Characteristics")}</p>
+                  <ul className="text-xs space-y-1">
+                    <li>{t("Kontrak emas berdenominasi USD", "USD-denominated gold contract")}</li>
+                    <li>{t("Leverage tinggi (margin trading)", "High leverage (margin trading)")}</li>
+                    <li>{t("Jam trading 24 jam (Senin-Jumat)", "24-hour trading (Monday-Friday)")}</li>
+                  </ul>
+                </div>
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                  <p className="font-medium text-amber-700 dark:text-amber-300 text-sm mb-1">{t("Risiko Utama", "Main Risks")}</p>
+                  <ul className="text-xs text-amber-600 dark:text-amber-400 space-y-1">
+                    <li>{t("Volatilitas tinggi", "High volatility")}</li>
+                    <li>{t("Potensi margin call", "Margin call potential")}</li>
+                    <li>{t("Kerugian bisa melebihi modal", "Losses can exceed capital")}</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SECTION 2: Martingale */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
@@ -202,48 +246,241 @@ export default function Literasi() {
             </CardContent>
           </Card>
 
+          {/* SECTION: 4 Metrik Kinerja dari Thesis */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                {t("4 Metrik Kinerja Strategi", "4 Strategy Performance Metrics")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm sm:text-base text-muted-foreground">
+              <p>
+                {t(
+                  "Tesis menggunakan 4 metrik untuk mengukur kinerja strategi averaging:",
+                  "The thesis uses 4 metrics to measure averaging strategy performance:"
+                )}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Percent className="w-4 h-4 text-blue-500" />
+                    <span className="font-medium text-foreground">Profit Factor (PF)</span>
+                  </div>
+                  <p className="text-xs mb-2">{t("Total Profit / Total Loss", "Total Profit / Total Loss")}</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-emerald-600 dark:text-emerald-400">{t("PF > 3 = Baik", "PF > 3 = Good")}</p>
+                    <p className="text-amber-600 dark:text-amber-400">{t("PF 1-3 = Cukup", "PF 1-3 = Fair")}</p>
+                    <p className="text-rose-600 dark:text-rose-400">{t("PF < 1 = Buruk", "PF < 1 = Poor")}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    <span className="font-medium text-foreground">Return on Margin (ROM)</span>
+                  </div>
+                  <p className="text-xs mb-2">{t("Potensi return berdasarkan modal", "Potential return based on capital")}</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-emerald-600 dark:text-emerald-400">{t("ROM > 300% = Excellent", "ROM > 300% = Excellent")}</p>
+                    <p className="text-amber-600 dark:text-amber-400">{t("ROM 100-300% = Baik", "ROM 100-300% = Good")}</p>
+                    <p className="text-rose-600 dark:text-rose-400">{t("ROM < 100% = Rendah", "ROM < 100% = Low")}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-purple-500" />
+                    <span className="font-medium text-foreground">Efficiency Ratio (ER)</span>
+                  </div>
+                  <p className="text-xs mb-2">{t("Efisiensi strategi", "Strategy efficiency")}</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-emerald-600 dark:text-emerald-400">{t("ER > 1 = Efisien", "ER > 1 = Efficient")}</p>
+                    <p className="text-amber-600 dark:text-amber-400">{t("ER 0.5-1 = Cukup", "ER 0.5-1 = Fair")}</p>
+                    <p className="text-rose-600 dark:text-rose-400">{t("ER < 0.5 = Tidak efisien", "ER < 0.5 = Inefficient")}</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-500" />
+                    <span className="font-medium text-foreground">MC Risk</span>
+                  </div>
+                  <p className="text-xs mb-2">{t("Risiko margin call", "Margin call risk")}</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-emerald-600 dark:text-emerald-400">{t("Rendah = Aman", "Low = Safe")}</p>
+                    <p className="text-amber-600 dark:text-amber-400">{t("Sedang = Hati-hati", "Medium = Caution")}</p>
+                    <p className="text-rose-600 dark:text-rose-400">{t("Tinggi = Berbahaya", "High = Dangerous")}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SECTION: Temuan Backtesting 2024-2025 */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-500" />
+                {t("Temuan Backtesting 2024-2025", "Backtest Findings 2024-2025")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm sm:text-base text-muted-foreground">
+              <p>
+                {t(
+                  "Hasil pengujian empiris dari data historis XUL10 periode 2024-2025:",
+                  "Empirical testing results from XUL10 historical data period 2024-2025:"
+                )}
+              </p>
+              
+              <div className="p-4 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="font-medium text-emerald-700 dark:text-emerald-300">
+                    {t("Kombinasi Optimal", "Optimal Combination")}
+                  </span>
+                </div>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 mb-2">
+                  <span className="font-bold">Linear Averaging + 30pts + Sideways</span>
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-background/50 p-2 rounded text-center">
+                    <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">PF 14.73</p>
+                  </div>
+                  <div className="bg-background/50 p-2 rounded text-center">
+                    <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">ROM 334%</p>
+                  </div>
+                  <div className="bg-background/50 p-2 rounded text-center">
+                    <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">ER 1.04</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/20 rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                  <span className="font-medium text-rose-700 dark:text-rose-300">
+                    {t("Kombinasi Berisiko Tinggi", "High Risk Combination")}
+                  </span>
+                </div>
+                <p className="text-sm text-rose-600 dark:text-rose-400 mb-2">
+                  <span className="font-bold">Martingale + Trending + Layer 4-5</span>
+                </p>
+                <p className="text-xs text-rose-600 dark:text-rose-400">
+                  {t(
+                    "Mengalami MARGIN CALL TOTAL pada periode bullish 2025. Sensitivitas layer 4-5 sangat tinggi.",
+                    "Experienced TOTAL MARGIN CALL during 2025 bullish period. Layer 4-5 sensitivity is very high."
+                  )}
+                </p>
+              </div>
+
+              <div className="p-4 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span className="font-medium text-amber-700 dark:text-amber-300">
+                    {t("Sensitivitas Layer", "Layer Sensitivity")}
+                  </span>
+                </div>
+                <ul className="text-xs text-amber-600 dark:text-amber-400 space-y-1">
+                  <li>{t("Layer 3: Risiko terkendali, modal cukup USD 100,000", "Layer 3: Controlled risk, USD 100,000 capital sufficient")}</li>
+                  <li>{t("Layer 4: Risiko signifikan, lot = 8x lot awal", "Layer 4: Significant risk, lot = 8x initial lot")}</li>
+                  <li>{t("Layer 5: Zona kritis margin call, lot = 16x lot awal", "Layer 5: Margin call critical zone, lot = 16x initial lot")}</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SECTION: 9 Bias Psikologis Lengkap */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
                 <Brain className="w-5 h-5 text-purple-500" />
-                {t("Bias Psikologis Trader", "Trader Psychological Biases")}
+                {t("9 Bias Psikologis Trader", "9 Trader Psychological Biases")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="p-4 bg-muted/50 rounded-md">
-                  <h4 className="font-medium text-foreground mb-2">1. Overconfidence Bias</h4>
-                  <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
+                {t(
+                  "Studi behavioral finance dalam tesis mengidentifikasi 9 bias yang mempengaruhi keputusan trading:",
+                  "Behavioral finance study in the thesis identifies 9 biases affecting trading decisions:"
+                )}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">1. Overconfidence Bias</h4>
+                  <p className="text-xs text-muted-foreground">
                     {t(
-                      "Merasa 'pasti balik' setelah beberapa kali berhasil recovery. Padahal satu kali gagal bisa menghapus semua profit.",
-                      "Feeling 'it will definitely recover' after a few successful recoveries. But one failure can wipe out all profits."
+                      "Merasa 'pasti balik' setelah beberapa kali berhasil recovery.",
+                      "Feeling 'it will definitely recover' after successful recoveries."
                     )}
                   </p>
                 </div>
-                <div className="p-4 bg-muted/50 rounded-md">
-                  <h4 className="font-medium text-foreground mb-2">2. Gambler's Fallacy</h4>
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">2. Risk Misperception</h4>
+                  <p className="text-xs text-muted-foreground">
                     {t(
-                      "Percaya bahwa 'sudah waktunya harga berbalik' setelah beberapa kali loss. Pasar tidak punya memori.",
-                      "Believing 'it's time for price to reverse' after several losses. The market has no memory."
+                      "Meremehkan risiko eksponensial pada strategi Martingale.",
+                      "Underestimating exponential risk in Martingale strategy."
                     )}
                   </p>
                 </div>
-                <div className="p-4 bg-muted/50 rounded-md">
-                  <h4 className="font-medium text-foreground mb-2">3. Sunk Cost Fallacy</h4>
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">3. Loss Aversion</h4>
+                  <p className="text-xs text-muted-foreground">
                     {t(
-                      "Terus menambah posisi karena 'sudah terlalu banyak kerugian untuk berhenti'. Justru memperbesar risiko.",
-                      "Keeping adding positions because 'too much loss to stop now'. This actually increases risk."
+                      "Menahan posisi rugi terlalu lama karena takut realisasi kerugian.",
+                      "Holding losing positions too long due to fear of realizing losses."
                     )}
                   </p>
                 </div>
-                <div className="p-4 bg-muted/50 rounded-md">
-                  <h4 className="font-medium text-foreground mb-2">4. Recency Bias</h4>
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">4. Herding Behaviour</h4>
+                  <p className="text-xs text-muted-foreground">
                     {t(
-                      "Menilai strategi berdasarkan hasil terakhir saja. Mengabaikan risiko jangka panjang.",
-                      "Judging strategy based on recent results only. Ignoring long-term risks."
+                      "Mengikuti 'sinyal' atau rekomendasi tanpa analisis independen.",
+                      "Following 'signals' or recommendations without independent analysis."
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">5. Anchoring Bias</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Terpaku pada harga entry, mengabaikan pergerakan pasar aktual.",
+                      "Fixating on entry price, ignoring actual market movement."
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">6. Recency Bias</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Menilai strategi berdasarkan hasil terakhir saja.",
+                      "Judging strategy based on recent results only."
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">7. Sunk Cost Fallacy</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Terus menambah posisi karena 'sudah terlanjur rugi banyak'.",
+                      "Keeping adding positions because 'already lost too much'."
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">8. Gambler's Fallacy</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Percaya 'sudah waktunya harga berbalik' setelah loss beruntun.",
+                      "Believing 'it's time for price to reverse' after consecutive losses."
+                    )}
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-md sm:col-span-2">
+                  <h4 className="font-medium text-foreground mb-1 text-sm">9. Disposition Effect</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "Menjual posisi profit terlalu cepat, menahan posisi rugi terlalu lama.",
+                      "Selling winning positions too quickly, holding losing positions too long."
                     )}
                   </p>
                 </div>
@@ -361,6 +598,25 @@ export default function Literasi() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <a
+                href={thesisPdfUrl}
+                download="Tesis_Iriawan_Widadi_UNDIP_2025.pdf"
+                className="inline-flex"
+              >
+                <Button variant="outline" className="gap-2" data-testid="button-download-thesis">
+                  <Download className="w-4 h-4" />
+                  {t("Download Tesis Lengkap (PDF)", "Download Full Thesis (PDF)")}
+                </Button>
+              </a>
+              <p className="text-xs text-muted-foreground mt-2">
+                {t(
+                  "Untuk melihat data backtesting lengkap, grafik hasil pengujian, dan bukti empiris penelitian.",
+                  "To view complete backtest data, testing result graphs, and empirical research evidence."
+                )}
+              </p>
             </div>
           </CardContent>
         </Card>
