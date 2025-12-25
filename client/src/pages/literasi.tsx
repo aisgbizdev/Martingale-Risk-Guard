@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import thesisPdfUrl from "@assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf";
+import appLogo from "@assets/ChatGPT_Image_Dec_25,_2025,_12_47_09_PM_1766641647288.png";
 
 function ExponentialTable({ t }: { t: (id: string, en: string) => string }) {
   const layers = [
@@ -91,9 +92,7 @@ export default function Literasi() {
 
         <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <div className="p-2 sm:p-3 bg-primary/10 rounded-md">
-              <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-            </div>
+            <img src={appLogo} alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               {t("Literasi Risiko", "Risk Literacy")}
             </h1>
