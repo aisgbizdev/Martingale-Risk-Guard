@@ -21,9 +21,6 @@ import {
   Download
 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
-import { useMode, modeLabels, type AppMode } from "@/lib/mode-context";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Users } from "lucide-react";
 import thesisPdfUrl from "@assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf";
 
 function ExponentialTable({ t }: { t: (id: string, en: string) => string }) {
@@ -70,7 +67,6 @@ function ExponentialTable({ t }: { t: (id: string, en: string) => string }) {
 
 export default function Literasi() {
   const { language, setLanguage, t } = useLanguage();
-  const { mode, setMode, modeLabel } = useMode();
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,38 +78,15 @@ export default function Literasi() {
               {t("Kembali", "Back")}
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2" data-testid="button-mode-toggle">
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">{modeLabel}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {(Object.keys(modeLabels) as AppMode[]).map((m) => (
-                  <DropdownMenuItem
-                    key={m}
-                    onClick={() => setMode(m)}
-                    className={mode === m ? "bg-accent" : ""}
-                    data-testid={`menu-mode-${m}`}
-                  >
-                    {modeLabels[m]}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setLanguage(language === "id" ? "en" : "id")}
-              className="gap-2"
-              data-testid="button-language-toggle"
-            >
-              <Globe className="w-4 h-4" />
-              {language === "id" ? "English" : "Indonesia"}
-            </Button>
-          </div>
+          <Button
+            variant="default"
+            onClick={() => setLanguage(language === "id" ? "en" : "id")}
+            className="gap-2"
+            data-testid="button-language-toggle"
+          >
+            <Globe className="w-4 h-4" />
+            {language === "id" ? "English" : "Indonesia"}
+          </Button>
         </div>
 
         <div className="text-center mb-8 sm:mb-10">

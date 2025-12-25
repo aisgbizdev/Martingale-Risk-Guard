@@ -5,9 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Shield, 
   CheckCircle, 
@@ -29,15 +26,10 @@ import {
   Trash2,
   X,
   Edit,
-  Plus,
-  Users,
-  SlidersHorizontal,
-  ChevronDown
+  Plus
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
-import { useMode, modeLabels, type AppMode } from "@/lib/mode-context";
-import { modeNarratives, getNarrative } from "@/lib/mode-narratives";
 
 // Interface untuk skenario tersimpan
 interface SavedScenario {
@@ -391,22 +383,11 @@ function parseLocalizedText(text: string, language: "id" | "en"): string {
 export default function Result() {
   const [, setLocation] = useLocation();
   const { language, setLanguage, t } = useLanguage();
-  const { mode, setMode, modeLabel } = useMode();
   const searchParams = new URLSearchParams(window.location.search);
   
   // State untuk fitur Compare Scenarios
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
   const [showCompare, setShowCompare] = useState(false);
-  const [showSimulator, setShowSimulator] = useState(false);
-  
-  // Function to update URL params for interactive simulation
-  const updateParam = (key: keyof RiskInput, value: string) => {
-    const newParams = new URLSearchParams(window.location.search);
-    newParams.set(key, value);
-    // Mode is preserved automatically since we're using the existing search params
-    const newUrl = `/result?${newParams.toString()}`;
-    setLocation(newUrl);
-  };
   
   // Load saved scenarios dari localStorage saat mount
   useEffect(() => {
@@ -539,30 +520,9 @@ export default function Result() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
-        <div className="flex justify-end mb-4 gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2" data-testid="button-mode-toggle">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">{modeLabel}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {(Object.keys(modeLabels) as AppMode[]).map((m) => (
-                <DropdownMenuItem
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={mode === m ? "bg-accent" : ""}
-                  data-testid={`menu-mode-${m}`}
-                >
-                  {modeLabels[m]}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex justify-end mb-4">
           <Button
             variant="default"
-            size="sm"
             onClick={() => setLanguage(language === "id" ? "en" : "id")}
             className="gap-2"
             data-testid="button-language-toggle"
@@ -586,52 +546,14 @@ export default function Result() {
           
           <StatusBadge status={result.status} t={t} />
           
-          {/* Mode-specific narrative */}
-          <div className="mt-4 p-3 sm:p-4 bg-muted/30 rounded-md max-w-lg mx-auto">
-            {/* Mode indicator badge */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Badge variant="outline" className="text-[10px]">
-                {mode === "public" 
-                  ? t("Mode: Publik", "Mode: Public")
-                  : mode === "internal"
-                    ? t("Mode: Internal WPB", "Mode: Internal WPB") 
-                    : t("Mode: Regulator", "Mode: Regulator")}
-              </Badge>
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              {getNarrative(
-                mode,
-                result.status === "AMAN" ? "statusAman" : result.status === "BERISIKO" ? "statusBerisiko" : "statusTidakLayak",
-                language
+          {result.status === "AMAN" && (
+            <p className="mt-3 text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 rounded-md px-3 py-2 max-w-md mx-auto">
+              {t(
+                "Status AMAN tidak berarti bebas risiko. Tetap disiplin dan pahami batas eksposur.",
+                "Safe status doesn't mean risk-free. Stay disciplined and understand exposure limits."
               )}
             </p>
-            
-            {/* Additional technical explanation for WPB/Regulator modes */}
-            {mode !== "public" && (
-              <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-xs text-muted-foreground">
-                {getNarrative(mode, "marginExplanation", language) && (
-                  <p className="flex items-start gap-1.5">
-                    <Info className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
-                    {getNarrative(mode, "marginExplanation", language)}
-                  </p>
-                )}
-                {getNarrative(mode, "riskExposureExplanation", language) && (
-                  <p className="flex items-start gap-1.5">
-                    <Activity className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
-                    {getNarrative(mode, "riskExposureExplanation", language)}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-          
-          {/* REM Sentence - appears in ALL modes */}
-          <div className="mt-3 p-2 sm:p-3 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md max-w-lg mx-auto">
-            <p className="text-[10px] sm:text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
-              <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5" />
-              <span>{getNarrative(mode, "remSentence", language)}</span>
-            </p>
-          </div>
+          )}
           
           <div className="mt-6 sm:mt-8">
             <div className="text-4xl sm:text-5xl font-mono font-bold text-foreground mb-2" data-testid="text-risk-score">
@@ -645,7 +567,10 @@ export default function Result() {
             <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-muted/50 rounded-md">
               <p className="text-xs sm:text-sm text-muted-foreground">
                 <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1.5 -mt-0.5" />
-                {getNarrative(mode, "interactiveHint", language)}
+                {t(
+                  "Silakan ubah parameter (target poin, layer, atau strategi) untuk melihat bagaimana risiko berubah.",
+                  "Try adjusting parameters (target points, layers, or strategy) to see how risk changes."
+                )}
               </p>
             </div>
             
@@ -802,129 +727,49 @@ export default function Result() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="mb-4 border-primary/30 bg-primary/5">
-                <Collapsible open={showSimulator} onOpenChange={setShowSimulator}>
-                  <CardHeader className="pb-2 px-4 sm:px-6">
-                    <CollapsibleTrigger asChild>
-                      <div className="cursor-pointer" data-testid="card-parameters-toggle">
-                        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                          <SlidersHorizontal className="w-5 h-5 text-primary" />
-                          <span>{getNarrative(mode, "interactiveLabel", language)}</span>
-                          <ChevronDown className={`w-4 h-4 text-muted-foreground ml-auto transition-transform ${showSimulator ? "rotate-180" : ""}`} />
-                        </CardTitle>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                          {t("Ubah parameter untuk melihat perubahan risiko", "Change parameters to see risk changes")}
-                        </p>
-                      </div>
-                    </CollapsibleTrigger>
-                  </CardHeader>
-                  
-                  {/* Current parameters display */}
-                  <CardContent className="px-4 sm:px-6 pt-0">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs sm:text-sm">
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Modal", "Capital")}</div>
-                        <div className="font-semibold">USD {params.modal.toLocaleString()}</div>
-                      </div>
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Strategi", "Strategy")}</div>
-                        <div className="font-semibold">{params.strategy}</div>
-                      </div>
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Target", "Target")}</div>
-                        <div className="font-semibold">{params.targetPoin} pts</div>
-                      </div>
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Maks Layer", "Max Layer")}</div>
-                        <div className="font-semibold">{params.maxLayer} layer</div>
-                      </div>
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Kondisi Pasar", "Market Condition")}</div>
-                        <div className="font-semibold">{params.marketCondition}</div>
-                      </div>
-                      <div className="bg-background rounded-md p-2 border">
-                        <div className="text-muted-foreground text-[10px]">{t("Pengalaman", "Experience")}</div>
-                        <div className="font-semibold">{params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</div>
-                      </div>
+              <Card 
+                className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
+                onClick={() => setLocation("/")}
+                data-testid="card-parameters-edit"
+              >
+                <CardHeader className="pb-2 px-4 sm:px-6">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-primary" />
+                    <span>{t("Parameter Analisis Anda", "Your Analysis Parameters")}</span>
+                    <Edit className="w-4 h-4 text-muted-foreground ml-auto" />
+                  </CardTitle>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {t("Klik untuk mengubah parameter", "Click to edit parameters")}
+                  </p>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6 pt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs sm:text-sm">
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Modal", "Capital")}</div>
+                      <div className="font-semibold">USD {params.modal.toLocaleString()}</div>
                     </div>
-                    
-                    {/* Collapsible interactive controls */}
-                    <CollapsibleContent>
-                      <div className="mt-4 pt-4 border-t border-border/50">
-                        <p className="text-xs text-muted-foreground mb-3">
-                          {t("Pilih parameter berbeda untuk melihat bagaimana risiko berubah:", "Select different parameters to see how risk changes:")}
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">{t("Strategi", "Strategy")}</label>
-                            <Select value={params.strategy} onValueChange={(v) => updateParam("strategy", v)}>
-                              <SelectTrigger className="h-9 text-xs" data-testid="select-strategy-sim">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Linear Averaging">Linear Averaging</SelectItem>
-                                <SelectItem value="Martingale">Martingale</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">{t("Target Poin", "Target Points")}</label>
-                            <Select value={params.targetPoin} onValueChange={(v) => updateParam("targetPoin", v)}>
-                              <SelectTrigger className="h-9 text-xs" data-testid="select-target-sim">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="30">30 pts</SelectItem>
-                                <SelectItem value="40">40 pts</SelectItem>
-                                <SelectItem value="50">50 pts</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">{t("Maks Layer", "Max Layer")}</label>
-                            <Select value={params.maxLayer} onValueChange={(v) => updateParam("maxLayer", v)}>
-                              <SelectTrigger className="h-9 text-xs" data-testid="select-layer-sim">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="3">3 Layer</SelectItem>
-                                <SelectItem value="4">4 Layer</SelectItem>
-                                <SelectItem value="5">5 Layer</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">{t("Kondisi Pasar", "Market Condition")}</label>
-                            <Select value={params.marketCondition} onValueChange={(v) => updateParam("marketCondition", v)}>
-                              <SelectTrigger className="h-9 text-xs" data-testid="select-market-sim">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Sideways">Sideways</SelectItem>
-                                <SelectItem value="Trending">Trending</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] sm:text-xs text-muted-foreground block mb-1">{t("Pengalaman", "Experience")}</label>
-                            <Select value={params.experience} onValueChange={(v) => updateParam("experience", v)}>
-                              <SelectTrigger className="h-9 text-xs" data-testid="select-experience-sim">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Pemula">{t("Pemula", "Beginner")}</SelectItem>
-                                <SelectItem value="Berpengalaman">{t("Berpengalaman", "Experienced")}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-3 italic">
-                          {t("Catatan: Modal tidak bisa diubah di sini. Kembali ke halaman awal untuk mengubah modal.", "Note: Capital cannot be changed here. Go back to home page to change capital.")}
-                        </p>
-                      </div>
-                    </CollapsibleContent>
-                  </CardContent>
-                </Collapsible>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Strategi", "Strategy")}</div>
+                      <div className="font-semibold">{params.strategy}</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Target", "Target")}</div>
+                      <div className="font-semibold">{params.targetPoin} pts</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Maks Layer", "Max Layer")}</div>
+                      <div className="font-semibold">{params.maxLayer} layer</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Kondisi Pasar", "Market Condition")}</div>
+                      <div className="font-semibold">{params.marketCondition}</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Pengalaman", "Experience")}</div>
+                      <div className="font-semibold">{params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</div>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             )}
 

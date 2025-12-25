@@ -48,27 +48,6 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - Typography: Inter (UI), JetBrains Mono (numerical data)
 - Bilingual UI (Indonesian/English) for all risk-related content
 
-### Mode System (NEW)
-Three presentation modes for different audiences, all sharing the same risk calculation engine:
-- **Public Mode** (default): Simple language for general public/retail traders
-- **Internal (WPB) Mode**: Semi-technical language for broker representatives (Wakil Pialang Berjangka)
-- **Regulator/Compliance Mode**: Formal, neutral language for compliance and academic presentations
-
-Mode features:
-- Stored in URL query param (`?mode=public|internal|regulator`) for shareable links
-- Persisted in localStorage as fallback
-- Mode toggle available in header across all pages
-- Same risk score/status across all modes - only narrative changes
-- REM sentence displayed in all modes: "Status AMAN tidak berarti bebas risiko..."
-- Interactive parameter simulator on result page with mode-specific labels
-
-### Interactive Risk Simulator
-Result page includes collapsible interactive controls allowing users to:
-- Change strategy, target points, layer count, market condition, experience level
-- See risk score update in real-time without going back to home page
-- Label: "Simulasikan Risiko" (Public/Internal) or "Lihat Perubahan Risiko" (Regulator)
-- Framing is educational, not profit optimization
-
 ## External Dependencies
 
 ### Database
