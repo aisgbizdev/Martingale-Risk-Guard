@@ -657,51 +657,110 @@ export default function Result() {
 
         {result.metrics && (
           <>
-            {/* PARAMETER ANALISIS ANDA - Ringkasan input dari home page, clickable */}
-            <Card 
-              className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
-              onClick={() => setLocation("/")}
-              data-testid="card-parameters-edit"
-            >
-              <CardHeader className="pb-2 px-4 sm:px-6">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Info className="w-5 h-5 text-primary" />
-                  <span>{t("Parameter Analisis Anda", "Your Analysis Parameters")}</span>
-                  <Edit className="w-4 h-4 text-muted-foreground ml-auto" />
-                </CardTitle>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  {t("Klik untuk mengubah parameter", "Click to edit parameters")}
-                </p>
-              </CardHeader>
-              <CardContent className="px-4 sm:px-6 pt-0">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs sm:text-sm">
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Modal", "Capital")}</div>
-                    <div className="font-semibold">USD {params.modal.toLocaleString()}</div>
+            {/* PARAMETER ANALISIS - Tampilkan semua skenario yang tersimpan */}
+            {savedScenarios.length >= 2 ? (
+              <Card className="mb-4 border-primary/30 bg-primary/5">
+                <CardHeader className="pb-2 px-4 sm:px-6">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <GitCompare className="w-5 h-5 text-primary" />
+                    <span>{t("Parameter Kedua Skenario", "Parameters of Both Scenarios")}</span>
+                  </CardTitle>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {t("Klik Bandingkan untuk melihat perbandingan lengkap", "Click Compare to see full comparison")}
+                  </p>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6 pt-0">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {savedScenarios.map((scenario) => {
+                      const bgClass = scenario.result.status === "AMAN" 
+                        ? "border-emerald-500/30 bg-emerald-500/5" 
+                        : scenario.result.status === "BERISIKO" 
+                          ? "border-amber-500/30 bg-amber-500/5" 
+                          : "border-rose-500/30 bg-rose-500/5";
+                      return (
+                        <div key={scenario.id} className={`rounded-md p-3 border ${bgClass}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold text-sm">{getScenarioName(scenario.nameKey)}</span>
+                            <span className="font-mono font-bold">{scenario.result.score}/100</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1 text-xs">
+                            <div>
+                              <span className="text-muted-foreground">{t("Modal", "Capital")}: </span>
+                              <span className="font-medium">USD {scenario.params.modal.toLocaleString()}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t("Strategi", "Strategy")}: </span>
+                              <span className="font-medium">{scenario.params.strategy}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Target: </span>
+                              <span className="font-medium">{scenario.params.targetPoin}pts</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Layer: </span>
+                              <span className="font-medium">{scenario.params.maxLayer}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t("Pasar", "Market")}: </span>
+                              <span className="font-medium">{scenario.params.marketCondition}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">{t("Exp", "Exp")}: </span>
+                              <span className="font-medium">{scenario.params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Exp")}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Strategi", "Strategy")}</div>
-                    <div className="font-semibold">{params.strategy}</div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card 
+                className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
+                onClick={() => setLocation("/")}
+                data-testid="card-parameters-edit"
+              >
+                <CardHeader className="pb-2 px-4 sm:px-6">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Info className="w-5 h-5 text-primary" />
+                    <span>{t("Parameter Analisis Anda", "Your Analysis Parameters")}</span>
+                    <Edit className="w-4 h-4 text-muted-foreground ml-auto" />
+                  </CardTitle>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {t("Klik untuk mengubah parameter", "Click to edit parameters")}
+                  </p>
+                </CardHeader>
+                <CardContent className="px-4 sm:px-6 pt-0">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs sm:text-sm">
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Modal", "Capital")}</div>
+                      <div className="font-semibold">USD {params.modal.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Strategi", "Strategy")}</div>
+                      <div className="font-semibold">{params.strategy}</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Target", "Target")}</div>
+                      <div className="font-semibold">{params.targetPoin} pts</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Maks Layer", "Max Layer")}</div>
+                      <div className="font-semibold">{params.maxLayer} layer</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Kondisi Pasar", "Market Condition")}</div>
+                      <div className="font-semibold">{params.marketCondition}</div>
+                    </div>
+                    <div className="bg-background rounded-md p-2 border">
+                      <div className="text-muted-foreground text-[10px]">{t("Pengalaman", "Experience")}</div>
+                      <div className="font-semibold">{params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</div>
+                    </div>
                   </div>
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Target", "Target")}</div>
-                    <div className="font-semibold">{params.targetPoin} pts</div>
-                  </div>
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Maks Layer", "Max Layer")}</div>
-                    <div className="font-semibold">{params.maxLayer} layer</div>
-                  </div>
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Kondisi Pasar", "Market Condition")}</div>
-                    <div className="font-semibold">{params.marketCondition}</div>
-                  </div>
-                  <div className="bg-background rounded-md p-2 border">
-                    <div className="text-muted-foreground text-[10px]">{t("Pengalaman", "Experience")}</div>
-                    <div className="font-semibold">{params.experience === "Pemula" ? t("Pemula", "Beginner") : t("Berpengalaman", "Experienced")}</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* BENCHMARK TESIS - PF & ER (tetap untuk kombinasi strategi + target) */}
             <Card className="mb-4">
