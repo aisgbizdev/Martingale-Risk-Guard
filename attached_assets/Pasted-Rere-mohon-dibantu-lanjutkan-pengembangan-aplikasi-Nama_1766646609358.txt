@@ -1,0 +1,96 @@
+Rere, mohon dibantu lanjutkan pengembangan aplikasi:
+
+Nama Aplikasi:
+Martingale Risk Guard
+
+KONSEP UTAMA (WAJIB DIPATUHI)
+- Ini SATU aplikasi, BUKAN 3 aplikasi terpisah.
+- Aplikasi memiliki SATU mesin logika perhitungan risiko.
+- Perbedaan hanya pada MODE tampilan & bahasa (menu), bukan pada hasil hitung.
+
+TUJUAN APLIKASI
+Martingale Risk Guard adalah aplikasi edukasi & mitigasi risiko
+untuk mengecek tingkat risiko strategi Martingale vs Linear Averaging
+pada XUL10 (SPA PBK).
+
+Aplikasi ini:
+- BUKAN aplikasi trading
+- BUKAN pemberi sinyal entry/exit
+- BUKAN rekomendasi transaksi
+- Fokus pada literasi risiko & perlindungan pengguna
+
+STRUKTUR MODE (DALAM SATU APLIKASI)
+Buat 3 MODE tampilan:
+
+1) MODE PUBLIK (default)
+   - Bahasa awam
+   - Untuk masyarakat umum
+   - Menampilkan:
+     - Status Risiko: AMAN / BERISIKO / TIDAK LAYAK
+     - Skor Risiko (0–100)
+     - Ringkasan alasan (bahasa sederhana)
+     - Peringatan utama
+     - Catatan psikologi trading
+   - Tidak ada istilah teknis berlebihan
+   - Tidak ada kesan “alat profesional trading”
+
+2) MODE INTERNAL / WPB
+   - Bahasa lebih teknis
+   - Untuk edukasi internal (WPB / trainer)
+   - Menampilkan hal yang sama dengan Mode Publik
+     + tambahan penjelasan teknis (margin, drawdown, eksposur risiko)
+   - Tidak mengubah hasil hitung
+   - Hanya memperdalam narasi
+
+3) MODE REGULATOR / EDUKASI
+   - Fokus presentasi & literasi risiko
+   - Bahasa netral & compliance-friendly
+   - Menekankan:
+     - Perlindungan nasabah
+     - Risiko eksponensial
+     - Bias psikologi trader
+   - TANPA bahasa strategi unggul / profit / cuan
+
+IMPLEMENTASI MODE
+- Mode cukup diatur via:
+  - query param (?mode=public | internal | regulator)
+  ATAU
+  - toggle menu sederhana
+- Default = public
+
+LOGIKA PERHITUNGAN (TIDAK BOLEH DUPLIKASI)
+Gunakan SATU fungsi risk engine:
+evaluateRisk(input)
+
+Hasil perhitungan:
+- Risk Score (0–100)
+- Status:
+  - 0–39   = AMAN
+  - 40–69  = BERISIKO
+  - 70–100 = TIDAK LAYAK
+
+❗ PENTING:
+- Hasil hitung HARUS SAMA di semua mode
+- Yang berubah hanya:
+  - bahasa
+  - istilah
+  - kedalaman penjelasan
+
+FITUR PENGEMBANGAN LANJUTAN (PRIORITAS)
+1) Interaktif:
+   - User bisa ubah parameter (target poin, layer, strategi)
+   - Sistem langsung update skor & status risiko
+2) Tambahkan kalimat edukatif:
+   “Silakan ubah parameter untuk melihat bagaimana risiko berubah.”
+
+BATASAN (HARUS DIJAGA)
+- Tidak boleh ada:
+  - sinyal trading
+  - rekomendasi entry/exit
+  - ajakan transaksi
+- Semua output bersifat edukasi & mitigasi risiko
+
+FILOSOFI PRODUK
+Martingale Risk Guard adalah ALAT REM, bukan GAS.
+Tugas aplikasi ini bukan membuat orang berani trading,
+tapi membuat orang sadar risiko sebelum salah langkah.
