@@ -299,6 +299,71 @@ export default function Literasi() {
             </Button>
           </Link>
         </div>
+
+        {/* ATRIBUSI THESIS - Landasan ilmiah aplikasi */}
+        <Card className="mt-10 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              {t("Landasan Penelitian", "Research Foundation")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm sm:text-base">
+            <div className="p-4 bg-background/80 rounded-md border">
+              <p className="font-semibold text-foreground mb-2">
+                {t("Aplikasi ini dikembangkan berdasarkan:", "This application is developed based on:")}
+              </p>
+              <div className="space-y-2 text-muted-foreground">
+                <p className="font-medium text-foreground">
+                  {t("Tesis Magister Manajemen", "Master of Management Thesis")}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Judul", "Title")}: </span>
+                  <span className="italic">
+                    "Analisis Perbandingan Strategi Martingale dan Linear Averaging pada Transaksi Gold Rolling Contract XUL10 (SPA PBK) Menggunakan Pendekatan Financial Engineering dan Behavioral Finance"
+                  </span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Penulis", "Author")}: </span>
+                  <span className="font-medium">Iriawan Widadi, S.Kom</span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Program Studi", "Program")}: </span>
+                  Magister Manajemen
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Universitas", "University")}: </span>
+                  <span className="font-medium">Universitas Diponegoro (UNDIP)</span>
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Lokasi", "Location")}: </span>
+                  Semarang, Jawa Tengah, Indonesia
+                </p>
+                <p>
+                  <span className="text-muted-foreground">{t("Tahun", "Year")}: </span>
+                  2025
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-700 dark:text-amber-300">
+                  <p className="font-medium mb-1">
+                    {t("Disclaimer Penting", "Important Disclaimer")}
+                  </p>
+                  <p>
+                    {t(
+                      "Semua hasil analisis, skor risiko, dan rekomendasi dalam aplikasi ini dihasilkan berdasarkan metodologi, data backtesting, dan parameter yang dikembangkan dalam penelitian tesis tersebut. Hasil analisis bersifat edukatif dan tidak menjamin akurasi dalam kondisi pasar nyata. Pengguna bertanggung jawab penuh atas keputusan trading yang diambil.",
+                      "All analysis results, risk scores, and recommendations in this application are generated based on the methodology, backtest data, and parameters developed in the aforementioned thesis research. Analysis results are educational in nature and do not guarantee accuracy in real market conditions. Users are fully responsible for their trading decisions."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

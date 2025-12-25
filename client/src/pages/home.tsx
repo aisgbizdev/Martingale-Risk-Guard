@@ -180,9 +180,9 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 gap-2">
           <Link href="/literasi">
-            <Button variant="ghost" size="sm" className="gap-2" data-testid="link-literasi">
+            <Button variant="default" size="sm" className="gap-2" data-testid="link-literasi">
               <BookOpen className="w-4 h-4" />
               {t("Literasi Risiko", "Risk Literacy")}
             </Button>
@@ -258,14 +258,29 @@ export default function Home() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm">{t("Modal Awal (USD)", "Initial Capital (USD)")}</FormLabel>
+                        <div className="flex gap-2 flex-wrap mb-2">
+                          {[100000, 200000, 300000].map((preset) => (
+                            <Button
+                              key={preset}
+                              type="button"
+                              variant={field.value === preset ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => field.onChange(preset)}
+                              data-testid={`button-modal-${preset}`}
+                            >
+                              {preset === 200000 && <CheckCircle className="w-3 h-3 mr-1 text-emerald-500" />}
+                              USD {preset.toLocaleString()}
+                            </Button>
+                          ))}
+                        </div>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder={t("Contoh: 50000", "Example: 50000")}
+                            placeholder={t("Atau masukkan nilai lain", "Or enter custom value")}
                             data-testid="input-modal"
                             className="h-10 sm:h-11"
                             min="0"
-                            value={field.value || ""}
+                            value={field.value === 100000 || field.value === 200000 || field.value === 300000 ? "" : (field.value || "")}
                             onChange={(e) => {
                               const val = e.target.value;
                               field.onChange(val === "" ? 0 : parseFloat(val));
@@ -274,7 +289,7 @@ export default function Home() {
                         </FormControl>
                         <p className="text-xs text-muted-foreground flex items-start gap-1">
                           <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                          {t("Referensi penelitian: USD 200.000", "Research reference: USD 200,000")}
+                          {t("Referensi optimal tesis: USD 200.000", "Thesis optimal reference: USD 200,000")}
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -434,12 +449,24 @@ export default function Home() {
         </div>
 
         <div className="mt-6 sm:mt-8 text-center px-4">
-          <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed">
+          <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4">
             {t(
               "Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.",
               "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility."
             )}
           </p>
+          <div className="flex justify-center gap-4 text-xs">
+            <Link href="/privacy">
+              <span className="text-muted-foreground hover:text-foreground underline cursor-pointer" data-testid="link-privacy">
+                {t("Kebijakan Privasi", "Privacy Policy")}
+              </span>
+            </Link>
+            <Link href="/terms">
+              <span className="text-muted-foreground hover:text-foreground underline cursor-pointer" data-testid="link-terms">
+                {t("Syarat & Ketentuan", "Terms & Conditions")}
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
