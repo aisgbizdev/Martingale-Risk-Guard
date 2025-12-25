@@ -522,14 +522,13 @@ export default function Result() {
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
         <div className="flex justify-end mb-4">
           <Button
-            variant="outline"
-            size="sm"
+            variant="default"
             onClick={() => setLanguage(language === "id" ? "en" : "id")}
             className="gap-2"
             data-testid="button-language-toggle"
           >
             <Globe className="w-4 h-4" />
-            {language === "id" ? "EN" : "ID"}
+            {language === "id" ? "English" : "Indonesia"}
           </Button>
         </div>
 
@@ -577,6 +576,18 @@ export default function Result() {
             
             {/* Tombol Simpan & Bandingkan Skenario */}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link href="/">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                  data-testid="button-buat-skenario-top"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t("Buat Skenario", "Create Scenario")}
+                </Button>
+              </Link>
+              
               <Button
                 variant="outline"
                 size="sm"
@@ -593,7 +604,7 @@ export default function Result() {
               
               {savedScenarios.length === 1 && (
                 <Button
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   onClick={() => setLocation("/")}
                   className="gap-2"
@@ -989,11 +1000,17 @@ export default function Result() {
           </CardContent>
         </Card>
 
-        <div className="mt-6 sm:mt-8 text-center">
+        <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/">
-            <Button size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-cek-ulang">
-              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              {t("Cek Ulang", "Check Again")}
+            <Button size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-buat-skenario">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              {t("Buat Skenario Baru", "Create New Scenario")}
+            </Button>
+          </Link>
+          <Link href="/literasi">
+            <Button variant="outline" size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-literasi-result">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              {t("Literasi Risiko", "Risk Literacy")}
             </Button>
           </Link>
         </div>
