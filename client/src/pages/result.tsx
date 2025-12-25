@@ -588,6 +588,16 @@ export default function Result() {
           
           {/* Mode-specific narrative */}
           <div className="mt-4 p-3 sm:p-4 bg-muted/30 rounded-md max-w-lg mx-auto">
+            {/* Mode indicator badge */}
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Badge variant="outline" className="text-[10px]">
+                {mode === "public" 
+                  ? t("Mode: Publik", "Mode: Public")
+                  : mode === "internal"
+                    ? t("Mode: Internal WPB", "Mode: Internal WPB") 
+                    : t("Mode: Regulator", "Mode: Regulator")}
+              </Badge>
+            </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {getNarrative(
                 mode,
@@ -600,10 +610,16 @@ export default function Result() {
             {mode !== "public" && (
               <div className="mt-3 pt-3 border-t border-border/50 space-y-2 text-xs text-muted-foreground">
                 {getNarrative(mode, "marginExplanation", language) && (
-                  <p>{getNarrative(mode, "marginExplanation", language)}</p>
+                  <p className="flex items-start gap-1.5">
+                    <Info className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
+                    {getNarrative(mode, "marginExplanation", language)}
+                  </p>
                 )}
                 {getNarrative(mode, "riskExposureExplanation", language) && (
-                  <p>{getNarrative(mode, "riskExposureExplanation", language)}</p>
+                  <p className="flex items-start gap-1.5">
+                    <Activity className="w-3 h-3 mt-0.5 flex-shrink-0 text-primary" />
+                    {getNarrative(mode, "riskExposureExplanation", language)}
+                  </p>
                 )}
               </div>
             )}
