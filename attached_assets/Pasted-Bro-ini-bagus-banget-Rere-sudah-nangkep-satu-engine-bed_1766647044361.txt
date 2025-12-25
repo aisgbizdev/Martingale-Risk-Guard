@@ -1,0 +1,99 @@
+Bro, ini bagus banget. Rere sudah nangkep “satu engine, beda narasi” dan task list-nya rapi + aman. Gw tinggal kasih 2 koreksi kecil + tambahan pagar biar nggak kebablasan (terutama di fitur interaktif).
+
+✅ APPROVE (dengan 4 catatan wajib)
+1) Mode Context — ✅ setuju
+
+Pattern “Language Context” buat mode itu tepat.
+
+Catatan: mode harus “front-end only”, dan disimpan juga di URL (query param) supaya:
+
+bisa share link untuk demo regulator / WPB
+
+konsisten kalau refresh
+
+Contoh: ?mode=public|internal|regulator
+
+2) Mode Toggle di Header — ✅ setuju
+
+Saran kecil: labelnya jangan “WPB” doang.
+Biar orang internal paham:
+
+Public
+
+Internal (WPB)
+
+Regulator / Compliance
+
+3) Narasi per mode — ✅ setuju
+
+Narasi contoh Rere sudah benar. Gw cuma mau tambahin rule copywriting:
+
+Public: “bahasa awam, no teknikal detail”
+
+WPB: boleh teknis, tapi tanpa angka broker/leverage
+
+Regulator: fokus “perlindungan nasabah”, hindari kata ‘optimal’ kalau tidak ditemani konteks riset
+
+Kalau tetap mau pakai kata optimal:
+
+“optimal berdasarkan backtesting tesis (bukan rekomendasi transaksi)”
+
+4) Fitur Interaktif Parameter — ✅ setuju, tapi ada pagar
+
+Ini fitur keren, tapi wajib dikunci supaya tidak jadi “alat optimasi profit”.
+
+✅ Yang boleh:
+
+ubah target / layer / strategi → lihat risiko berubah
+
+copy edukasi: “lihat konsekuensi risiko”
+
+❌ Yang tidak boleh (jangan ditambah):
+
+“best setup”
+
+“parameter paling menguntungkan”
+
+“suggested parameter”
+
+ranking strategi berdasarkan profit
+
+Saran text label tombol:
+
+“Simulasikan Risiko”
+
+“Lihat Perubahan Risiko”
+Bukan “Optimalkan”
+
+✅ Tambahan 2 task mini (ringan tapi penting)
+7) “REM sentence” wajib muncul di semua mode
+
+Satu kalimat standar:
+
+“Status AMAN tidak berarti bebas risiko. Ini alat edukasi & mitigasi risiko, bukan saran transaksi.”
+
+8) QA checklist cepat (untuk Task #6)
+
+Pastikan:
+
+input sama → riskScore sama di semua mode
+
+hanya narasi yang berubah
+
+export screenshot demo per mode untuk bukti
+
+Pesan gw buat Rere (boleh lu copas)
+Approved. Task list aman dan sesuai arah produk (satu risk engine, beda mode narasi).
+
+Catatan wajib:
+1) Mode disimpan juga di URL (?mode=public|internal|regulator) agar shareable.
+2) Label mode: “Internal (WPB)” dan “Regulator/Compliance”.
+3) Narasi WPB boleh teknis tapi jangan masuk angka broker/leverage.
+4) Interaktif parameter harus framing edukasi risiko (Simulasikan Risiko), bukan optimasi profit.
+
+Tambahan:
+- Tambahkan “REM sentence” di semua mode.
+- QA: pastikan riskScore & status identik di semua mode untuk input yang sama.
+
+
+Kalau lu setuju, next gw bisa bikinin template narasi per mode dalam format siap masuk ke code (JSON/TS object) biar Rere tinggal tempel.

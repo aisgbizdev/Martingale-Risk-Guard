@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe, BookOpen, CheckCircle, XCircle } from "lucide-react";
+import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe, BookOpen, CheckCircle, XCircle, Users } from "lucide-react";
 import { riskInputSchema, type RiskInput, type RiskResult } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
+import { useMode, modeLabels, type AppMode } from "@/lib/mode-context";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import appLogo from "@assets/logo_1766644590116.png";
 
 function LiveRiskPreview({ score, status, isCalculating, t }: { 
@@ -95,6 +97,7 @@ export default function Home() {
   const [liveStatus, setLiveStatus] = useState<string | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { mode, setMode, modeLabel } = useMode();
 
   const form = useForm<RiskInput>({
     resolver: zodResolver(riskInputSchema),
@@ -181,22 +184,45 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
-        <div className="flex justify-between items-center mb-4 gap-2">
+        <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
           <Link href="/literasi">
             <Button variant="default" size="sm" className="gap-2" data-testid="link-literasi">
               <BookOpen className="w-4 h-4" />
               {t("Literasi Risiko", "Risk Literacy")}
             </Button>
           </Link>
-          <Button
-            variant="default"
-            onClick={() => setLanguage(language === "id" ? "en" : "id")}
-            className="gap-2"
-            data-testid="button-language-toggle"
-          >
-            <Globe className="w-4 h-4" />
-            {language === "id" ? "English" : "Indonesia"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="button-mode-toggle">
+                  <Users className="w-4 h-4" />
+                  <span className="hidden sm:inline">{modeLabel}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(Object.keys(modeLabels) as AppMode[]).map((m) => (
+                  <DropdownMenuItem
+                    key={m}
+                    onClick={() => setMode(m)}
+                    className={mode === m ? "bg-accent" : ""}
+                    data-testid={`menu-mode-${m}`}
+                  >
+                    {modeLabels[m]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setLanguage(language === "id" ? "en" : "id")}
+              className="gap-2"
+              data-testid="button-language-toggle"
+            >
+              <Globe className="w-4 h-4" />
+              {language === "id" ? "English" : "Indonesia"}
+            </Button>
+          </div>
         </div>
 
         <div className="text-center mb-8 sm:mb-10">
