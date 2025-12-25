@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe, BookOpen, CheckCircle, XCircle } from "lucide-react";
 import { riskInputSchema, type RiskInput, type RiskResult } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
-import appLogo from "@assets/ChatGPT_Image_Dec_25,_2025,_12_47_09_PM_1766641647288.png";
 
 function LiveRiskPreview({ score, status, isCalculating, t }: { 
   score: number | null; 
@@ -201,7 +200,9 @@ export default function Home() {
 
         <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <img src={appLogo} alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12" />
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-md">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+            </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               Martingale Risk Guard
             </h1>

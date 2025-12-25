@@ -18,13 +18,14 @@ export default function PrivacyPolicy() {
             </Button>
           </Link>
           <Button
-            variant="default"
+            variant="outline"
+            size="sm"
             onClick={() => setLanguage(language === "id" ? "en" : "id")}
             className="gap-2"
             data-testid="button-language-toggle"
           >
             <Globe className="w-4 h-4" />
-            {language === "id" ? "English" : "Indonesia"}
+            {language === "id" ? "EN" : "ID"}
           </Button>
         </div>
 
