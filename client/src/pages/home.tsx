@@ -465,6 +465,9 @@ export default function Home() {
               </span>
             </Link>
           </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            © 2025 Martingale Risk Guard. {t("Hak cipta dilindungi.", "All rights reserved.")}
+          </p>
         </div>
       </div>
     </div>
