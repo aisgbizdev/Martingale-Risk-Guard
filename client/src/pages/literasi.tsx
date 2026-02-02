@@ -17,11 +17,9 @@ import {
   Percent,
   Activity,
   CircleDollarSign,
-  FileText,
-  Download
+  FileText
 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
-import thesisPdfUrl from "@assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf";
 
 function ExponentialTable({ t }: { t: (id: string, en: string) => string }) {
   const layers = [
@@ -612,24 +610,6 @@ export default function Literasi() {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-border">
-              <a
-                href={thesisPdfUrl}
-                download="Tesis_Iriawan_Widadi_UNDIP_2025.pdf"
-                className="inline-flex"
-              >
-                <Button variant="outline" className="gap-2" data-testid="button-download-thesis">
-                  <Download className="w-4 h-4" />
-                  {t("Download Tesis Lengkap (PDF)", "Download Full Thesis (PDF)")}
-                </Button>
-              </a>
-              <p className="text-xs text-muted-foreground mt-2">
-                {t(
-                  "Untuk melihat data backtesting lengkap, grafik hasil pengujian, dan bukti empiris penelitian.",
-                  "To view complete backtest data, testing result graphs, and empirical research evidence."
-                )}
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
