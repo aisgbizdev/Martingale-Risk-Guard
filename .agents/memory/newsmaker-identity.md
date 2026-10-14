@@ -23,9 +23,9 @@ The user approved a chart-first Technical view, with the chart directly visible 
 
 Remove dropdowns that only contain a short explanatory description, along with the redundant description. Keep the layout consistent across pages, not just Technical.
 
-**Why:** The user said the other pages were also messy and asked to remove dropdowns containing only one line of explanation.
+**Why:** The user said the other pages were also messy and asked to remove dropdowns containing only one line of explanation. They later repeated that almost every page was messy and the supplied Positions screenshot was only one example.
 
-**How to apply:** Prefer useful controls and data over decorative explanations. Preserve meaningful form/filter/data disclosures, novice term help, and essential visible risk/source warnings.
+**How to apply:** Prefer useful controls and data over decorative explanations. Preserve meaningful form/filter/data disclosures, novice term help, and essential visible risk/source warnings. Treat these complaints as application-wide layout feedback, not a request to fix only the pictured route.
 
 Desktop and mobile must have intentionally adapted layouts and interaction behavior, not merely scaled elements. Check expanded forms as well as the closed dashboard.
 
