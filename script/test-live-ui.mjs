@@ -115,6 +115,16 @@ try {
   await click("Mengerti, lanjutkan");
   check("Introduction choice persists locally", await evaluate('localStorage.getItem("mrg_welcome_seen") === "1"'));
   check("Mobile overview does not overflow", await noOverflow());
+  await waitFor("document.querySelector('.live-brand img')?.naturalWidth > 0");
+  check("Newsmaker logo and identity render from a local asset", await evaluate("document.querySelector('.live-brand img').getAttribute('src') === '/newsmaker-logo-white.png' && document.body.innerText.includes('MRG · Newsmaker')"));
+  check("Header uses the official Newsmaker blue", await evaluate("getComputedStyle(document.querySelector('.live-header')).backgroundColor === 'rgb(16, 97, 179)'"));
+  await click("Buka menu", true);
+  check("Mobile expanded menu remains readable on its blue surface", await evaluate("getComputedStyle(document.querySelector('.live-mobile-menu')).backgroundColor === 'rgb(16, 97, 179)' && !!document.querySelector('.live-mobile-menu a')"));
+  await click("Tutup menu", true);
+  check("Browser favicon and app theme match Newsmaker", await evaluate("document.querySelector('link[rel=\"icon\"]').getAttribute('href') === '/newsmaker-favicon.png' && document.querySelector('meta[name=\"theme-color\"]').content === '#1061b3'"));
+  await command("Emulation.setDeviceMetricsOverride", { width: 320, height: 800, deviceScaleFactor: 1, mobile: true });
+  check("Narrow 320px overview retains all header controls without overflow", await noOverflow() && await evaluate("[...document.querySelectorAll('.live-header button,.live-header a')].every(el => { const r=el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; })"));
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   await navigate("/positions", "Catat, lalu bandingkan");
   check("Introduction stays dismissed on another route", !(await text()).includes("Sebelum menggunakan MRG"));
   await click("Catat posisi");

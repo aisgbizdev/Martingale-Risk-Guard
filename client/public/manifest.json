@@ -1,21 +1,21 @@
 {
-  "name": "Martingale Risk Guard",
-  "short_name": "Risk Guard",
+  "name": "Martingale Risk Guard · Newsmaker",
+  "short_name": "MRG · Newsmaker",
   "description": "Aplikasi edukasi untuk cek risiko strategi Martingale vs Linear Averaging pada XUL10",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "background_color": "#f7f8fb",
+  "theme_color": "#1061b3",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/newsmaker-mrg-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/newsmaker-mrg-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

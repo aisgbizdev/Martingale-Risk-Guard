@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Shield, ChevronRight, AlertTriangle, TrendingUp, Layers, User, BarChart3, Info, Globe, BookOpen, CheckCircle, XCircle } from "lucide-react";
 import { riskInputSchema, type RiskInput, type RiskResult } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
-import appLogo from "@assets/logo_1766644590116.png";
 
 function LiveRiskPreview({ score, status, isCalculating, t }: { 
   score: number | null; 
@@ -198,12 +197,13 @@ export default function Home() {
 
         <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-            <img src={appLogo} alt="Martingale Risk Guard Logo" className="w-10 h-10 sm:w-12 sm:h-12" />
+            <img src="/newsmaker-favicon.png" alt="Newsmaker" className="w-10 h-10 sm:w-12 sm:h-12" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               {t("Simulasi Dasar", "Basic Simulation")}
             </h1>
           </div>
           
+          <p className="text-primary text-xs font-semibold tracking-wide mb-3">MRG · Newsmaker</p>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-2">
             {t(
               "Asesmen risiko berbasis framework Financial Engineering dan Behavioral Finance untuk strategi Martingale vs Linear Averaging pada XUL10.",

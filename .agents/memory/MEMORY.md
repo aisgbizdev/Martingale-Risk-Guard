@@ -2,3 +2,4 @@
 - [Live risk boundaries](live-risk-analysis.md) — approved D1 gold-reference use, transparent initial weights, and no brokerage execution.
 - [Browser verification quirks](browser-verification.md) — storage-denial tests also affect Replit's injected preview banner; separate those errors from application failures.
 - [Quote feed documentation scope](quote-feed-shapes.md) — the guide describes a wrapper, while the direct feed exposes native timestamps; validate per-symbol times in both.
+- [Newsmaker visual identity](newsmaker-identity.md) — MRG should feel like a Newsmaker feature, without copying the portal's news-homepage layout.
