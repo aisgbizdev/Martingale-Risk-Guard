@@ -85,7 +85,7 @@ try {
   });
   await new Promise((done) => socket.once("open", done));
   browserVersion = await command("Browser.getVersion");
-  console.log("Environment: desktop headless Chromium with mobile viewport emulation; NOT Android hardware.", browserVersion.product);
+  console.log("Environment: desktop headless Chromium with mobile viewport emulation; NOT Android/iPhone hardware or Safari.", browserVersion.product);
   await command("Page.enable"); await command("Runtime.enable"); await command("Network.enable");
   await command("Network.setCacheDisabled", { cacheDisabled: true });
   await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -209,13 +209,49 @@ try {
   check("Reconnection clears the offline banner", true);
   check("Reconnection permits a fresh network API request", await evaluate("fetch('/api/market/quotes').then(r=>r.ok).catch(()=>false)"));
   check("Reconnection preserves the complete local portfolio", await evaluate("localStorage.getItem('mrg_portfolio_v1')") === savedPortfolio);
+  const manifest = await fetch(origin + "/manifest.json").then((response) => response.json());
+  check("Manifest requests standalone with both orientations", manifest.display === "standalone" && manifest.orientation === "any");
+  check("Apple standalone metadata and cached touch icon are present", await evaluate(`(
+    document.querySelector('meta[name="apple-mobile-web-app-capable"]')?.content === 'yes' &&
+    document.querySelector('meta[name="apple-mobile-web-app-title"]')?.content === 'MRG · Newsmaker' &&
+    document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href') === '/newsmaker-mrg-192.png'
+  )`) && cachePaths.includes("/newsmaker-mrg-192.png"));
+  // Exercise the iOS-specific property in Chromium, not actual Safari or OS launch.
+  const standaloneFlag = await command("Page.addScriptToEvaluateOnNewDocument", {
+    source: "Object.defineProperty(navigator,'standalone',{configurable:true,get:()=>true})",
+  });
+  await command("Page.navigate", { url: origin + "/positions" });
+  await waitFor("document.querySelector('.live-riskbar') !== null");
+  check("Synthetic navigator.standalone hides the install control", await evaluate("!document.querySelector('[aria-label=\"Install aplikasi\"]')"));
+  await evaluate("document.querySelector('a[href=\"/analysis\"]').click()");
+  await waitFor("document.body.innerText.includes('Konteks, bukan sinyal')");
+  check("Synthetic iOS standalone state survives in-app navigation", await evaluate("!document.querySelector('[aria-label=\"Install aplikasi\"]')"));
+  await command("Page.removeScriptToEvaluateOnNewDocument", { identifier: standaloneFlag.identifier });
+  await command("Page.navigate", { url: origin + "/positions" });
+  await waitFor("document.querySelector('[aria-label=\"Install aplikasi\"]') !== null");
+  // Discard Chromium's real deferred prompt to model a browser without that API.
+  await evaluate(`(() => {
+    const event = new Event('beforeinstallprompt', {cancelable:true});
+    event.prompt = async () => {};
+    event.userChoice = Promise.resolve({outcome:'dismissed'});
+    window.dispatchEvent(event);
+    document.querySelector('[aria-label="Install aplikasi"]').click();
+  })()`);
+  await waitFor("document.querySelector('[aria-label=\"Panduan install\"]') !== null");
+  await evaluate("document.querySelector('[aria-label=\"Tutup panduan install\"]').click()");
+  await evaluate("document.querySelector('[aria-label=\"Install aplikasi\"]').click()");
+  await waitFor("document.querySelector('[aria-label=\"Panduan install\"]') !== null");
+  check("Without a browser prompt, the guide gives Safari Share and Add to Home Screen steps", await evaluate(`document.querySelector('[aria-label="Panduan install"]').innerText.includes('iPhone: Safari → Bagikan → Tambahkan ke Layar Utama.')`));
+  await screenshot("iphone-install-guide");
+  await evaluate("document.querySelector('[aria-label=\"Tutup panduan install\"]').click()");
+  check("Manual installation guide closes without changing local records", await evaluate("!document.querySelector('[aria-label=\"Panduan install\"]') && localStorage.getItem('mrg_portfolio_v1') === " + JSON.stringify(savedPortfolio)));
   check("No uncaught production application errors", errors.length === 0);
   await writeFile(resolve(evidenceRoot, "checks.json"), JSON.stringify({
     checkedAt: new Date().toISOString(),
-    environment: "Local production-build fixture; desktop headless Chromium, mobile viewport emulation. Not a deployed production URL or Android OS.",
+    environment: "Local production-build fixture; desktop headless Chromium, mobile viewport emulation. Not a deployed production URL, Android/iPhone OS, or Safari.",
     browser: browserVersion, viewports: ["390x844", "844x390", "390x360"],
     checks, errors,
-    notVerified: ["Android OS installation", "Actual standalone launch", "Physical safe area", "Android software keyboard", "Browser restart on Android", "Production deployment"],
+    notVerified: ["Android OS installation", "iPhone Safari and Add to Home Screen", "Actual standalone launch", "Physical safe area", "Android/iPhone software keyboard", "Browser restart on Android/iPhone", "Production deployment"],
   }, null, 2));
   console.log(`Verified ${checks.length} local production-build PWA checks. Evidence: generated-artifacts/pwa/`);
 } catch (error) {
