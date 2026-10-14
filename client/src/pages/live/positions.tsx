@@ -9,7 +9,7 @@ import { usePortfolio } from "@/lib/portfolio-context";
 import { useLanguage } from "@/lib/language-context";
 import { LiveShell } from "@/components/live/live-shell";
 import { AdaptivePanel } from "@/components/live/adaptive-panel";
-import { ErrorBox, Field, PageIntro, Panel, RiskSummary } from "@/components/live/live-ui";
+import { ErrorBox, Field, INITIAL_HEURISTIC_WARNING_ID, PageIntro, Panel, RiskSummary, WHOLE_ACCOUNT_RISK_REASON_ID } from "@/components/live/live-ui";
 import { TermHelp } from "@/components/live/term-help";
 
 const show = (value: number | null, digits = 3) => value === null ? "—" : new Intl.NumberFormat(undefined, { maximumFractionDigits: digits }).format(value);
@@ -77,6 +77,7 @@ export default function PositionsPage() {
     const positions = portfolio.positions.filter((p) => p.side === side);
     return { side, positions, summary: summarizePositions(positions) };
   }), [portfolio.positions]);
+  const displayedGroups = groups.filter((group) => group.positions.length > 0);
 
   const setSetting = (key: keyof PositionSettings, raw: string) => {
     setSettings((old) => ({ ...old, [key]: raw.trim() ? Number(raw) : null }));
@@ -249,23 +250,33 @@ export default function PositionsPage() {
 
     <div className="live-grid live-position-workspace" data-testid="positions-workspace">
       <div className="live-position-left-column" data-testid="positions-entry-records">
-        <button id={activePanel === "entry" ? undefined : "position-entry-controls"} data-testid={activePanel === "entry" ? undefined : "positions-entry"} type="button" className="live-section-toggle" aria-expanded={activePanel === "entry"} onClick={(event) => openEntry(event.currentTarget)}>
-          <span className="live-section-icon"><Plus size={19}/></span><span className="live-section-copy"><strong>{t("Buka catatan", "Open entry form")}</strong><small>{t("Input manual · XUL10 · tanpa order", "Manual entry · XUL10 · no orders")}</small></span><span className="live-section-cta">{t("Buka", "Open")}</span>
-        </button>
+        <div className="live-position-actions">
+          <button id={activePanel === "entry" ? undefined : "position-entry-controls"} data-testid={activePanel === "entry" ? undefined : "positions-entry"} type="button" className="live-section-toggle" aria-expanded={activePanel === "entry"} onClick={(event) => openEntry(event.currentTarget)}>
+            <span className="live-section-icon"><Plus size={19}/></span><span className="live-section-copy"><strong>{t("Buka catatan", "Open entry form")}</strong><small>{t("Input manual · XUL10 · tanpa order", "Manual entry · XUL10 · no orders")}</small></span><span className="live-section-cta">{t("Buka", "Open")}</span>
+          </button>
+          <button id="simulation-controls" data-testid="positions-simulation" type="button" className="live-section-toggle" aria-expanded={activePanel === "simulation"} onClick={(event) => openSimulation(event.currentTarget)}>
+            <span className="live-section-icon"><CopyPlus size={19}/></span><span className="live-section-copy"><strong>{t("Simulasi tambah layer", "Simulate another layer")}</strong><small>{t("Snapshot terpisah · hipotetis · tanpa transaksi", "Separate snapshot · hypothetical · no trade")}</small></span><span className="live-section-cta">{t("Buka", "Open")}</span>
+          </button>
+        </div>
         <Panel data-testid="positions-records" className="live-position-records" title={t("Rangkaian posisi", "Position series")} eyebrow={`${portfolio.positions.length} ${t("catatan tersimpan lokal", "local records")}`} action={<div className="live-row" style={{ flexWrap: "wrap" }}>
           {portfolio.positions.length > 0 && <button className="live-button danger" onClick={() => { if (window.confirm(t("Hapus semua catatan posisi? Tindakan ini tidak dapat dibatalkan.", "Delete all position records? This cannot be undone."))) try { clearPositions(); setActionError(""); } catch (e) { setActionError(String(e)); } }}><Trash2 size={14}/>{t("Hapus semua posisi", "Delete all positions")}</button>}
           <button className="live-button danger" onClick={() => { if (window.confirm(t("Hapus portfolio, preferensi, dan skenario dasar tersimpan di perangkat ini?", "Delete the portfolio, preferences, and saved basic scenarios on this device?"))) try { resetPortfolio(); setSettings({ capital: null, equity: null, currency: "USD", maxLots: null, maxLayers: null, targetPriceDistance: null, layerSpacingPrice: null }); setSettingsFieldErrors({}); setSettingsError(""); setActionError(""); } catch (e) { setActionError(String(e)); } }}><RotateCcw size={14}/>{t("Reset data lokal", "Reset local data")}</button>
         </div>}>
-          {portfolio.positions.length === 0 ? <div className="live-alert">{t("Belum ada posisi. Catatan yang Anda tambahkan hanya disimpan di penyimpanan browser perangkat ini.", "No positions yet. Records you add stay in this device browser storage.")}</div> :
-            <div className="live-grid" style={{ margin: 0 }}>{groups.filter((g) => g.positions.length).map(({ side, positions, summary }) => {
+          {portfolio.positions.length === 0 ? <div className="live-alert">{t("Belum ada posisi. Catatan yang Anda tambahkan hanya disimpan di penyimpanan browser perangkat ini.", "No positions yet. Records you add stay in this device browser storage.")}</div> : <>
+            <div className="live-alert mrg-position-risk-note" role="note">{t("Indeks 0–100 adalah heuristik awal yang belum dikalibrasi; bukan probabilitas rugi atau ukuran risiko seluruh rekening. Batas pilihan yang lebih besar tidak membuat posisi aman.", "The 0–100 index is an initial, uncalibrated heuristic; not a loss probability or whole-account risk measure. Larger chosen limits do not make a position safe.")}</div>
+            <div className="live-grid mrg-position-sides" style={{ margin: 0 }}>{displayedGroups.map(({ side, positions, summary }) => {
               const risk = evaluatePositionRisk(positions, portfolio.settings, market.usableQuote, market.context.isError ? null : market.context.data ?? null, market.now);
-              return <div key={side} className="live-card live-span-6">
-                <div className="live-row"><h3>{side === "buy" ? t("Sisi buy", "Buy side") : t("Sisi sell", "Sell side")}</h3><span className="live-pill">{show(summary.totalLots, 4)} {t("lot", "lots")}</span></div>
+              return <div key={side} data-testid={`position-side-${side}`} className="live-card live-span-6">
+                <div className="live-row"><h3>{side === "buy" ? t("Sisi buy", "Buy side") : t("Sisi sell", "Sell side")}</h3><span className="live-pill">{positions.length} {t("layer", "layers")}</span></div>
+                <div className="mrg-position-quick-metrics" aria-label={t("Ringkasan sisi posisi", "Position side summary")}>
+                  <div><span>{t("Total lot", "Total lots")}</span><strong>{show(summary.totalLots, 4)}</strong></div>
+                  <div><span>{t("Rata-rata berbobot", "Weighted average")}</span><strong>{show(summary.averageEntry)}</strong></div>
+                </div>
                 <details className="live-details" style={{ marginTop: 10 }}><summary>{t("Lihat catatan posisi", "View position records")} · {positions.length}</summary><div className="live-list" style={{ marginTop: 8 }}>{positions.map((p, index) => <div className="live-position" key={p.id}>
                   <div><div className="live-kicker">{t("Layer", "Layer")} {index + 1} · XUL10</div><strong className="live-mono">{show(p.entry)} <span className="live-small">× {show(p.lots, 4)} {t("lot", "lots")}</span></strong><div className="live-small">{p.enteredAt ? new Date(p.enteredAt).toLocaleString() : t("Waktu tidak dicatat", "Time not recorded")}</div></div>
                   <div className="live-row" style={{ gap: 4 }}><button className="live-icon-btn" onClick={(event) => edit(p, event.currentTarget)} aria-label={t("Ubah posisi", "Edit position")}><Pencil size={14}/></button><button className="live-icon-btn" onClick={() => { if (window.confirm(t("Hapus catatan posisi ini?", "Delete this position record?"))) try { removePosition(p.id); setActionError(""); } catch (e) { setActionError(String(e)); } }} aria-label={t("Hapus posisi", "Delete position")}><Trash2 size={14}/></button></div>
                 </div>)}</div></details>
-                <div style={{ marginTop: 15 }}><RiskSummary risk={risk} detailed/></div>
+                <div className="mrg-position-risk"><RiskSummary risk={risk} detailed compact showCalibrationNote={false} omitReasonIds={[WHOLE_ACCOUNT_RISK_REASON_ID]} omitWarningIds={[INITIAL_HEURISTIC_WARNING_ID]}/></div>
                 {risk.components.length > 0 && <details className="live-details" style={{ marginTop: 14 }}><summary>{t("Lihat rincian indeks dan formula", "View index details and formulas")}</summary><div className="live-stack" style={{ marginTop: 12 }}>{risk.components.map((component) => <div className="live-row live-small" key={component.key} style={{ alignItems: "start" }}><span style={{ flex: 1 }}><strong>{t(component.label.id, component.label.en)}</strong><br/>{t(component.explanation.id, component.explanation.en)}</span><strong className="live-mono">{component.points === null ? "—" : show(component.points, 1)} / {component.max}</strong></div>)}</div></details>}
                 {market.usableQuote && <div className="live-alert" style={{ marginTop: 12 }}>
                   <strong>{t("Stress hipotetis · harga, bukan uang", "Hypothetical stress · price, not money")}</strong>
@@ -273,28 +284,31 @@ export default function PositionsPage() {
                     {stressScenarios(positions, market.usableQuote.price).map((scenario) => <div key={scenario.percent} className="live-row" style={{ marginTop: 7 }}><span>{scenario.percent}% {t("melawan posisi", "adverse move")}</span><strong className="live-mono">{show(scenario.scenarioPrice)} · {t("jarak adverse", "adverse distance")} {show(scenario.adverseDistance)}</strong></div>)}
                     {stressValid && stressScenarios(positions, market.usableQuote.price, [customStress]).map((scenario) => <div key="custom" className="live-row" style={{ marginTop: 7 }}><span>{scenario.percent}% · {t("pilihan Anda", "your choice")}</span><strong className="live-mono">{show(scenario.scenarioPrice)} · {t("jarak adverse", "adverse distance")} {show(scenario.adverseDistance)}</strong></div>)}
                   </details>
-                  <p className="live-small" style={{ marginTop: 9 }}>{t("Skenario ini bukan batas kerugian terburuk atau simulasi likuiditas, spread, maupun margin call.", "These scenarios are not a worst-case loss bound or a simulation of liquidity, spreads, or margin calls.")}</p>
                 </div>}
-                {portfolio.settings.maxLots !== null && <p className="live-small" style={{ marginTop: 12 }}>{t("Sisa batas lot pilihan Anda", "Remaining chosen lot limit")}: {show(Math.max(0, portfolio.settings.maxLots - summary.totalLots), 4)} · {t("bukan kapasitas aman rekening", "not safe account capacity")}</p>}
-                {portfolio.settings.maxLayers !== null && <p className="live-small">{t("Sisa batas layer pilihan Anda", "Remaining chosen layer limit")}: {Math.max(0, portfolio.settings.maxLayers - summary.layers)}</p>}
+                {(portfolio.settings.maxLots !== null || portfolio.settings.maxLayers !== null) && <div className="mrg-position-limit-reminder live-small">
+                  {portfolio.settings.maxLots !== null && <span>{t("Sisa batas lot", "Lots remaining")}: <strong>{show(Math.max(0, portfolio.settings.maxLots - summary.totalLots), 4)}</strong> · {t("bukan kapasitas aman", "not safe capacity")}</span>}
+                  {portfolio.settings.maxLayers !== null && <span>{t("Sisa batas layer", "Layers remaining")}: <strong>{Math.max(0, portfolio.settings.maxLayers - summary.layers)}</strong></span>}
+                </div>}
               </div>;
-            })}</div>}
+            })}</div>
+            {market.usableQuote && <p className="live-small mrg-position-stress-caveat">{t("Skenario tekanan menunjukkan jarak harga saja; bukan batas kerugian terburuk atau simulasi likuiditas, spread, maupun margin call.", "Stress scenarios show price distance only; not a worst-case loss bound or a simulation of liquidity, spreads, or margin calls.")}</p>}
+          </>}
         </Panel>
       </div>
 
       <Panel id="settings-controls" data-testid="positions-settings" className="live-position-settings" title={t("Batas & preferensi", "Limits & preferences")} eyebrow={t("Bukan target atau rekomendasi", "Not a target or recommendation")} action={<button type="button" className="live-button live-section-settings-button" onClick={(event) => openSettings(event.currentTarget)} aria-expanded={activePanel === "settings"} aria-label={t("Tampilkan pengaturan", "Show settings")}><Settings2 size={16}/>{t("Atur batas", "Edit limits")}</button>}>
         <p className="live-small">{t("Modal dan ekuitas dipisahkan. Tidak ada klaim P/L uang, margin, atau risiko rekening; ukuran kontrak dan konversi poin belum tervalidasi.", "Capital and equity are separate. No monetary P/L, margin, or account-risk claims; contract size and point conversion are not verified.")}</p>
-        <div className="live-row" style={{ marginTop: 14 }}><span className="live-small">{t("Mata uang", "Currency")}</span><strong>{portfolio.settings.currency}</strong></div>
-        <div className="live-row" style={{ marginTop: 9 }}><span className="live-inline-help"><span className="live-small">{t("Batas lot / layer", "Lot / layer limit")}</span><TermHelp term="limits"/><TermHelp term="layers"/></span><strong>{portfolio.settings.maxLots ?? "—"} / {portfolio.settings.maxLayers ?? "—"}</strong></div>
-        <div className="live-row" style={{ marginTop: 9 }}><span className="live-small">{t("Target / jarak layer", "Target / layer spacing")}</span><strong>{show(portfolio.settings.targetPriceDistance)} / {show(portfolio.settings.layerSpacingPrice)}</strong></div>
+        <div className="mrg-settings-overview" aria-label={t("Ringkasan batas & preferensi", "Limits and preferences summary")}>
+          <div className="mrg-settings-metric"><span>{t("Mata uang", "Currency")}</span><strong>{portfolio.settings.currency}</strong></div>
+          <div className="mrg-settings-metric"><span>{t("Modal / ekuitas", "Capital / equity")}</span><strong>{show(portfolio.settings.capital)} / {show(portfolio.settings.equity)} <small>{portfolio.settings.currency}</small></strong></div>
+          <div className="mrg-settings-metric"><span className="live-inline-help">{t("Batas lot / layer", "Lot / layer limit")}<TermHelp term="limits"/><TermHelp term="layers"/></span><strong>{portfolio.settings.maxLots ?? "—"} / {portfolio.settings.maxLayers ?? "—"}</strong></div>
+          <div className="mrg-settings-metric"><span>{t("Target / jarak layer", "Target / layer spacing")}</span><strong>{show(portfolio.settings.targetPriceDistance)} / {show(portfolio.settings.layerSpacingPrice)}</strong></div>
+        </div>
       </Panel>
 
       <details className="live-disclosure live-span-12"><summary>{t("Skenario tekanan pilihan Anda", "Your chosen stress scenario")}</summary><Panel className="live-span-12" title={t("Skenario tekanan pilihan Anda", "Your chosen stress scenario")} eyebrow={t("Simulasi harga · bukan prediksi", "Price simulation · not a prediction")}>
         <Field label={t("Pergerakan melawan posisi (%)", "Adverse price move (%)")} value={stressPercent} onChange={setStressPercent} error={!stressValid ? t("Masukkan persentase lebih dari 0 dan kurang dari 100.", "Enter a percentage greater than 0 and less than 100.") : undefined} hint={t("Hasil muncul di setiap rangkaian bila harga feed masih baru. Persentase ini bukan probabilitas kejadian.", "Results appear in each series when the feed price is fresh. This percentage is not an event probability.")}/>
       </Panel></details>
-      <button id="simulation-controls" data-testid="positions-simulation" type="button" className="live-section-toggle live-span-12" aria-expanded={activePanel === "simulation"} onClick={(event) => openSimulation(event.currentTarget)}>
-        <span className="live-section-icon"><CopyPlus size={19}/></span><span className="live-section-copy"><strong>{t("Simulasi tambah layer", "Simulate another layer")}</strong><small>{t("Perbandingan hipotetis · snapshot terpisah · tanpa transaksi", "Hypothetical comparison · separate snapshot · no trade")}</small></span><span className="live-section-cta">{t("Buka", "Open")}</span>
-      </button>
       <div className="live-span-12 live-small">{t("Data posisi tersimpan lokal tanpa cloud sync. Reset lokal juga menghapus preferensi MRG dan skenario kalkulator dasar yang tersimpan.", "Position data stays local without cloud sync. Local reset also removes MRG preferences and saved basic calculator scenarios.")}</div>
     </div>
 

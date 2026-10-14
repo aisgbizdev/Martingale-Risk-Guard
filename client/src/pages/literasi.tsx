@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -69,6 +70,7 @@ export default function Literasi() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
+        <MRGBrandBar />
         <div className="flex justify-between items-center mb-6">
           <Link href="/" className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted" data-testid="button-kembali">
             <ArrowLeft className="w-4 h-4" />{t("Kembali", "Back")}

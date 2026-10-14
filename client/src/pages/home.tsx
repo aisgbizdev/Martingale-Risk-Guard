@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
+import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -172,6 +173,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-3 sm:px-6 sm:py-6 md:px-8 md:py-8">
+        <MRGBrandBar />
         <div className="flex justify-between items-center mb-4 gap-2">
           <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">
             <Shield className="w-4 h-4" />{t("Kembali ke ringkasan live", "Back to live overview")}
@@ -187,20 +189,12 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="text-center mb-5 sm:mb-8">
-          <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <img src="/newsmaker-favicon.png" alt="Newsmaker" className="w-10 h-10 sm:w-12 sm:h-12" />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-              {t("Simulasi Dasar", "Basic Simulation")}
-            </h1>
-          </div>
-          
-          <p className="text-primary text-xs font-semibold tracking-wide mb-2">MRG · Newsmaker</p>
-          <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-2">
-            {t(
-              "Asesmen risiko berbasis framework Financial Engineering dan Behavioral Finance untuk strategi Martingale vs Linear Averaging pada XUL10.",
-              "Risk assessment based on Financial Engineering and Behavioral Finance frameworks for Martingale vs Linear Averaging strategies on XUL10."
-            )}
+        <div className="mrg-basic-intro text-center mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+            {t("Simulasi Dasar", "Basic Simulation")}
+          </h1>
+          <p className="text-muted-foreground text-sm max-w-2xl mx-auto leading-relaxed">
+            {t("Kalkulator studi historis untuk parameter strategi XUL10 · bukan penilaian pasar live.", "Historical-study calculator for XUL10 strategy inputs · not a live-market assessment.")}
           </p>
           
           <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
@@ -211,7 +205,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="mrg-basic-content mx-auto">
           {(isCalculating || (liveScore !== null && liveStatus !== null)) && <div className="sticky top-0 z-50 bg-background pb-4">
             <LiveRiskPreview 
               score={liveScore} 
@@ -233,7 +227,7 @@ export default function Home() {
             <CardContent className="px-4 sm:px-6">
               <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 sm:space-y-6">
-                <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
+                <div className="mrg-basic-section space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />
                     {t("Parameter Finansial", "Financial Parameters")}
@@ -307,7 +301,7 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
+                <div className="mrg-basic-section space-y-4 sm:space-y-5 pb-4 sm:pb-5 border-b border-border">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
                     {t("Parameter Strategi", "Strategy Parameters")}
@@ -362,7 +356,7 @@ export default function Home() {
                   />
                 </div>
 
-                <div className="space-y-4 sm:space-y-5">
+                <div className="mrg-basic-section space-y-4 sm:space-y-5">
                   <h3 className="text-xs sm:text-sm font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <User className="w-4 h-4" />
                     {t("Profil & Kondisi Pasar", "Profile & Market")}

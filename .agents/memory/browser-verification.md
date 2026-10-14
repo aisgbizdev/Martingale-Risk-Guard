@@ -31,3 +31,9 @@ PWA readiness checks in desktop Chromium are not evidence of installation or per
 **Why:** Mobile viewport emulation and synthetic installation events cannot validate the OS launcher, standalone launch, software keyboard, safe-area insets, or device restart behavior.
 
 **How to apply:** State browser version, test environment and simulated conditions explicitly. Keep physical-device results unverified until supported by an approved device session or Newsmaker programmer recordings/report; obtain any production URL from deployment metadata.
+
+Horizontal-overflow checks do not prove that a responsive layout is readable.
+
+**Why:** Side-by-side phone actions passed width checks while their text columns were so narrow that labels wrapped almost character by character. The problem was found in a populated-state screenshot, not by the passing layout suite.
+
+**How to apply:** Combine screenshots with minimum useful text/card widths and reasonable action heights. Check populated and expanded states, and capture from the top of the page when evaluating first-screen hierarchy.

@@ -7,7 +7,7 @@ import { useLanguage } from "@/lib/language-context";
 import { evaluatePositionRisk, summarizePositions } from "@shared/position-risk";
 import { calendarIsFresh } from "@shared/live-types";
 import { LiveShell } from "@/components/live/live-shell";
-import { ErrorBox, LoadingBlock, PageIntro, Panel, RiskSummary } from "@/components/live/live-ui";
+import { ErrorBox, INITIAL_HEURISTIC_WARNING_ID, LoadingBlock, PageIntro, Panel, RiskSummary, WHOLE_ACCOUNT_RISK_REASON_ID } from "@/components/live/live-ui";
 import { TermHelp } from "@/components/live/term-help";
 
 const fmt = (n: number, digits = 2) => new Intl.NumberFormat(undefined, { maximumFractionDigits: digits }).format(n);
@@ -60,17 +60,16 @@ export default function LiveOverview() {
       </Panel>
       </details>
       <Panel className="live-span-12 overview-exposure" title={t("Catatan eksposur posisi", "Recorded position exposure")} eyebrow={t("Dicatat manual · tersimpan di perangkat ini", "Manually recorded · stored on this device")} action={<Link className="live-button primary" href="/positions">{t("Kelola posisi", "Manage positions")}<ChevronRight size={15}/></Link>}>
+        {portfolio.positions.length > 0 && <div className="live-alert mrg-overview-risk-note" role="note">{t("Buy dan sell dinilai terpisah, tidak dinetokan. Indeks adalah heuristik awal yang belum dikalibrasi; bukan probabilitas rugi atau ukuran risiko seluruh rekening. Rata-rata bukan titik impas bersih.", "Buy and sell are assessed separately, never netted. The index is an initial, uncalibrated heuristic; not a loss probability or whole-account risk measure. Average entry is not net break-even.")}</div>}
         {portfolio.positions.length === 0 ? <div className="live-alert">{t("Belum ada posisi tercatat. Indeks eksposur tidak tersedia sampai Anda mencatat posisi dan mengisi batas lot serta layer pilihan.", "No positions recorded. The exposure index remains unavailable until you record a position and enter your chosen lot and layer limits.")}</div> :
-          <div className="live-grid" style={{ margin: 0 }}>{groups.filter((g) => g.positions.length > 0).map(({ side, positions, summary, risk }) => <div className="live-card live-span-6" key={side}>
+          <div className="live-grid mrg-overview-side-grid" style={{ margin: 0 }}>{groups.filter((g) => g.positions.length > 0).map(({ side, positions, summary, risk }) => <div className="live-card live-span-6" key={side}>
             <div className="live-row"><h3>{side === "buy" ? t("Rangkaian buy", "Buy series") : t("Rangkaian sell", "Sell series")}</h3><span className="live-pill">{positions.length} {t("layer", "layers")}</span></div>
-            <div className="live-grid" style={{ margin: "14px 0", gap: 8 }}>
-              <div className="live-metric live-span-4"><span className="live-small">{t("Total lot", "Total lots")}</span><strong>{fmt(summary.totalLots, 4)}</strong></div>
-              <div className="live-metric live-span-4"><span className="live-small">{t("Rata-rata berbobot", "Weighted average")}</span><strong>{summary.averageEntry === null ? "—" : fmt(summary.averageEntry, 3)}</strong></div>
-              <div className="live-metric live-span-4"><span className="live-small">{t("Skor indeks", "Index score")}</span><strong>{risk.score ?? "—"}</strong></div>
+            <div className="mrg-overview-side-metrics">
+              <div className="live-metric"><span className="live-small">{t("Total lot", "Total lots")}</span><strong>{fmt(summary.totalLots, 4)}</strong></div>
+              <div className="live-metric"><span className="live-small">{t("Rata-rata berbobot", "Weighted average")}</span><strong>{summary.averageEntry === null ? "—" : fmt(summary.averageEntry, 3)}</strong></div>
             </div>
-            <RiskSummary risk={risk}/>
+            <RiskSummary risk={risk} compact showCalibrationNote={false} omitReasonIds={[WHOLE_ACCOUNT_RISK_REASON_ID]} omitWarningIds={[INITIAL_HEURISTIC_WARNING_ID]}/>
           </div>)}</div>}
-        {portfolio.positions.length > 0 && <p className="live-small" style={{ marginTop: 12 }}>{t("Buy dan sell dinilai terpisah; tidak digabung atau saling dinetokan. Rata-rata bukan titik impas bersih.", "Buy and sell are assessed separately; they are not combined or netted. Average entry is not a net break-even price.")}</p>}
       </Panel>
       <Panel className="live-span-5 overview-agenda" title={t("Agenda USD terdekat", "Upcoming USD calendar")} eyebrow={`${userTimezone} · ${t("waktu lokal", "user timezone")}`}>
         {!market.context.isLoading && !calendarFresh && <div className="live-alert">{t("Kalender tidak tersedia atau sudah kedaluwarsa; konteks fundamental live ditunda.", "Calendar is unavailable or stale; live fundamental context is paused.")}</div>}

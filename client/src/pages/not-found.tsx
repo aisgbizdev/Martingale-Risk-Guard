@@ -1,21 +1,18 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowLeft, FileQuestion } from "lucide-react";
+import { LiveShell } from "@/components/live/live-shell";
+import { useLanguage } from "@/lib/language-context";
 
 export default function NotFound() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const { t } = useLanguage();
+  return <LiveShell>
+    <main className="mrg-not-found" aria-labelledby="not-found-title">
+      <div className="live-kicker">NEWSMAKER · MRG</div>
+      <FileQuestion size={34} aria-hidden="true" />
+      <p className="mrg-not-found-code">404</p>
+      <h1 id="not-found-title">{t("Halaman tidak ditemukan", "Page not found")}</h1>
+      <p className="live-subtitle">{t("Alamat ini tidak mengarah ke bagian MRG yang tersedia.", "This address does not point to an available MRG section.")}</p>
+      <Link href="/" className="live-button primary" data-testid="button-not-found-home"><ArrowLeft size={16} />{t("Kembali ke ringkasan", "Back to overview")}</Link>
+    </main>
+  </LiveShell>;
 }

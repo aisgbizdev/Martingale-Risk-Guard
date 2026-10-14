@@ -20,7 +20,31 @@ perangkat nyata. Tidak ada hasil native yang dinyatakan lulus.**
 
 Dokumen ini menyiapkan pelaksanaan dan pencatatan bukti, bukan menggantikan
 pengujian perangkat. Tidak ada perubahan UI, perhitungan, data, atau publish
-sebagai akibat pemeriksaan akses ini.
+sebagai akibat pemeriksaan akses awal ini. Setelah itu pengguna menyetujui
+perapian UI seluruh aplikasi; perubahan tersebut tidak berarti perangkat
+native telah diuji.
+
+## Hasil browser setelah perapian UI yang disetujui
+
+- Build produksi dan pemeriksaan TypeScript berhasil.
+- `npm run test:ui`: 254 pemeriksaan browser/integrasi lulus, mencakup catatan
+  kosong, buy saja, sell saja, kedua sisi, detail terbuka, panel form,
+  Back/Forward, pembatalan draft, konfirmasi simulasi dan snapshot usang.
+- Halaman Ringkasan, Posisi, Analisis teknikal/kalender/berita, artikel,
+  kalkulator dasar, hasil, literasi, privasi dan ketentuan diperiksa lewat
+  suite/UI screenshot yang relevan. Matrix tambahan memakai 390×844,
+  768×1024, 1024×768 dan 1440×900; pengecekan panel juga memakai viewport
+  sempit/pendek. Cakupan ini tidak mengklaim setiap state pada setiap ukuran.
+- `npm run test:pwa`: 30 pemeriksaan fixture build produksi lokal lulus.
+  Perangkat, keyboard OS dan Safari nyata tetap **belum diuji**.
+- Uji logika bersama/backend sebelumnya: 47 lulus; model dan backend tidak
+  diubah dalam perapian ini.
+- Bukti browser dibuat di `generated-artifacts/live-ui-checks.json`,
+  `generated-artifacts/pwa/checks.json` dan `generated-artifacts/panels/`.
+  Semuanya dikecualikan dari Git/deployment dan bukan bukti native.
+- Screenshot menemukan aksi HP terlalu sempit meskipun tidak overflow.
+  Layout aksi kini satu kolom pada HP; regression check juga memeriksa lebar
+  teks serta tinggi tombol, bukan hanya batas horizontal dokumen.
 
 ## Lingkungan yang perlu diuji
 

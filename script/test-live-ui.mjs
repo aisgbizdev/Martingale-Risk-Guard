@@ -87,6 +87,8 @@ const panelFits = () => evaluate(`(() => {
     panel.scrollWidth <= panel.clientWidth + 1;
 })()`);
 const panelScreenshot = async (name) => {
+  await evaluate("if (!document.querySelector('[role=\"dialog\"][data-state=\"open\"]')) window.scrollTo(0, 0)");
+  await sleep(75);
   await mkdir("generated-artifacts/panels", { recursive: true });
   const shot = await command("Page.captureScreenshot", { format: "jpeg", quality: 75 });
   await writeFile(`generated-artifacts/panels/${name}.jpg`, Buffer.from(shot.data, "base64"));
@@ -104,6 +106,47 @@ const travelHistory = async (delta, expected) => {
   await sleep(150);
 };
 const snapshotReference = () => evaluate(`[...document.querySelectorAll('[data-testid="positions-simulation-panel"] .live-alert')].find(el => el.textContent.includes('Snapshot:'))?.textContent`);
+const layoutMatrix = async (name) => {
+  for (const [width, height] of [[390, 844], [768, 1024], [1024, 768], [1440, 900]]) {
+    await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+    await sleep(200);
+    check(`${name} content fits ${width}x${height}`, await noOverflow());
+    check(`${name} has no clipped visible action at ${width}px`, await evaluate(`(() => {
+      const scope = document.querySelector('main') || document.getElementById('root');
+      return [...scope.querySelectorAll('button')].filter(el => el.getClientRects().length).every(el => {
+        const r = el.getBoundingClientRect();
+        return r.left >= -1 && r.right <= innerWidth + 1;
+      });
+    })()`));
+    if (width === 390 || width === 1440) await panelScreenshot(`${name}-${width}x${height}`);
+  }
+};
+const positionWidths = async (sides) => {
+  for (const [width, height] of [[390, 844], [768, 1024], [1024, 768], [1440, 900]]) {
+    await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+    await sleep(200);
+    check(`${sides.join("+")} positions fit ${width}px`, await noOverflow());
+    check(`Primary position actions remain readable rather than wrapping letter-by-letter at ${width}px`, await evaluate(`[...document.querySelectorAll('.live-position-actions > button')].every(button => {
+      const copy = button.querySelector('.live-section-copy').getBoundingClientRect();
+      return copy.width >= 100 && button.getBoundingClientRect().height <= 110;
+    })`));
+    const dimensions = await evaluate(`(() => {
+      const region = document.querySelector('[data-testid="positions-records"]');
+      return ${JSON.stringify(sides)}.map(side => {
+        const card = document.querySelector('[data-testid="position-side-' + side + '"]');
+        if (!region || !card) return null;
+        const r = card.getBoundingClientRect(), p = region.getBoundingClientRect();
+        return {width:r.width, parentWidth:p.width, left:r.left, right:r.right, top:r.top};
+      });
+    })()`);
+    check(`Populated side cards use real content width at ${width}px`, dimensions.every(Boolean) &&
+      dimensions.every(r => r.width >= Math.min(300, width - 70)));
+    if (sides.length === 1) check(`A single side is not forced into half its region at ${width}px`, dimensions[0].width >= dimensions[0].parentWidth * .84);
+    if (sides.length === 2 && width === 1440) check("Wide desktop presents independent buy/sell summaries alongside each other", Math.abs(dimensions[0].top - dimensions[1].top) < 3 && dimensions[1].left >= dimensions[0].right - 1);
+    if (width === 390 || width === 1440) await panelScreenshot(`positions-${sides.join("-")}-${width}x${height}`);
+  }
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
+};
 
 try {
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -213,6 +256,7 @@ try {
   await fill("Modal (opsional)", 10000); await fill("Ekuitas berjalan (opsional)", 9000);
   await fill("Target jarak harga (opsional)", 30); await fill("Jarak layer (opsional)", 20); await click("Simpan batas");
   check("Limits, equity, target and layer spacing are independent", (await stored()).settings.equity === 9000 && (await stored()).settings.targetPriceDistance === 30 && (await stored()).settings.layerSpacingPrice === 20);
+  await positionWidths(["buy"]);
   await click("Tampilkan pengaturan", true);
   for (const [width, height] of [[320, 740], [390, 844], [768, 1024], [1024, 768], [1280, 900], [844, 390], [390, 360]]) {
     await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
@@ -344,8 +388,20 @@ try {
   await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
   await fill("Arah posisi", "sell"); await fill("Harga masuk XUL10", 150); await fill("Lot", 2); await click("Catat posisi");
   check("Buy and sell appear as separate groups", (await text()).includes("Sisi buy") && (await text()).includes("Sisi sell"));
+  await positionWidths(["buy", "sell"]);
+  await evaluate("document.querySelector('[data-testid=\"positions-records\"]').querySelectorAll('details').forEach(el => el.open = true)");
+  await layoutMatrix("positions-expanded");
+  await evaluate("document.querySelector('[data-testid=\"positions-records\"]').querySelectorAll('details').forEach(el => el.open = false)");
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
+  const mixedPortfolioFixture = await stored();
+  await evaluate(`localStorage.setItem("mrg_portfolio_v1", ${JSON.stringify(JSON.stringify({ ...mixedPortfolioFixture, positions: mixedPortfolioFixture.positions.filter(p => p.side === "sell") }))})`);
+  await navigate("/positions", "Catat, lalu bandingkan");
+  await positionWidths(["sell"]);
+  await evaluate(`localStorage.setItem("mrg_portfolio_v1", ${JSON.stringify(JSON.stringify(mixedPortfolioFixture))})`);
+  await navigate("/positions", "Catat, lalu bandingkan");
+  check("Isolated single-sell layout fixture restores the complete original test portfolio", JSON.stringify(await stored()) === JSON.stringify(mixedPortfolioFixture));
   check("Mobile populated positions do not overflow", await noOverflow());
-  check("Remaining personal limits are not labelled account safety", (await text()).includes("Sisa batas lot pilihan Anda") && (await text()).includes("bukan kapasitas aman rekening"));
+  check("Remaining personal limits are not labelled account safety", (await text()).includes("Sisa batas lot") && (await text()).includes("bukan kapasitas aman") && await evaluate("document.querySelector('.mrg-position-risk-note').textContent.includes('bukan probabilitas rugi atau ukuran risiko seluruh rekening')"));
   await fill("Pergerakan melawan posisi (%)", 100);
   check("Invalid custom stress is rejected visibly", (await text()).includes("kurang dari 100"));
   await fill("Pergerakan melawan posisi (%)", 5);
@@ -377,6 +433,8 @@ try {
   check("Country aliases search USD agendas and reset pagination", await evaluate("document.querySelectorAll('.live-event').length > 0 && [...document.querySelectorAll('.live-event')].every(el=>el.innerText.includes('USD')) && document.querySelector('.live-pagination').innerText.includes('1–')"));
   await fill("Cari acara, negara, atau mata uang", "__MRG_NO_MATCH__");
   check("No keyword matches are explicit, not a missing-calendar error", (await text()).includes("Tidak ada agenda yang cocok"));
+  await layoutMatrix("calendar");
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   await fill("Cari acara, negara, atau mata uang", "");
   await fill("Mata uang", "USD"); await fill("Dampak", "high");
   check("Calendar currency/impact filters affect visible events", await evaluate("[...document.querySelectorAll('.live-event')].every(e => e.innerText.includes('USD') && e.innerText.includes('Dampak tinggi'))"));
@@ -429,6 +487,8 @@ try {
   await evaluate("document.querySelector('button.live-position').click()");
   await waitFor("document.querySelector('.live-article')?.textContent.length > 50");
   check("An article opens from the same analysis route", (await text()).includes("Kembali ke daftar"));
+  await layoutMatrix("article");
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   check("Article content contains no executable HTML", await evaluate("document.querySelector('.live-article').children.length === 0"));
   await click("Kembali ke daftar");
   await waitFor("document.querySelector('.live-article') === null");
@@ -462,6 +522,7 @@ try {
   await command("Emulation.setDeviceMetricsOverride", { width:1280,height:900,deviceScaleFactor:1,mobile:false });
   await navigate("/basic", "Simulasi Dasar");
   check("Original calculator is still accessible", (await text()).includes("Target Poin"));
+  await layoutMatrix("basic");
   const baseline = { modal: 200000, targetPoin: "30", strategy: "Linear Averaging", maxLayer: "3", experience: "Pemula", marketCondition: "Sideways" };
   const goodCalculation = await fetch(origin + "/api/calculate-risk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseline) });
   const baselineResult = await goodCalculation.json();
@@ -477,6 +538,11 @@ try {
   await waitFor("document.querySelector('[data-testid=\"button-save-scenario\"]') !== null");
   check("Saved study scenarios survive hydration and reload", await evaluate('JSON.parse(localStorage.getItem("riskcheck_scenarios")).length === 1'));
   check("Valid saved study records load without a storage warning", await evaluate("!document.querySelector('[data-testid=\"button-save-scenario\"]').disabled && !document.body.innerText.includes('Skenario lokal tidak dapat dibaca atau disimpan')"));
+  await layoutMatrix("result");
+  }
+  for (const [path, title, label] of [["/literasi", "Literasi", "education"], ["/privacy", "Privasi", "privacy"], ["/terms", "Ketentuan", "terms"]]) {
+    await navigate(path, title);
+    await layoutMatrix(label);
   }
   storageDeniedScenario = true;
   await command("Page.addScriptToEvaluateOnNewDocument", { source: "Storage.prototype.getItem = function() { throw new DOMException('Storage denied', 'SecurityError'); }; Storage.prototype.setItem = function() { throw new DOMException('Storage denied', 'SecurityError'); };" });

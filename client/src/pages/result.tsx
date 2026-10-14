@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -384,6 +385,7 @@ export default function Result() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
+        <MRGBrandBar />
         <div className="flex justify-end mb-4">
           <Button
             variant="default"
