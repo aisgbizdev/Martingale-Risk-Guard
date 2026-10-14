@@ -11,6 +11,7 @@
     "test": "node --import tsx --test shared/*.test.ts server/market/*.test.ts",
     "test:ui": "node script/test-live-ui.mjs",
     "test:pwa": "node --import tsx script/test-pwa.mjs",
+    "test:pwa-upgrade": "node --import tsx script/test-pwa-upgrade.mjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

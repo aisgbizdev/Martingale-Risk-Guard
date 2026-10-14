@@ -32,6 +32,12 @@ PWA readiness checks in desktop Chromium are not evidence of installation or per
 
 **How to apply:** State browser version, test environment and simulated conditions explicitly. Keep physical-device results unverified until supported by an approved device session or Newsmaker programmer recordings/report; obtain any production URL from deployment metadata.
 
+CDP offline emulation does not reliably retain `navigator.onLine` after navigation or disconnect service-worker fetches.
+
+**Why:** A warm-cache upgrade fixture reloaded successfully with its HTTP transport disabled, but the new document still reported online.
+
+**How to apply:** Cut fixture transport independently. If testing the OS offline indication, model its flag explicitly and label that condition as synthetic, not airplane mode or native-device evidence.
+
 Horizontal-overflow checks do not prove that a responsive layout is readable.
 
 **Why:** Side-by-side phone actions passed width checks while their text columns were so narrow that labels wrapped almost character by character. The problem was found in a populated-state screenshot, not by the passing layout suite.

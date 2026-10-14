@@ -38,13 +38,25 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || url.origin !== self.location.origin ||
       url.pathname === '/api' || url.pathname.startsWith('/api/')) return;
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(async () => (await caches.match('/')) || Response.error()));
+    event.respondWith((async () => {
+      let response;
+      try {
+        response = await fetch(event.request);
+        // Do not bypass authentication/client errors with an offline shell.
+        if (response.status < 500) return response;
+      } catch {
+        // A transport failure can use this worker's verified shell only.
+      }
+      const cache = await caches.open(CACHE_NAME);
+      return (await cache.match('/')) || response || Response.error();
+    })());
     return;
   }
   // Restrict offline caching to this app's static assets, not arbitrary routes.
   if (!url.pathname.startsWith('/assets/') && !shellFiles.includes(url.pathname)) return;
   event.respondWith((async () => {
-    const cached = await caches.match(event.request);
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(event.request);
     if (cached) return cached;
     const response = await fetch(event.request);
     if (response.ok && response.type === 'basic') {
