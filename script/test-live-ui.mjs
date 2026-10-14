@@ -10,7 +10,8 @@ const browser = spawn("chromium", ["--headless", "--no-sandbox", "--disable-dev-
 let ws;
 const checks = [], errors = [], posts = [];
 const expectedPreviewErrors = [];
-let serial = 0, dialogAccept = false, staleQuote = false, brokenCalendar = false, storageDeniedScenario = false;
+let serial = 0, dialogAccept = false, staleQuote = false, brokenCalendar = false, storageDeniedScenario = false, blockedWidget = false;
+let widgetRequested = false;
 const pending = new Map();
 const check = (name, condition) => { assert.ok(condition, name); checks.push(name); console.log(`PASS ${name}`); };
 const command = (method, params = {}) => new Promise((resolve, reject) => {
@@ -104,9 +105,14 @@ try {
       else errors.push(error);
     }
     if (message.method === "Page.javascriptDialogOpening") command("Page.handleJavaScriptDialog", { accept: dialogAccept }).catch(console.error);
-    if (message.method === "Network.requestWillBeSent" && message.params.request.method === "POST") posts.push(new URL(message.params.request.url).pathname);
+    if (message.method === "Network.requestWillBeSent" && message.params.request.method === "POST" && new URL(message.params.request.url).origin === origin) posts.push(new URL(message.params.request.url).pathname);
+    if (message.method === "Network.requestWillBeSent" && message.params.request.url === "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js") widgetRequested = true;
     if (message.method === "Fetch.requestPaused") {
       const { requestId, request } = message.params;
+      if (blockedWidget && request.url === "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js") {
+        command("Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(console.error);
+        return;
+      }
       let payload;
       if (staleQuote && request.url.includes("/api/market/quotes")) {
         payload = { ...quoteResponse, status: "ready", quote: { ...(quoteResponse.quote ?? { symbol: "XUL10", price: 100, bid: 99, ask: 101, source: "Browser test fixture" }), asOf: "2000-01-01T00:00:00.000Z" } };
@@ -226,12 +232,25 @@ try {
   check("Tabs replace the long calendar stack", await evaluate("document.querySelectorAll('.live-event').length === 0"));
   check("TradingView is not requested before opening", await evaluate("document.querySelector('iframe') === null"));
   await click("Buka chart");
-  check("Chart is separate and uses the disclosed reference symbol", await evaluate("document.querySelector('iframe').src.includes('OANDA%3AXAUUSD')"));
+  await waitFor("document.querySelector('.live-chart-frame iframe') !== null");
+  check("Chart uses the official widget script and dedicated embed host", widgetRequested && await evaluate("new URL(document.querySelector('.live-chart-frame iframe').src).hostname === 'www.tradingview-widget.com'"));
+  check("Chart is separate and uses the disclosed reference symbol", await evaluate("decodeURIComponent(document.querySelector('.live-chart-frame iframe').src).includes('OANDA:XAUUSD')"));
+  check("An iframe cannot be incorrectly labelled a successfully loaded chart", !(await text()).split("\n").some(line => line.trim() === "Widget dimuat"));
+  check("Chart always offers a safe direct TradingView link", await evaluate("[...document.querySelectorAll('a')].some(a => a.textContent.includes('Buka di TradingView') && a.target === '_blank' && a.rel.includes('noopener') && a.href.includes('symbol=OANDA%3AXAUUSD'))"));
   await evaluate("document.querySelector('iframe').scrollIntoView({block:'center'})");
   await sleep(4000);
   await mkdir("generated-artifacts", { recursive: true });
   const chartShot = await command("Page.captureScreenshot", { format: "jpeg", quality: 65 });
   await writeFile("generated-artifacts/chart-browser-check.jpg", Buffer.from(chartShot.data, "base64"));
+  blockedWidget = true;
+  await command("Network.setCacheDisabled", { cacheDisabled: true });
+  await command("Fetch.enable", { patterns: [{ urlPattern: "https://s3.tradingview.com/external-embedding/*" }] });
+  await click("Coba muat ulang chart");
+  await waitFor(has("Widget belum dapat ditampilkan"));
+  check("Blocked widget scripts show an explicit failure without a success claim", !(await text()).split("\n").some(line => line.trim() === "Widget dimuat"));
+  blockedWidget = false;
+  await command("Fetch.disable");
+  await command("Network.setCacheDisabled", { cacheDisabled: false });
   await click("Tutup chart", true);
   check("Closing chart removes its iframe", await evaluate("document.querySelector('iframe') === null"));
   await click("Berita");

@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 import { LiveShell } from "@/components/live/live-shell";
 import { ErrorBox, Field, LoadingBlock, PageIntro, Panel } from "@/components/live/live-ui";
 import { TermHelp } from "@/components/live/term-help";
+import { TradingViewChart } from "@/components/live/tradingview-chart";
 import type { CalendarEvent } from "@shared/live-types";
 import { calendarIsFresh } from "@shared/live-types";
 
@@ -62,8 +63,6 @@ export default function AnalysisPage() {
   const [keyword, setKeyword] = useState("");
   const [eventPage, setEventPage] = useState(1);
   const [chartOpen, setChartOpen] = useState(false);
-  const [chartAttempt, setChartAttempt] = useState(0);
-  const [chartState, setChartState] = useState<"loading" | "loaded" | "failed">("loading");
   const context = market.context.data;
   const analysis = context?.history.analysis;
   const events = context?.calendar.events ?? [];
@@ -95,13 +94,6 @@ export default function AnalysisPage() {
   useEffect(() => {
     setArticleSlug(new URLSearchParams(window.location.search).get("article"));
   }, [location, search]);
-  useEffect(() => {
-    if (!chartOpen) return;
-    setChartState("loading");
-    const timeout = window.setTimeout(() => setChartState((state) => state === "loaded" ? state : "failed"), 14000);
-    return () => window.clearTimeout(timeout);
-  }, [chartOpen, chartAttempt]);
-  const chartUrl = `https://www.tradingview.com/widgetembed/?frameElementId=mrg-tv&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=%23f5f1e7&studies=%5B%5D&theme=light&style=1&timezone=Etc%2FUTC&withdateranges=1&hideideas=1&locale=${language === "id" ? "id" : "en"}`;
   return <LiveShell>
     <PageIntro kicker={t("Analisis pasar · XUL10", "Market analysis · XUL10")} title={t("Konteks, bukan sinyal.", "Context, not signals.")}>
       {t("Indikator harian, kalender, chart eksternal opsional, dan bacaan Newsmaker dengan sumber yang terlihat.", "Daily indicators, calendar, optional external chart, and Newsmaker reading with visible sources.")}
@@ -138,9 +130,8 @@ export default function AnalysisPage() {
       <Panel className="live-span-5" title={t("Chart visual", "Visual chart")} eyebrow="TRADINGVIEW · OANDA:XAUUSD">
         <div className="live-alert">{t("Widget hanya visual. OANDA:XAUUSD adalah referensi berbeda dari XUL10 dan tidak digunakan untuk indeks atau simulasi. Widget dimuat hanya setelah Anda membukanya; permintaan akan dikirim ke TradingView.", "Visual widget only. OANDA:XAUUSD is a different reference from XUL10 and is not used for the index or simulation. It loads only when opened; a request is sent to TradingView.")}</div>
         {!chartOpen ? <button className="live-button primary" style={{ marginTop: 14 }} onClick={() => setChartOpen(true)}><LineChart size={16}/>{t("Buka chart", "Open chart")}</button> : <>
-          <div className="live-row" style={{ marginTop: 12 }}><span className="live-small">{chartState === "loaded" ? t("Widget dimuat", "Widget loaded") : chartState === "failed" ? t("Widget gagal dimuat", "Widget failed to load") : t("Memuat chart…", "Loading chart…")}</span><button className="live-icon-btn" onClick={() => setChartOpen(false)} aria-label={t("Tutup chart", "Close chart")}><X size={15}/></button></div>
-          {chartState === "failed" ? <div style={{ marginTop: 12 }}><ErrorBox message={t("TradingView tidak merespons. Chart tidak memengaruhi data lain.", "TradingView did not respond. The chart does not affect other data.")} retry={() => { setChartState("loading"); setChartAttempt((attempt) => attempt + 1); }} /></div> :
-            <iframe key={chartAttempt} className="live-chart-frame" title={t("Chart referensi emas OANDA XAUUSD dari TradingView", "OANDA XAUUSD gold-reference chart from TradingView")} src={chartUrl} onLoad={() => setChartState("loaded")} loading="lazy" referrerPolicy="no-referrer" />}
+          <div className="live-row" style={{ marginTop: 12, justifyContent: "end" }}><button className="live-icon-btn" onClick={() => setChartOpen(false)} aria-label={t("Tutup chart", "Close chart")}><X size={15}/></button></div>
+          <TradingViewChart />
           <div className="live-small">{t("Sumber chart", "Chart source")}: <a className="live-link" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView <ExternalLink size={12}/></a></div>
         </>}
       </Panel>

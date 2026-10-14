@@ -1,6 +1,6 @@
 ---
 name: Browser verification quirks
-description: Distinguishing the imported app from injected preview code during browser storage fault tests.
+description: Storage-fault attribution, browser-target selection, and external widget verification quirks.
 ---
 
 Replit's development preview injects a banner script outside the application. A browser-wide simulated denial of Storage access also affects that script, even when the application correctly catches the denial and displays its own error state.
@@ -20,3 +20,9 @@ Chromium's debugging-target list can start with an extension background page rat
 **Why:** A production-PWA check attached to an extension context and waited on an empty background document even though navigation had been requested.
 
 **How to apply:** Select an actual page target by its type, not by array position. When a browser check sees an unexpected empty document, inspect its current URL and target type before changing application code.
+
+Third-party widget loaders can remove their own script tag after creating a working iframe.
+
+**Why:** TradingView's official loader removed its tag after generating the chart; requiring that tag to remain in the DOM produced a false test failure.
+
+**How to apply:** Verify the loader's resource request and the generated iframe's expected origin and configuration, rather than requiring a persistent script element.
