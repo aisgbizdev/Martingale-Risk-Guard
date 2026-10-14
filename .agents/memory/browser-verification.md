@@ -43,3 +43,9 @@ Horizontal-overflow checks do not prove that a responsive layout is readable.
 **Why:** Side-by-side phone actions passed width checks while their text columns were so narrow that labels wrapped almost character by character. The problem was found in a populated-state screenshot, not by the passing layout suite.
 
 **How to apply:** Combine screenshots with minimum useful text/card widths and reasonable action heights. Check populated and expanded states, and capture from the top of the page when evaluating first-screen hierarchy.
+
+Chromium full-page screenshots can place a fixed bottom navigation bar at the bottom of the original viewport, in the middle of the taller captured image.
+
+**Why:** A full-page news fixture showed the phone navigation between article cards even though the ordinary viewport correctly kept it at the screen bottom. This is a capture-coordinate effect, not evidence that navigation moved into the document flow.
+
+**How to apply:** Use viewport screenshots for fixed-bar placement and full-page screenshots for below-fold content. Do not redesign navigation solely from its position inside a full-page image.

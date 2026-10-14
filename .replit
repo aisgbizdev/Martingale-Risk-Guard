@@ -31,6 +31,14 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "core-regression"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "visual-regression"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -39,6 +47,28 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "core-regression"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run check && npm test"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "visual-regression"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run test:visual:unit && npm run test:visual"
+
+[workflows.workflow.metadata]
+isValidation = true
 
 [postMerge]
 path = "script/post-merge.sh"

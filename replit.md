@@ -66,6 +66,7 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - API logs omit payloads. Portfolio changes and simulations are calculated locally, not posted to external providers.
 - Browser storage failure/corruption is reported and existing unreadable records are not silently overwritten. Local reset clears only MRG records/preferences and saved basic scenarios.
 - Generated test outputs belong in `/generated-artifacts/`, excluded from Git and publishing.
+- `npm run test:visual` compares deterministic MRG browser screenshots against explicitly approved baselines; keep live/vendor checks in `npm run test:ui`. See `docs/visual-regression.md` for fixtures, tolerances and baseline approval.
 - The first-use introduction is brief and dismissible. Formula details can be expanded on mobile. Custom stress percentages simulate price moves only; remaining lot/layer capacity means remaining personal limits, not a safe financial buffer.
 - The service worker must never cache or provide offline substitutes for live API responses. Offline positions may remain local, but unavailable live data must pause the live index.
 - PWA registration is production-only, not gated by host-name substrings. Build fingerprints version the precached JS/CSS shell; install help covers Android and iPhone. `npm run test:pwa` verifies the built app in an ephemeral browser fixture, including offline reload with the HTTP cache disabled.

@@ -3,6 +3,8 @@ import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import WebSocket from "ws";
 
+// Live freshness/vendor/history assertions remain separate from deterministic pixel comparisons.
+// Run `npm run test:visual` too; screenshots produced here are diagnostic, not approved baselines.
 const origin = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : process.env.MRG_TEST_URL;
 if (!origin) throw new Error("Set MRG_TEST_URL or run in the Replit workspace with the application workflow running.");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
