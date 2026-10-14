@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { Activity, BarChart3, BookOpen, Globe2, Layers3, Menu, X } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import { PwaInstall } from "@/components/live/pwa-install";
 
 const routes = [
   { href: "/", id: "overview", icon: Activity, idText: "Ringkasan", enText: "Overview" },
@@ -33,7 +34,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="live-nav" aria-label={t("Navigasi utama", "Main navigation")}>
             {routes.map(({ href, id, icon: Icon, idText, enText }) => (
-              <Link key={id} href={href} aria-current={location === href ? "page" : undefined}>
+              <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}>
                 <Icon size={16} />{t(idText, enText)}
               </Link>
             ))}
@@ -49,18 +50,22 @@ export function LiveShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         {menuOpen && <nav className="live-nav live-mobile-menu" style={{ display: "flex", flexWrap: "wrap" }} aria-label={t("Navigasi", "Navigation")}>
-          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
+          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
         </nav>}
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
-        {introOpen && <aside className="live-alert" style={{ marginTop: 16 }} aria-label={t("Pengenalan MRG", "MRG introduction")}>
-          <strong>{t("Sebelum menggunakan MRG", "Before using MRG")}</strong>
-          <p>{t("Live berarti data pasar diperbarui. Posisi tetap catatan manual; aplikasi tidak mengirim order. Skor awal belum dikalibrasi dan bukan jaminan keamanan atau probabilitas rugi.", "Live means market data updates. Positions remain manual records; the app sends no orders. The initial score is uncalibrated, not a safety guarantee or loss probability.")}</p>
-          <div className="live-row" style={{ justifyContent: "start", flexWrap: "wrap", marginTop: 10 }}><button className="live-button" onClick={dismissIntro}>{t("Mengerti, lanjutkan", "Understood, continue")}</button><Link className="live-link" href="/terms">{t("Baca ketentuan", "Read terms")}</Link></div>
-        </aside>}
+        <aside className="live-critical-note" aria-label={t("Pengenalan MRG", "MRG introduction")}>
+          <span>{t("Informasi saja · posisi manual · tanpa order · indeks belum dikalibrasi", "Information only · manual positions · no orders · uncalibrated index")}</span>
+          {introOpen && <details className="live-intro-details">
+            <summary>{t("Catatan penggunaan", "Usage note")}</summary>
+            <p>{t("Data pasar dapat diperbarui; posisi tetap catatan manual. Skor awal adalah heuristik, bukan jaminan keamanan, probabilitas rugi, atau ukuran risiko seluruh rekening.", "Market data may update; positions remain manual records. The initial score is heuristic, not a safety guarantee, loss probability, or whole-account risk measure.")}</p>
+            <div className="live-row" style={{ justifyContent: "start", flexWrap: "wrap", marginTop: 8 }}><button className="live-button" onClick={dismissIntro}>{t("Mengerti, lanjutkan", "Understood, continue")}</button><Link className="live-link" href="/terms">{t("Ketentuan", "Terms")}</Link></div>
+          </details>}
+        </aside>
         {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
+        <PwaInstall />
         <main className="live-main">{children}</main>
         <nav className="live-tabbar" aria-label={t("Navigasi utama", "Main navigation")}>
-          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} aria-current={location === href ? "page" : undefined}><Icon /><span>{t(idText, enText)}</span></Link>)}
+          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon /><span>{t(idText, enText)}</span></Link>)}
         </nav>
         <footer className="live-footer" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <span className="live-small">MRG · {t("Alat informasi, bukan broker atau layanan transaksi.", "Information tool, not a broker or trading service.")}</span>

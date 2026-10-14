@@ -10,6 +10,7 @@
     "check": "tsc",
     "test": "node --import tsx --test shared/*.test.ts server/market/*.test.ts",
     "test:ui": "node script/test-live-ui.mjs",
+    "test:pwa": "node --import tsx script/test-pwa.mjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

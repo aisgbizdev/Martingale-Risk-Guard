@@ -15,7 +15,7 @@ export function normalizeEvent(row: any, timezone: string): CalendarEvent {
   const rawCurrency = String(row.country ?? "").trim().toUpperCase();
   const currency = ({ US: "USD", USA: "USD", CHN: "CNY", JPN: "JPY" } as Record<string, string>)[rawCurrency] ?? rawCurrency;
   return {
-    id: String(row.id), name: text(row.figures)!, currency, impact, date, time,
+    id: String(row.id), name: text(row.figures)!, country: text(row.country), currency, impact, date, time,
     at: date ? providerTimestamp(`${date} ${time}`, timezone) : null,
     previous: text(row.previous), forecast: text(row.forecast), actual: text(row.actual),
     explanation: text(row.why_trader_care), source: text(row.sources),

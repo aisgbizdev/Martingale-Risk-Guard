@@ -8,3 +8,9 @@ MRG should use Newsmaker's company identity rather than an unrelated visual pale
 **Why:** The user approved matching the supplied Newsmaker design so MRG feels like a feature of the same product.
 
 **How to apply:** Use official company assets and verify brand styling against the current source. Branding changes must not alter calculations, data sources, manual-position behavior, or the meaning of risk states. Warning colors and text remain distinct from company colors.
+
+The app has two primary uses: clean, elegant live marketing presentations and self-guided education for novices or independent traders. Support PC, mobile, and tablet. Favor clear action buttons, disclosures, and short interactive help rather than long text and stacked forms.
+
+**Why:** The user explicitly described both audiences and requested device-responsive, mobile-first navigation.
+
+**How to apply:** Beginner help should explain risk and Martingale/Averaging at the point of use without filling the screen. Critical warnings must stay clear and visible in both presentation and independent-use flows.

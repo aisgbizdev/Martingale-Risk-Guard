@@ -11,6 +11,16 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
 
 export function useMarket() {
   const [now, setNow] = useState(Date.now);
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const changed = () => setOnline(navigator.onLine);
+    window.addEventListener("online", changed);
+    window.addEventListener("offline", changed);
+    return () => {
+      window.removeEventListener("online", changed);
+      window.removeEventListener("offline", changed);
+    };
+  }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
@@ -25,10 +35,10 @@ export function useMarket() {
     queryFn: ({ signal }) => getJson("/api/market/context", signal),
     refetchInterval: 60_000, staleTime: 55_000, retry: 1,
   });
-  const live = !quotes.isError && quotes.data?.status === "ready" &&
+  const live = online && !quotes.isError && quotes.data?.status === "ready" &&
     quoteIsFresh(quotes.data.quote, now);
   return {
-    now, quotes, context,
+    now, online, quotes, context,
     usableQuote: live ? quotes.data!.quote : null,
     live,
     refresh: () => Promise.all([quotes.refetch(), context.refetch()]),

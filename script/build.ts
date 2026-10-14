@@ -1,6 +1,7 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, writeFile } from "fs/promises";
+import { createHash } from "node:crypto";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -37,6 +38,12 @@ async function buildAll() {
 
   console.log("building client...");
   await viteBuild();
+  // Every frontend build gets its own offline shell, even if SW logic is unchanged.
+  const fingerprint = createHash("sha256").update(await readFile("dist/public/index.html")).digest("hex").slice(0, 12);
+  const sw = await readFile("dist/public/sw.js", "utf8");
+  const marker = "'martingale-risk-guard-v3'";
+  if (!sw.includes(marker)) throw new Error("Service worker cache marker missing");
+  await writeFile("dist/public/sw.js", sw.replace(marker, `'martingale-risk-guard-v3-${fingerprint}'`));
 
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));

@@ -50,6 +50,7 @@ export interface DailyAnalysis {
 export interface CalendarEvent {
   id: string;
   name: string;
+  country?: string | null;
   currency: string;
   impact: "high" | "medium" | "low" | "unknown";
   date: string | null;

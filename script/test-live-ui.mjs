@@ -36,9 +36,15 @@ const text = () => evaluate("document.body.innerText");
 const has = (s) => `!!document.body && document.body.innerText.includes(${JSON.stringify(s)})`;
 const stored = () => evaluate('JSON.parse(localStorage.getItem("mrg_portfolio_v1") || "null")');
 const click = async (label, aria = false) => {
-  await evaluate(`(() => {
+  await evaluate(`(async () => {
     const el = [...document.querySelectorAll('button')].find(e => ${aria ? `e.getAttribute('aria-label')` : `e.textContent.trim()`} === ${JSON.stringify(label)});
     if (!el || el.disabled) throw new Error('Missing or disabled button: ' + ${JSON.stringify(label)});
+    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === 'DETAILS') parent.open = true;
+    }
+    if (!el.getClientRects().length) throw new Error('Button not visible: ' + ${JSON.stringify(label)});
+    el.scrollIntoView({block:'center',behavior:'instant'});
+    await new Promise(resolve => requestAnimationFrame(resolve));
     el.click();
   })()`);
   await sleep(150);
@@ -48,6 +54,11 @@ const fill = async (label, value) => {
     const label = [...document.querySelectorAll('label')].find(e => e.textContent.replace(' *','').trim() === ${JSON.stringify(label)});
     const el = label && document.getElementById(label.htmlFor);
     if (!el) throw new Error('Missing field: ' + ${JSON.stringify(label)});
+    for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+      if (parent.tagName === 'DETAILS') parent.open = true;
+    }
+    if (!el.getClientRects().length) throw new Error('Field not visible: ' + ${JSON.stringify(label)});
+    el.scrollIntoView({block:'center'});
     const proto = el.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
     Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, ${JSON.stringify(String(value))});
     el.dispatchEvent(new Event('input', {bubbles:true}));
@@ -111,7 +122,7 @@ try {
   await command("Emulation.setTimezoneOverride", { timezoneId: "Asia/Jakarta" });
   if (!process.env.MRG_UI_STORAGE_ONLY) {
   await navigate("/", "Lihat eksposur");
-  check("First-use introduction explains manual positions", (await text()).includes("Sebelum menggunakan MRG"));
+  check("Concise notice keeps manual positions and uncalibrated index visible", (await text()).includes("posisi manual") && (await text()).includes("indeks belum dikalibrasi"));
   await click("Mengerti, lanjutkan");
   check("Introduction choice persists locally", await evaluate('localStorage.getItem("mrg_welcome_seen") === "1"'));
   check("Mobile overview does not overflow", await noOverflow());
@@ -127,6 +138,13 @@ try {
   await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   await navigate("/positions", "Catat, lalu bandingkan");
   check("Introduction stays dismissed on another route", !(await text()).includes("Sebelum menggunakan MRG"));
+  check("Entry form is not stacked into the initial position screen", await evaluate("!document.getElementById('harga-masuk-xul10')"));
+  await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
+  await waitFor("document.getElementById('harga-masuk-xul10') !== null");
+  await click("Bantuan istilah: Lot", true);
+  check("Novice help opens by tap without filling the screen", await evaluate("document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]') !== null"));
+  await command("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  check("Novice help dismisses with Escape", await evaluate("!document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]')"));
   await click("Catat posisi");
   check("Empty position shows positive-price validation", (await text()).includes("Harga masuk harus berupa angka positif"));
   await fill("Harga masuk XUL10", 100); await fill("Lot", 1); await fill("Waktu masuk (opsional)", "2026-10-14T19:00:15");
@@ -145,7 +163,8 @@ try {
   await fill("Modal (opsional)", 10000); await fill("Ekuitas berjalan (opsional)", 9000);
   await fill("Target jarak harga (opsional)", 30); await fill("Jarak layer (opsional)", 20); await click("Simpan batas");
   check("Limits, equity, target and layer spacing are independent", (await stored()).settings.equity === 9000 && (await stored()).settings.targetPriceDistance === 30 && (await stored()).settings.layerSpacingPrice === 20);
-  check("Model details collapse on mobile", await evaluate("!!document.querySelector('details.live-details') && !document.querySelector('details.live-details').open"));
+  check("Model details collapse on mobile", await evaluate("[...document.querySelectorAll('details.live-details')].some(el => el.querySelector('summary').textContent.includes('rincian indeks') && !el.open)"));
+  await evaluate("document.querySelectorAll('[aria-label=\"Langkah penggunaan\"] button')[2].click()");
   await click("Buat simulasi");
   await fill("Harga hipotetis", 90);
   await click("Gandakan lot terakhir");
@@ -163,6 +182,7 @@ try {
   await fill("Batas total lot", 12); await click("Simpan batas");
   check("Changing limits marks the frozen simulation outdated", (await text()).includes("Snapshot usang"));
   await click("Tutup simulasi");
+  await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
   await fill("Arah posisi", "sell"); await fill("Harga masuk XUL10", 150); await fill("Lot", 2); await click("Catat posisi");
   check("Buy and sell appear as separate groups", (await text()).includes("Sisi buy") && (await text()).includes("Sisi sell"));
   check("Mobile populated positions do not overflow", await noOverflow());
@@ -183,15 +203,27 @@ try {
   check("Stale-price failure scenario reaches the browser", await evaluate("fetch('/api/market/quotes').then(r=>r.json()).then(v=>v.quote.asOf === '2000-01-01T00:00:00.000Z')"));
   check("Stale prices visibly pause the live index", (await text()).includes("Belum tersedia"));
   staleQuote = false; brokenCalendar = true;
-  await navigate("/analysis", "Konteks, bukan sinyal");
+  await navigate("/analysis?tab=calendar", "Konteks, bukan sinyal");
   await waitFor(has("komponen indeks agenda tidak digunakan"));
   check("Unavailable calendar is not presented as zero event risk", (await text()).includes("Kalender tidak tersedia"));
   brokenCalendar = false; await command("Fetch.disable");
-  await navigate("/analysis", "Konteks, bukan sinyal");
+  await navigate("/analysis?tab=calendar", "Konteks, bukan sinyal");
   await waitFor("document.querySelectorAll('.live-event').length > 0");
+  check("Calendar renders at most five agendas per page", await evaluate("document.querySelectorAll('.live-event').length <= 5"));
+  check("Mobile calendar shows agendas before unfolding advanced filters", await evaluate("!document.querySelector('.live-calendar-filters').open && document.querySelector('.live-event').getBoundingClientRect().top < innerHeight - 64"));
+  const firstAgenda = await evaluate("document.querySelector('.live-event').innerText");
+  await click("Halaman berikutnya", true);
+  check("Calendar next-page control changes the visible agendas", await evaluate("document.querySelector('.live-event').innerText") !== firstAgenda);
+  await fill("Cari acara, negara, atau mata uang", "Amerika");
+  check("Country aliases search USD agendas and reset pagination", await evaluate("document.querySelectorAll('.live-event').length > 0 && [...document.querySelectorAll('.live-event')].every(el=>el.innerText.includes('USD')) && document.querySelector('.live-pagination').innerText.includes('1–')"));
+  await fill("Cari acara, negara, atau mata uang", "__MRG_NO_MATCH__");
+  check("No keyword matches are explicit, not a missing-calendar error", (await text()).includes("Tidak ada agenda yang cocok"));
+  await fill("Cari acara, negara, atau mata uang", "");
   await fill("Mata uang", "USD"); await fill("Dampak", "high");
   check("Calendar currency/impact filters affect visible events", await evaluate("[...document.querySelectorAll('.live-event')].every(e => e.innerText.includes('USD') && e.innerText.includes('Dampak tinggi'))"));
   check("Calendar labels the displayed timezone", (await text()).toLowerCase().includes("asia/jakarta"));
+  await click("Teknikal");
+  check("Tabs replace the long calendar stack", await evaluate("document.querySelectorAll('.live-event').length === 0"));
   check("TradingView is not requested before opening", await evaluate("document.querySelector('iframe') === null"));
   await click("Buka chart");
   check("Chart is separate and uses the disclosed reference symbol", await evaluate("document.querySelector('iframe').src.includes('OANDA%3AXAUUSD')"));
@@ -202,6 +234,7 @@ try {
   await writeFile("generated-artifacts/chart-browser-check.jpg", Buffer.from(chartShot.data, "base64"));
   await click("Tutup chart", true);
   check("Closing chart removes its iframe", await evaluate("document.querySelector('iframe') === null"));
+  await click("Berita");
   await waitFor("document.querySelector('button.live-position') !== null");
   await evaluate("document.querySelector('button.live-position').click()");
   await waitFor("document.querySelector('.live-article')?.textContent.length > 50");
@@ -231,6 +264,11 @@ try {
   await command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await navigate("/", "Lihat eksposur");
   check("Desktop overview does not overflow", await noOverflow());
+  for (const [width,height] of [[768,1024],[1024,768],[844,390]]) {
+    await command("Emulation.setDeviceMetricsOverride", {width,height,deviceScaleFactor:1,mobile:width<1024});
+    check(`Responsive ${width}x${height} overview keeps content and navigation in bounds`, await noOverflow() && await evaluate("[...document.querySelectorAll('.live-header a,.live-tabbar a')].filter(el=>el.getClientRects().length).some(el=>el.getAttribute('href')==='/positions' && el.getBoundingClientRect().left>=0 && el.getBoundingClientRect().right<=innerWidth)"));
+  }
+  await command("Emulation.setDeviceMetricsOverride", { width:1280,height:900,deviceScaleFactor:1,mobile:false });
   await navigate("/basic", "Simulasi Dasar");
   check("Original calculator is still accessible", (await text()).includes("Target Poin"));
   const baseline = { modal: 200000, targetPoin: "30", strategy: "Linear Averaging", maxLayer: "3", experience: "Pemula", marketCondition: "Sideways" };

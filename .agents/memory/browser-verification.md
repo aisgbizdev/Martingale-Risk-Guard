@@ -14,3 +14,9 @@ Browser-local portfolios belong to the specific browser profile used to create t
 **Why:** Screenshot capture and an isolated interaction-test browser do not share those local records.
 
 **How to apply:** Verify initial/empty states with the ordinary screenshot capture. Capture populated test states from the same isolated browser that created them; an empty portfolio in a different browser is not evidence of data loss.
+
+Chromium's debugging-target list can start with an extension background page rather than the application tab.
+
+**Why:** A production-PWA check attached to an extension context and waited on an empty background document even though navigation had been requested.
+
+**How to apply:** Select an actual page target by its type, not by array position. When a browser check sees an unexpected empty document, inspect its current URL and target type before changing application code.

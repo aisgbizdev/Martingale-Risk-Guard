@@ -3,15 +3,19 @@ import { AlertCircle, Check, RefreshCw } from "lucide-react";
 import type { PositionRisk } from "@shared/position-risk";
 import type { Copy } from "@shared/live-types";
 import { useLanguage } from "@/lib/language-context";
+import { TermHelp } from "@/components/live/term-help";
 
 export function Text({ id, en }: Copy) { const { t } = useLanguage(); return <>{t(id, en)}</>; }
 export function PageIntro({ kicker, title, children, action }: { kicker: string; title: string; children?: ReactNode; action?: ReactNode }) {
-  return <div className="live-row" style={{ alignItems: "end", flexWrap: "wrap", paddingTop: 28 }}>
-    <div><div className="live-kicker">{kicker}</div><h1 className="live-title">{title}</h1>{children && <div className="live-subtitle">{children}</div>}</div>{action}
+  return <div className="live-page-intro">
+    <div className="live-row" style={{ alignItems: "center", flexWrap: "wrap" }}>
+      <div><div className="live-kicker">{kicker}</div><h1 className="live-title">{title}</h1></div>{action}
+    </div>
+    {children && <details className="live-intro-copy"><summary><Text id="Tentang halaman ini" en="About this page" /></summary><div className="live-subtitle">{children}</div></details>}
   </div>;
 }
-export function Panel({ title, eyebrow, action, children, className = "" }: { title: string; eyebrow?: string; action?: ReactNode; children: ReactNode; className?: string }) {
-  return <section className={`live-card ${className}`}><div className="live-row" style={{ alignItems: "start", marginBottom: 16 }}><div>{eyebrow && <div className="live-kicker" style={{ marginBottom: 6 }}>{eyebrow}</div>}<h2>{title}</h2></div>{action}</div>{children}</section>;
+export function Panel({ title, eyebrow, action, children, className = "", id }: { title: string; eyebrow?: string; action?: ReactNode; children: ReactNode; className?: string; id?: string }) {
+  return <section id={id} className={`live-card ${className}`}><div className="live-row" style={{ alignItems: "start", marginBottom: 16 }}><div>{eyebrow && <div className="live-kicker" style={{ marginBottom: 6 }}>{eyebrow}</div>}<h2>{title}</h2></div>{action}</div>{children}</section>;
 }
 export function ErrorBox({ message, retry }: { message: string; retry?: () => void }) {
   const { t } = useLanguage();
@@ -22,17 +26,17 @@ export function RiskSummary({ risk, detailed = false }: { risk: PositionRisk; de
   const label = risk.level === "unavailable" ? t("Belum tersedia", "Unavailable") : risk.level === "low" ? t("Relatif rendah", "Relatively low") : risk.level === "moderate" ? t("Relatif sedang", "Relatively moderate") : t("Relatif tinggi", "Relatively high");
   const color = risk.level === "high" ? "#a84f43" : risk.level === "moderate" ? "#a17b31" : "#477e78";
   return <div>
-    <div className="live-row" style={{ alignItems: "baseline" }}><div><span className="live-kicker">{t("Indeks eksposur posisi", "Position exposure index")}</span><div style={{ fontSize: 22, fontWeight: 700, color }}>{label}</div></div><strong className="live-mono" style={{ fontSize: 36, color }}>{risk.score ?? "—"}<span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>/100</span></strong></div>
+     <div className="live-row" style={{ alignItems: "baseline" }}><div><span className="live-inline-help"><span className="live-kicker">{t("Indeks eksposur posisi", "Position exposure index")}</span><TermHelp term="exposure" /></span><div style={{ fontSize: 22, fontWeight: 700, color }}>{label}</div></div><strong className="live-mono" style={{ fontSize: 36, color }}>{risk.score ?? "—"}<span style={{ fontSize: 13, color: "hsl(var(--muted-foreground))" }}>/100</span></strong></div>
     <div className="live-riskbar" aria-label={t("Rentang relatif rendah 0 sampai 35, sedang 36 sampai 60, tinggi 61 sampai 100", "Relative low 0 to 35, moderate 36 to 60, high 61 to 100")}><span/><span/><span/></div>
     <div className="live-row live-small"><span>0–35 {t("rendah", "low")}</span><span>36–60 {t("sedang", "moderate")}</span><span>61–100 {t("tinggi", "high")}</span></div>
     <p className="live-small" style={{ marginTop: 12 }}>{t("Indeks heuristik awal yang belum dikalibrasi. Bukan probabilitas rugi, ukuran risiko seluruh rekening, atau penilaian bahwa posisi aman.", "An initial, uncalibrated heuristic. Not a loss probability, whole-account risk measure, or a claim that a position is safe.")}</p>
     {(risk.reasons.length > 0 || risk.warnings.length > 0) && <div className="live-stack" style={{ marginTop: 12 }}>{[...(detailed ? risk.reasons : risk.reasons.slice(0, 3)), ...risk.warnings].map((reason, i) => <div key={`${reason.id}-${i}`} className="live-small"><AlertCircle size={13} style={{ display: "inline", marginRight: 6 }} /><Text {...reason} /></div>)}</div>}
   </div>;
 }
-export function Field({ label, value, onChange, error, type = "number", placeholder, hint, step = "any", min = "0", required = false }: {
-  label: string; value: string | number; onChange: (value: string) => void; error?: string; type?: string; placeholder?: string; hint?: string; step?: string; min?: string; required?: boolean;
+export function Field({ label, value, onChange, error, type = "number", placeholder, hint, step = "any", min = "0", required = false, help }: {
+  label: string; value: string | number; onChange: (value: string) => void; error?: string; type?: string; placeholder?: string; hint?: string; step?: string; min?: string; required?: boolean; help?: ReactNode;
 }) {
   const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  return <div className="live-field"><label htmlFor={id}>{label}{required && " *"}</label><input id={id} type={type} inputMode={type === "number" ? "decimal" : undefined} min={min} step={step} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined} />{error && <span id={`${id}-error`} className="live-error">{error}</span>}{hint && !error && <span id={`${id}-hint`} className="live-small">{hint}</span>}</div>;
+  return <div className="live-field"><div className="live-field-label-row"><label htmlFor={id}>{label}{required && " *"}</label>{help}</div><input id={id} type={type} inputMode={type === "number" ? "decimal" : undefined} min={min} step={step} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined} />{error && <span id={`${id}-error`} className="live-error">{error}</span>}{hint && !error && <span id={`${id}-hint`} className="live-small">{hint}</span>}</div>;
 }
 export function LoadingBlock({ label }: { label: string }) { return <div aria-label={label} className="live-stack"><div className="live-skeleton" style={{ width: "38%" }}/><div className="live-skeleton" style={{ height: 38 }}/><div className="live-skeleton" style={{ width: "70%" }}/></div>; }

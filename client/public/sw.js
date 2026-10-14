@@ -1,55 +1,56 @@
-const CACHE_NAME = 'martingale-risk-guard-v2';
-const urlsToCache = [
-  '/',
-  '/index.html'
+const CACHE_NAME = 'martingale-risk-guard-v3';
+const shellFiles = [
+  '/', '/manifest.json', '/newsmaker-logo-white.png', '/newsmaker-favicon.png',
+  '/newsmaker-mrg-192.png', '/newsmaker-mrg-512.png',
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const response = await fetch('/', { cache: 'reload' });
+    if (!response.ok) throw new Error('App shell unavailable');
+    const html = await response.clone().text();
+    const assets = [...html.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)]
+      .map((match) => new URL(match[1], self.location.origin))
+      .filter((url) => url.origin === self.location.origin && url.pathname.startsWith('/assets/'))
+      .map((url) => url.pathname + url.search);
+    if (!assets.some((asset) => /\.js(?:\?|$)/.test(asset))) {
+      throw new Error('Offline mode requires the production build');
+    }
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll([...new Set([...shellFiles.slice(1), ...assets])]);
+    await cache.put('/', response);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith('martingale-risk-guard-') && cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    for (const key of await caches.keys()) {
+      if (key.startsWith('martingale-risk-guard-') && key !== CACHE_NAME) await caches.delete(key);
+    }
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  // Never replace failed live API requests with a previously successful response.
-  // Leave POSTs and third-party content to the browser, including TradingView.
+  // Never cache or replace market API failures with old successful responses.
   if (event.request.method !== 'GET' || url.origin !== self.location.origin ||
       url.pathname === '/api' || url.pathname.startsWith('/api/')) return;
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const responseToCache = response.clone();
-        event.waitUntil(caches.open(CACHE_NAME)
-          .then((cache) => cache.put(event.request.mode === 'navigate' ? '/' : event.request, responseToCache))
-          .catch(() => { /* Static caching is optional; do not hide network errors. */ }));
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request.mode === 'navigate' ? '/' : event.request)
-          .then((response) => response || Response.error());
-      })
-  );
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request).catch(async () => (await caches.match('/')) || Response.error()));
+    return;
+  }
+  // Restrict offline caching to this app's static assets, not arbitrary routes.
+  if (!url.pathname.startsWith('/assets/') && !shellFiles.includes(url.pathname)) return;
+  event.respondWith((async () => {
+    const cached = await caches.match(event.request);
+    if (cached) return cached;
+    const response = await fetch(event.request);
+    if (response.ok && response.type === 'basic') {
+      const copy = response.clone();
+      event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {}));
+    }
+    return response;
+  })());
 });
