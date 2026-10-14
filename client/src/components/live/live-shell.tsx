@@ -14,6 +14,16 @@ export function LiveShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { language, setLanguage, t, languageStorageAvailable } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(() => {
+    try { return localStorage.getItem("mrg_welcome_seen") !== "1"; }
+    catch { return true; }
+  });
+  const [introStorageError, setIntroStorageError] = useState(false);
+  const dismissIntro = () => {
+    try { localStorage.setItem("mrg_welcome_seen", "1"); }
+    catch { setIntroStorageError(true); }
+    setIntroOpen(false);
+  };
   return (
     <div className="live-shell">
       <div className="live-container">
@@ -43,6 +53,12 @@ export function LiveShell({ children }: { children: ReactNode }) {
           {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
         </nav>}
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
+        {introOpen && <aside className="live-alert" style={{ marginTop: 16 }} aria-label={t("Pengenalan MRG", "MRG introduction")}>
+          <strong>{t("Sebelum menggunakan MRG", "Before using MRG")}</strong>
+          <p>{t("Live berarti data pasar diperbarui. Posisi tetap catatan manual; aplikasi tidak mengirim order. Skor awal belum dikalibrasi dan bukan jaminan keamanan atau probabilitas rugi.", "Live means market data updates. Positions remain manual records; the app sends no orders. The initial score is uncalibrated, not a safety guarantee or loss probability.")}</p>
+          <div className="live-row" style={{ justifyContent: "start", flexWrap: "wrap", marginTop: 10 }}><button className="live-button" onClick={dismissIntro}>{t("Mengerti, lanjutkan", "Understood, continue")}</button><Link className="live-link" href="/terms">{t("Baca ketentuan", "Read terms")}</Link></div>
+        </aside>}
+        {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
         <main className="live-main">{children}</main>
         <nav className="live-tabbar" aria-label={t("Navigasi utama", "Main navigation")}>
           {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} aria-current={location === href ? "page" : undefined}><Icon /><span>{t(idText, enText)}</span></Link>)}

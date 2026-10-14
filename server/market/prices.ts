@@ -10,9 +10,16 @@ export function normalizeQuote(payload: any): LiveQuote {
   if (price === null) throw new Error("XUL10 price is absent or invalid");
   const bid = finitePrice(row.sell), ask = finitePrice(row.buy);
   if (bid !== null && ask !== null && bid > ask) throw new Error("Crossed quote");
+  // Direct feed and documented wrapper expose different per-symbol aliases.
+  // A clock without its date is insufficient. Never borrow the envelope's time.
+  // Where aliases disagree, retain the oldest valid tick rather than freshening it.
+  const tickTimes = [row.serverDateTime, row.date_time, row.updatedAt, row.serverTime]
+    .map((value) => providerTimestamp(value, "Asia/Jakarta"))
+    .filter((value): value is string => value !== null);
+  const asOf = tickTimes.length ? new Date(Math.min(...tickTimes.map((value) => Date.parse(value)))).toISOString() : null;
   return {
     symbol: "XUL10", price, bid, ask,
-    asOf: providerTimestamp(row.serverDateTime ?? row.date_time, "Asia/Jakarta"),
+    asOf,
     source: "Newsmaker · XUL10",
   };
 }

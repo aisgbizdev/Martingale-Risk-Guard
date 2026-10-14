@@ -29,6 +29,7 @@ import {
   Plus
 } from "lucide-react";
 import type { RiskResult, RiskInput } from "@shared/schema";
+import { riskInputSchema, riskStatusOptions } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
 
 // Interface untuk skenario tersimpan
@@ -242,30 +243,38 @@ export default function Result() {
   // State untuk fitur Compare Scenarios
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
   const [scenariosLoaded, setScenariosLoaded] = useState(false);
+  const [scenarioStorageError, setScenarioStorageError] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   
   // Load saved scenarios dari localStorage saat mount
   useEffect(() => {
-    const saved = localStorage.getItem("riskcheck_scenarios");
-    if (saved) {
-      try {
-        setSavedScenarios(JSON.parse(saved));
-      } catch {
-        console.error("Failed to load scenarios");
+    try {
+      const saved = localStorage.getItem("riskcheck_scenarios");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed) || parsed.length > 2 || parsed.some((item) =>
+          !item || typeof item.id !== "string" || !["conservative", "aggressive"].includes(item.nameKey) ||
+          !Number.isFinite(item.savedAt) || !riskInputSchema.safeParse(item.params).success ||
+          !item.result || !Number.isFinite(item.result.score) || item.result.score < 0 || item.result.score > 100 ||
+          !riskStatusOptions.includes(item.result.status) ||
+          ["reasons", "warnings", "psychologyNotes"].some(key => !Array.isArray(item.result[key]) || item.result[key].some((value: unknown) => typeof value !== "string")) ||
+          !item.result.metrics || ["expectedPF", "expectedROM", "expectedER", "marginCallRisk"].some(key => typeof item.result.metrics[key] !== "string")
+        )) throw new Error("Invalid saved study scenarios");
+        setSavedScenarios(parsed);
       }
-    }
+    } catch { setScenarioStorageError(true); }
     setScenariosLoaded(true);
   }, []);
   
-  // Save ke localStorage ketika scenarios berubah
-  useEffect(() => {
-    if (!scenariosLoaded) return;
-    if (savedScenarios.length > 0) {
-      localStorage.setItem("riskcheck_scenarios", JSON.stringify(savedScenarios));
-    } else {
-      localStorage.removeItem("riskcheck_scenarios");
-    }
-  }, [savedScenarios, scenariosLoaded]);
+  // Persist before updating the UI; never overwrite unreadable scenarios.
+  const persistScenarios = (next: SavedScenario[]) => {
+    if (!scenariosLoaded || scenarioStorageError) return;
+    try {
+      if (next.length) localStorage.setItem("riskcheck_scenarios", JSON.stringify(next));
+      else localStorage.removeItem("riskcheck_scenarios");
+      setSavedScenarios(next);
+    } catch { setScenarioStorageError(true); }
+  };
   
   const params: RiskInput = {
     modal: parseFloat(searchParams.get("modal") || "0"),
@@ -310,7 +319,7 @@ export default function Result() {
     if (!result) return;
     if (savedScenarios.length >= 2) {
       // Hapus yang paling lama jika sudah ada 2
-      setSavedScenarios(prev => [...prev.slice(1), {
+      persistScenarios([...savedScenarios.slice(1), {
         id: Date.now().toString(),
         nameKey,
         params,
@@ -318,7 +327,7 @@ export default function Result() {
         savedAt: Date.now()
       }]);
     } else {
-      setSavedScenarios(prev => [...prev, {
+      persistScenarios([...savedScenarios, {
         id: Date.now().toString(),
         nameKey,
         params,
@@ -329,11 +338,12 @@ export default function Result() {
   };
 
   const deleteScenario = (id: string) => {
-    setSavedScenarios(prev => prev.filter(s => s.id !== id));
+    persistScenarios(savedScenarios.filter(s => s.id !== id));
   };
 
   const clearAllScenarios = () => {
-    setSavedScenarios([]);
+    if (!window.confirm(t("Hapus semua skenario studi yang tersimpan di browser ini?", "Delete all saved study scenarios in this browser?"))) return;
+    persistScenarios([]);
     setShowCompare(false);
   };
 
@@ -431,6 +441,9 @@ export default function Result() {
               </p>
             </div>
             
+            {scenarioStorageError && <div role="alert" className="mt-4 rounded-md border border-destructive/30 p-3 text-sm">
+              {t("Skenario lokal tidak dapat dibaca atau disimpan. Data lama tidak ditimpa; kalkulasi tetap tersedia. Jika data rusak, gunakan Reset data lokal di halaman Posisi setelah mempertimbangkan penghapusannya.", "Local study scenarios cannot be read or saved. Existing data is not overwritten; calculation remains available. For corrupt records, use Local data reset on the Positions page after considering the deletion.")}
+            </div>}
             {/* Tombol Simpan & Bandingkan Skenario */}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Link href="/basic" className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" data-testid="button-buat-skenario-top">
@@ -446,6 +459,7 @@ export default function Result() {
                 }}
                 className="gap-2"
                 data-testid="button-save-scenario"
+                disabled={!scenariosLoaded || scenarioStorageError}
               >
                 <Save className="w-4 h-4" />
                 {t("Simpan Skenario", "Save Scenario")} ({savedScenarios.length}/2)

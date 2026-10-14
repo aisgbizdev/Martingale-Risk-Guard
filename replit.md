@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 - Install dependencies with `npm ci` when setting up a fresh checkout.
 - Build with `npm run build`; run the built app with `npm start`.
 - Setup verification: homepage rendered in preview, valid calculation returned HTTP 200, invalid input returned HTTP 400, and production build passed.
-- Validate with `npm run check`, `npm test`, and `npm run build`.
+- Validate with `npm run check`, `npm test`, and `npm run build`. With the app workflow running and Chromium available, `npm run test:ui` checks isolated-browser flows and actual provider responses; outputs are ignored under generated-artifacts.
 - Express remains on version 4. The `proxy-addr` override selects a patched release because the imported locked release was blocked by Replit's package security policy.
 
 ## System Architecture
@@ -66,6 +66,8 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - API logs omit payloads. Portfolio changes and simulations are calculated locally, not posted to external providers.
 - Browser storage failure/corruption is reported and existing unreadable records are not silently overwritten. Local reset clears only MRG records/preferences and saved basic scenarios.
 - Generated test outputs belong in `/generated-artifacts/`, excluded from Git and publishing.
+- The first-use introduction is brief and dismissible. Formula details can be expanded on mobile. Custom stress percentages simulate price moves only; remaining lot/layer capacity means remaining personal limits, not a safe financial buffer.
+- The service worker must never cache or provide offline substitutes for live API responses. Offline positions may remain local, but unavailable live data must pause the live index.
 
 ### Shared Code
 - `shared/schema.ts`: Zod schemas for input validation and TypeScript types

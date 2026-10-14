@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "test": "node --import tsx --test shared/*.test.ts server/market/*.test.ts",
+    "test:ui": "node script/test-live-ui.mjs",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

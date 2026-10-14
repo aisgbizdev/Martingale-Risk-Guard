@@ -1,2 +1,4 @@
 - [Dependency setup constraints](dependency-setup.md) — preserve the imported framework major when resolving blocked transitive dependencies.
-- [Live risk analysis direction](live-risk-analysis.md) — real-time prices and technical/fundamental analysis are being explored, not yet approved for implementation.
+- [Live risk boundaries](live-risk-analysis.md) — approved D1 gold-reference use, transparent initial weights, and no brokerage execution.
+- [Browser verification quirks](browser-verification.md) — storage-denial tests also affect Replit's injected preview banner; separate those errors from application failures.
+- [Quote feed documentation scope](quote-feed-shapes.md) — the guide describes a wrapper, while the direct feed exposes native timestamps; validate per-symbol times in both.

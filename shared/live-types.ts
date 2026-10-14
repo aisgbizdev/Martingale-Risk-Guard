@@ -108,7 +108,7 @@ export const positionSchema = z.object({
   side: z.enum(["buy", "sell"]),
   entry: positive,
   lots: positive.max(1e6),
-  enteredAt: z.string().max(40).nullable(),
+  enteredAt: z.string().max(40).datetime({ offset: true }).nullable(),
 });
 export type Position = z.infer<typeof positionSchema>;
 

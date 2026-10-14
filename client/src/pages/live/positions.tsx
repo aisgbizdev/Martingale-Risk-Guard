@@ -18,7 +18,7 @@ function numberText(value: number | null) { return value === null ? "" : String(
 function localDateTime(value: string) {
   const date = new Date(value);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${String(date.getMilliseconds()).padStart(3, "0")}`;
 }
 
 export default function PositionsPage() {
@@ -39,6 +39,9 @@ export default function PositionsPage() {
   const [candidateEntry, setCandidateEntry] = useState("");
   const [candidateLots, setCandidateLots] = useState("");
   const [recordConfirm, setRecordConfirm] = useState(false);
+  const [stressPercent, setStressPercent] = useState("3");
+  const customStress = Number(stressPercent);
+  const stressValid = stressPercent.trim() !== "" && Number.isFinite(customStress) && customStress > 0 && customStress < 100;
   const sim = simulationSide === "buy" ? buySim : sellSim;
   const groups = useMemo(() => (["buy", "sell"] as const).map((side) => {
     const positions = portfolio.positions.filter((p) => p.side === side);
@@ -156,13 +159,20 @@ export default function PositionsPage() {
                 <div className="live-row" style={{ gap: 4 }}><button className="live-icon-btn" onClick={() => edit(p)} aria-label={t("Ubah posisi", "Edit position")}><Pencil size={14}/></button><button className="live-icon-btn" onClick={() => { if (window.confirm(t("Hapus catatan posisi ini?", "Delete this position record?"))) try { removePosition(p.id); setActionError(""); } catch (e) { setActionError(String(e)); } }} aria-label={t("Hapus posisi", "Delete position")}><Trash2 size={14}/></button></div>
               </div>)}</div>
               <div style={{ marginTop: 15 }}><RiskSummary risk={risk} detailed/></div>
-              {risk.components.length > 0 && <div className="live-stack" style={{ marginTop: 14 }}>{risk.components.map((component) => <div className="live-row live-small" key={component.key} style={{ alignItems: "start" }}><span style={{ flex: 1 }}><strong>{t(component.label.id, component.label.en)}</strong><br/>{t(component.explanation.id, component.explanation.en)}</span><strong className="live-mono">{component.points === null ? "—" : show(component.points, 1)} / {component.max}</strong></div>)}</div>}
+              {risk.components.length > 0 && <details className="live-details" style={{ marginTop: 14 }}><summary>{t("Lihat rincian indeks dan formula", "View index details and formulas")}</summary><div className="live-stack" style={{ marginTop: 12 }}>{risk.components.map((component) => <div className="live-row live-small" key={component.key} style={{ alignItems: "start" }}><span style={{ flex: 1 }}><strong>{t(component.label.id, component.label.en)}</strong><br/>{t(component.explanation.id, component.explanation.en)}</span><strong className="live-mono">{component.points === null ? "—" : show(component.points, 1)} / {component.max}</strong></div>)}</div></details>}
               {market.usableQuote && <div className="live-alert" style={{ marginTop: 12 }}>
                 <strong>{t("Stress hipotetis · harga, bukan uang", "Hypothetical stress · price, not money")}</strong>
                 {stressScenarios(positions, market.usableQuote.price).map((scenario) => <div key={scenario.percent} className="live-row" style={{ marginTop: 7 }}><span>{scenario.percent}% {t("melawan posisi", "adverse move")}</span><strong className="live-mono">{show(scenario.scenarioPrice)} · {t("jarak adverse", "adverse distance")} {show(scenario.adverseDistance)}</strong></div>)}
+                {stressValid && stressScenarios(positions, market.usableQuote.price, [customStress]).map((scenario) => <div key="custom" className="live-row" style={{ marginTop: 7 }}><span>{scenario.percent}% · {t("pilihan Anda", "your choice")}</span><strong className="live-mono">{show(scenario.scenarioPrice)} · {t("jarak adverse", "adverse distance")} {show(scenario.adverseDistance)}</strong></div>)}
+                <p className="live-small" style={{ marginTop: 9 }}>{t("Skenario ini bukan batas kerugian terburuk atau simulasi likuiditas, spread, maupun margin call.", "These scenarios are not a worst-case loss bound or a simulation of liquidity, spreads, or margin calls.")}</p>
               </div>}
+              {portfolio.settings.maxLots !== null && <p className="live-small" style={{ marginTop: 12 }}>{t("Sisa batas lot pilihan Anda", "Remaining chosen lot limit")}: {show(Math.max(0, portfolio.settings.maxLots - summary.totalLots), 4)} · {t("bukan kapasitas aman rekening", "not safe account capacity")}</p>}
+              {portfolio.settings.maxLayers !== null && <p className="live-small">{t("Sisa batas layer pilihan Anda", "Remaining chosen layer limit")}: {Math.max(0, portfolio.settings.maxLayers - summary.layers)}</p>}
             </div>;
           })}</div>}
+      </Panel>
+      <Panel className="live-span-12" title={t("Skenario tekanan pilihan Anda", "Your chosen stress scenario")} eyebrow={t("Simulasi harga · bukan prediksi", "Price simulation · not a prediction")}>
+        <Field label={t("Pergerakan melawan posisi (%)", "Adverse price move (%)")} value={stressPercent} onChange={setStressPercent} error={!stressValid ? t("Masukkan persentase lebih dari 0 dan kurang dari 100.", "Enter a percentage greater than 0 and less than 100.") : undefined} hint={t("Hasil muncul di setiap rangkaian bila harga feed masih baru. Persentase ini bukan probabilitas kejadian.", "Results appear in each series when the feed price is fresh. This percentage is not an event probability.")}/>
       </Panel>
       <Panel className="live-span-12" title={t("Simulasikan tambahan layer", "Compare an additional layer")} eyebrow={t("Snapshot terpisah · tidak ada transaksi", "Separate snapshot · no trade execution")} action={sim.snapshot && <button className="live-icon-btn" onClick={closeSimulation} aria-label={t("Tutup simulasi", "Close simulation")}><X size={15}/></button>}>
         {!sim.snapshot ? <div className="live-row" style={{ justifyContent: "start", flexWrap: "wrap" }}>
@@ -176,7 +186,7 @@ export default function PositionsPage() {
           </div>
           <div className="live-row" style={{ justifyContent: "start", flexWrap: "wrap", marginTop: 14 }}>
             <button className="live-button" onClick={() => { const last = sim.snapshot?.positions.at(-1); if (!last) { setActionError(t("Belum ada posisi terakhir untuk menggandakan lot.", "There is no last position lot to double.")); return; } sim.doubleLastLot(); setCandidateLots(String(last.lots * 2)); setActionError(""); }}><ChevronUp size={15}/>{t("Gandakan lot terakhir", "Double last lot")}</button>
-            <button className="live-button" onClick={() => { sim.refreshReference(); if (market.usableQuote) setCandidateEntry(String(market.usableQuote.price)); }}>{t("Perbarui acuan harga", "Refresh price reference")}</button>
+            <button className="live-button" disabled={!market.usableQuote} onClick={() => { sim.refreshReference(); if (market.usableQuote) setCandidateEntry(String(market.usableQuote.price)); }}>{t("Gunakan harga terbaru untuk simulasi", "Use latest price for simulation")}</button>
             <button className="live-button" onClick={closeSimulation}>{t("Tutup simulasi", "Close simulation")}</button>
           </div>
           {sim.outdated && <div className="live-error" role="alert" style={{ marginTop: 12 }}>{t("Snapshot usang. Buat ulang simulasi sebelum mencatat.", "Snapshot is outdated. Recreate it before recording.")}</div>}

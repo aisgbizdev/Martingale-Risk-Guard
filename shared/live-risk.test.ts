@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { analyzeDaily, finitePrice, normalizeCandles, providerTimestamp, validDate } from "./market-analysis";
-import { EMPTY_SETTINGS, portfolioSchema, quoteIsFresh, type DailyCandle, type LiveQuote, type MarketContext, type Position } from "./live-types";
+import { EMPTY_SETTINGS, portfolioSchema, positionSchema, quoteIsFresh, type DailyCandle, type LiveQuote, type MarketContext, type Position } from "./live-types";
 import { compareSimulation, evaluatePositionRisk, stressScenarios, summarizePositions } from "./position-risk";
+import { normalizeQuote } from "../server/market/prices";
 
 const NOW = Date.parse("2026-10-14T13:00:00Z");
 const quote: LiveQuote = { symbol: "XUL10", price: 95, bid: 94.6, ask: 95.4, asOf: new Date(NOW).toISOString(), source: "test" };
@@ -191,4 +192,30 @@ test("stress scenarios are price moves, not monetary loss or forecasts", () => {
   assert.equal(stressScenarios([position], 100)[2].scenarioPrice, 98);
   assert.equal(stressScenarios([{ ...position, side: "sell" }], 100)[2].scenarioPrice, 102);
   assert.throws(() => stressScenarios([position], NaN), /Invalid/);
+});
+test("custom stress percentages remain explicit hypothetical moves with no safe buffer claim", () => {
+  assert.equal(stressScenarios([position], 100, [3, 5])[1].scenarioPrice, 95);
+  assert.equal(stressScenarios([{ ...position, entry: 80 }], 100, [3])[0].adverseDistance, 0);
+  for (const values of [[], [0], [-1], [100], [Infinity], [NaN]]) {
+    assert.throws(() => stressScenarios([position], 100, values), /percentages/);
+  }
+});
+test("position timestamps are explicitly unknown or valid timezone-aware instants", () => {
+  assert.equal(positionSchema.safeParse({ ...position, enteredAt: null }).success, true);
+  assert.equal(positionSchema.safeParse({ ...position, enteredAt: "2026-10-14T19:00:15+07:00" }).success, true);
+  for (const enteredAt of ["bad", "2026-02-30T19:00:00Z", "2026-10-14T19:00:00"]) {
+    assert.equal(positionSchema.safeParse({ ...position, enteredAt }).success, false);
+  }
+});
+test("a fresh documented quote row enables the index, and its stale tick disables it", () => {
+  const packet = { status: "success", updatedAt: new Date(NOW + 60_000).toISOString(),
+    data: [{ instrument: "XAU/USD", symbol: "XUL10", price: 95, buy: 95.4, sell: 94.6,
+      serverTime: "20:00:00", updatedAt: new Date(NOW).toISOString() }] };
+  const fresh = normalizeQuote(packet);
+  assert.equal(quoteIsFresh(fresh, NOW), true);
+  assert.equal(evaluatePositionRisk([position], settings, fresh, context(), NOW).score, 36);
+  packet.data[0].updatedAt = new Date(NOW - 21_000).toISOString();
+  const stale = normalizeQuote(packet);
+  assert.equal(quoteIsFresh(stale, NOW), false);
+  assert.equal(evaluatePositionRisk([position], settings, stale, context(), NOW).score, null);
 });

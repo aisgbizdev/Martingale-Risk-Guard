@@ -202,6 +202,8 @@ button, input, select { font: inherit; }
 .live-icon-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid hsl(var(--border)); background:transparent; color:inherit; padding:9px 12px; min-height:40px; border-radius:999px; cursor:pointer; }
 .live-icon-btn:hover { background:hsl(var(--muted)); }
 .live-main { animation:rise-in .35s ease both; }
+.live-details summary { cursor:pointer; padding:10px 0; font-size:12px; font-weight:600; min-height:44px; }
+.live-alert p { margin-top:6px; }
 @keyframes rise-in { from {opacity:0;transform:translateY(8px)} to {opacity:1;transform:translateY(0)} }
 .live-kicker { text-transform:uppercase; letter-spacing:.15em; font:500 10px var(--font-mono); color:hsl(var(--muted-foreground)); }
 .live-title { font:800 clamp(30px,5vw,52px)/1.02 var(--font-serif); letter-spacing:-.055em; margin:10px 0 12px; }

@@ -139,10 +139,13 @@ export function compareSimulation(
   };
 }
 
-export function stressScenarios(positions: Position[], price: number) {
+export function stressScenarios(positions: Position[], price: number, percentages = [0.5, 1, 2]) {
   if (!Number.isFinite(price) || price <= 0) throw new Error("Invalid stress reference price");
+  if (!percentages.length || percentages.length > 10 || percentages.some((n) => !Number.isFinite(n) || n <= 0 || n >= 100)) {
+    throw new Error("Stress percentages must be greater than 0 and less than 100");
+  }
   const summary = summarizePositions(positions);
-  return [0.5, 1, 2].map((percent) => {
+  return percentages.map((percent) => {
     const direction = positions[0]?.side === "sell" ? 1 : -1;
     const scenarioPrice = price * (1 + direction * percent / 100);
     const adverseDistance = summary.averageEntry === null ? null :

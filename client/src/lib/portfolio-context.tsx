@@ -59,6 +59,7 @@ export function usePortfolioState() {
       try {
         localStorage.removeItem(KEY);
         localStorage.removeItem("riskcheck_scenarios");
+        localStorage.removeItem("mrg_welcome_seen");
       } catch {
         const message = "Data lokal belum dapat dihapus. / Local data could not be deleted.";
         setError(message);

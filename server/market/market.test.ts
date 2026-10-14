@@ -17,6 +17,34 @@ test("global response timestamp cannot hide missing tick timestamps", () => {
   assert.equal(normalizeQuote({ status: "success", updatedAt: "2026-10-14T13:00:00Z",
     data: [{ symbol: "XUL10", price: 100 }] }).asOf, null);
 });
+test("documented quote row uses its ISO updatedAt, not the envelope refresh time", () => {
+  const quote = normalizeQuote({ status: "success", updatedAt: "2026-10-14T14:00:00Z", serverTime: "21:00:00",
+    data: [{ instrument: "XAU/USD", symbol: "XUL10", price: "100", buy: "100.4", sell: "99.6",
+      serverTime: "20:00:00", updatedAt: "2026-10-14T13:00:00Z" }] });
+  assert.equal(quote.asOf, "2026-10-14T13:00:00.000Z");
+  assert.equal(quote.bid, 99.6); assert.equal(quote.ask, 100.4);
+});
+test("documented per-symbol serverTime is accepted only when it includes a valid full date", () => {
+  assert.equal(normalizeQuote({ status: "success", data: [
+    { symbol: "XUL10", price: 100, serverTime: "2026-10-14 20:00:00" },
+  ] }).asOf, "2026-10-14T13:00:00.000Z");
+});
+test("time-only quote clocks cannot borrow a date from global updatedAt or the current day", () => {
+  assert.equal(normalizeQuote({ status: "success", updatedAt: "2026-10-14T13:00:00Z",
+    serverTime: "20:00:00", data: [{ symbol: "XUL10", price: 100, serverTime: "20:00:00" }] }).asOf, null);
+});
+test("a newer wrapper timestamp cannot hide an older native per-symbol tick", () => {
+  assert.equal(normalizeQuote({ status: "success", updatedAt: "2026-10-14T13:00:00Z", data: [
+    { symbol: "XUL10", price: 100, serverDateTime: "2026-10-14 19:00:00",
+      updatedAt: "2026-10-14T13:00:00Z", serverTime: "20:00:00" },
+  ] }).asOf, "2026-10-14T12:00:00.000Z");
+});
+test("malformed documented timestamps remain unknown instead of inheriting a fresh response time", () => {
+  for (const updatedAt of ["bad", "2026-02-30T13:00:00Z", "2026-10-14T24:00:00Z"]) {
+    assert.equal(normalizeQuote({ status: "success", updatedAt: "2026-10-14T13:00:00Z",
+      data: [{ symbol: "XUL10", price: 100, updatedAt, serverTime: "20:00:00" }] }).asOf, null);
+  }
+});
 test("missing symbols, disconnected feed, crossed prices and zero price fail explicitly", () => {
   assert.throws(() => normalizeQuote({ status: "success", data: [{ symbol: "OTHER", price: 100 }] }));
   assert.throws(() => normalizeQuote({ status: "success", state: "disconnected", data: [{ symbol: "XUL10", price: 100 }] }));
