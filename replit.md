@@ -62,7 +62,7 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - Missing user limits, missing/stale prices, insufficient/stale candles, incomplete/stale calendars or unclear relevant USD event timing produce an unavailable aggregate index, not synthetic zero components.
 - Simulation freezes base positions, settings, quote, context and assessment time. Inputs remain hypothetical; only an explicit confirmation adds a manual record. No transaction is sent or verified.
 - Target and layer spacing are separate fixed preferences in raw price units. XUL10 point/contract conversion is not verified; monetary P/L, free margin, margin-call prices and automatic adaptive targets are deliberately not implemented.
-- External TradingView OANDA:XAUUSD chart is optional/on-demand display only and clearly separate from calculation sources. Market/news API credentials remain server-side. Full articles are rendered as plain text.
+- External TradingView OANDA:XAUUSD chart is display only, automatically requested when the Technical tab is active and online; other tabs and offline mode do not load it. It remains separate from calculation sources. Market/news API credentials remain server-side. Full articles are rendered as plain text.
 - API logs omit payloads. Portfolio changes and simulations are calculated locally, not posted to external providers.
 - Browser storage failure/corruption is reported and existing unreadable records are not silently overwritten. Local reset clears only MRG records/preferences and saved basic scenarios.
 - Generated test outputs belong in `/generated-artifacts/`, excluded from Git and publishing.

@@ -14,3 +14,9 @@ The app has two primary uses: clean, elegant live marketing presentations and se
 **Why:** The user explicitly described both audiences and requested device-responsive, mobile-first navigation.
 
 **How to apply:** Beginner help should explain risk and Martingale/Averaging at the point of use without filling the screen. Critical warnings must stay clear and visible in both presentation and independent-use flows.
+
+The user approved a chart-first Technical view, with the chart directly visible rather than behind an opening button or dropdown. Keep the page header compact and group app controls instead of leaving an isolated Install row.
+
+**Why:** The user called the scattered empty areas and introductory band awkward, and approved automatically requesting TradingView when entering the Technical tab.
+
+**How to apply:** Preserve this chart-first direction in later UI refinements. Keep technical source distinctions and critical warnings readable; reduce duplicate text and unused spacing rather than hiding risk information.

@@ -5,15 +5,20 @@ import { useLanguage } from "@/lib/language-context";
 const WIDGET_SCRIPT = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
 const CHART_LINK = "https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD";
 
-export function TradingViewChart() {
+export function TradingViewChart({ online }: { online: boolean }) {
   const { language, t } = useLanguage();
   const host = useRef<HTMLDivElement>(null);
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<"loading" | "frame" | "failed">("loading");
+  const [state, setState] = useState<"offline" | "loading" | "frame" | "failed">("loading");
 
   useEffect(() => {
     const target = host.current;
     if (!target) return;
+    if (!online) {
+      target.replaceChildren();
+      setState("offline");
+      return;
+    }
     let active = true;
     setState("loading");
     const container = document.createElement("div");
@@ -71,24 +76,24 @@ export function TradingViewChart() {
       script.onerror = null;
       container.remove();
     };
-  }, [language, attempt]);
+  }, [language, attempt, online]);
 
   return <>
-    <div className="live-row" style={{ marginTop: 12, flexWrap: "wrap" }}>
-      <a className="live-button" href={CHART_LINK} target="_blank" rel="noopener noreferrer">
-        <ExternalLink size={15}/>{t("Buka di TradingView", "Open in TradingView")}
+    <div className="mrg-chart-actions">
+      <a className="live-button" href={CHART_LINK} target="_blank" rel="noopener noreferrer" aria-label={t("Buka di TradingView", "Open in TradingView")}>
+        <ExternalLink size={15}/><span className="mrg-chart-action-long">{t("Buka di TradingView", "Open in TradingView")}</span><span className="mrg-chart-action-short">TradingView</span>
       </a>
-      <button className="live-button" onClick={() => setAttempt((value) => value + 1)}>
-        <RefreshCw size={15}/>{t("Coba muat ulang chart", "Retry chart")}
+      <button className="live-button" type="button" onClick={() => setAttempt((value) => value + 1)} disabled={!online} aria-label={t("Coba muat ulang chart", "Retry chart")}>
+        <RefreshCw size={15}/><span className="mrg-chart-action-long">{t("Coba muat ulang chart", "Retry chart")}</span><span className="mrg-chart-action-short">{t("Muat ulang", "Retry")}</span>
       </button>
     </div>
-    {state === "loading" && <div className="live-small" role="status" style={{ marginTop: 10 }}>{t("Meminta widget TradingView…", "Requesting the TradingView widget…")}</div>}
-    <div className="live-small" style={{ marginTop: 10 }}>
-      {t("Isi widget eksternal tidak dapat diverifikasi otomatis. Jika kosong atau muncul 403, gunakan Buka di TradingView. Analisis MRG tidak terpengaruh.", "External widget contents cannot be verified automatically. If blank or showing 403, use Open in TradingView. MRG analysis is unaffected.")}
-    </div>
-    {state === "failed" && <div className="live-error" role="alert" style={{ marginTop: 12 }}>
+    {state === "offline" && <div className="mrg-widget-status" role="status">
+      {t("Offline — widget TradingView tidak diminta. Chart akan diinisialisasi saat koneksi kembali.", "Offline — no TradingView widget request was made. The chart will initialize when connectivity returns.")}
+    </div>}
+    {state === "loading" && <div className="mrg-widget-status" role="status">{t("Meminta widget TradingView…", "Requesting the TradingView widget…")}</div>}
+    {state === "failed" && <div className="live-error mrg-widget-status" role="alert">
       {t("Widget belum dapat ditampilkan. Koneksi, pemblokir konten, atau pembatasan TradingView bisa menjadi penyebab.", "The widget could not be displayed. Connectivity, content blockers, or TradingView restrictions may be responsible.")}
     </div>}
-    <div ref={host} className="live-chart-frame" style={{ marginTop: 12, display: state === "failed" ? "none" : undefined }} />
+    <div ref={host} className="live-chart-frame" data-testid="tradingview-chart-frame" style={{ display: state === "failed" || state === "offline" ? "none" : undefined }} />
   </>;
 }

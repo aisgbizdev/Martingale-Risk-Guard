@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import "./pwa-install.css";
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -23,7 +25,7 @@ window.addEventListener("appinstalled", () => {
 const standalone = () => installationCompleted || window.matchMedia("(display-mode: standalone)").matches ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
-export function PwaInstall() {
+export function PwaInstall({ toolbarId }: { toolbarId?: string }) {
   const { t } = useLanguage();
   const [, redraw] = useState(0);
   const [help, setHelp] = useState(false);
@@ -31,6 +33,10 @@ export function PwaInstall() {
   const [installed, setInstalled] = useState(standalone);
   const [online, setOnline] = useState(navigator.onLine);
   const [error, setError] = useState(false);
+  const [toolbar, setToolbar] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setToolbar(toolbarId ? document.getElementById(toolbarId) : null);
+  }, [toolbarId]);
   useEffect(() => {
     const changed = () => redraw((value) => value + 1);
     const installedChanged = () => setInstalled(true);
@@ -61,11 +67,12 @@ export function PwaInstall() {
       setBusy(false);
     }
   };
+  const installButton = !installed ? <button className={toolbarId ? "live-icon-btn live-install-trigger" : "live-button"} onClick={() => void install()} disabled={busy}
+    aria-expanded={help} aria-controls="mrg-install-guide" aria-label={t("Install aplikasi", "Install app")}><Download size={15}/><span className="live-install-label">{busy ? t("Menunggu", "Waiting") : t("Install", "Install")}</span></button> : null;
   return <div className="live-pwa-tools">
+    {toolbarId ? toolbar && createPortal(installButton, toolbar) : installButton}
     {!online && <div className="live-alert" role="alert">{t("Offline · harga dan indeks live dijeda. Catatan lokal tetap tersedia.", "Offline · live prices and index paused. Local records remain available.")}</div>}
-    {!installed && <button className="live-button" onClick={() => void install()} disabled={busy}
-      aria-expanded={help} aria-label={t("Install aplikasi", "Install app")}><Download size={15}/>{busy ? t("Menunggu", "Waiting") : t("Install", "Install")}</button>}
-    {help && <div className="live-alert" role="region" aria-label={t("Panduan install", "Installation guide")}>
+    {help && <div id="mrg-install-guide" className="live-alert" role="region" aria-label={t("Panduan install", "Installation guide")}>
       <div className="live-row"><strong>{t("Pasang MRG di ponsel", "Install MRG on your phone")}</strong><button className="live-button" onClick={() => setHelp(false)} aria-label={t("Tutup panduan install", "Close installation guide")}><X size={14}/></button></div>
       <p className="live-small">{t("Android: menu browser → Install aplikasi / Tambahkan ke layar utama. iPhone: Safari → Bagikan → Tambahkan ke Layar Utama.", "Android: browser menu → Install app / Add to home screen. iPhone: Safari → Share → Add to Home Screen.")}</p>
       {window.self !== window.top && <a className="live-button primary" href="/" target="_blank" rel="noopener noreferrer">{t("Buka di browser", "Open in browser")}</a>}

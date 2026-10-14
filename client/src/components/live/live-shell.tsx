@@ -40,7 +40,8 @@ export function LiveShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="live-row" style={{ gap: 6 }}>
-            <Link href="/basic" className="live-icon-btn" title={t("Simulasi Dasar", "Basic simulation")}><BookOpen size={16} /><span className="hidden sm:inline">{t("Simulasi Dasar", "Basic")}</span></Link>
+            <span id="mrg-install-toolbar" className="live-header-install" />
+            <Link href="/basic" className="live-icon-btn live-basic-shortcut" title={t("Simulasi Dasar", "Basic simulation")}><BookOpen size={16} /><span className="hidden sm:inline">{t("Simulasi Dasar", "Basic")}</span></Link>
             <button className="live-icon-btn" onClick={() => setLanguage(language === "id" ? "en" : "id")} aria-label={t("Ganti bahasa", "Change language")}>
               <Globe2 size={16} />{language === "id" ? "EN" : "ID"}
             </button>
@@ -51,6 +52,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
         </header>
         {menuOpen && <nav className="live-nav live-mobile-menu" style={{ display: "flex", flexWrap: "wrap" }} aria-label={t("Navigasi", "Navigation")}>
           {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
+          <Link href="/basic" onClick={() => setMenuOpen(false)}><BookOpen size={16}/>{t("Simulasi Dasar", "Basic simulation")}</Link>
         </nav>}
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
         <aside className="live-critical-note" aria-label={t("Pengenalan MRG", "MRG introduction")}>
@@ -62,7 +64,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
           </details>}
         </aside>
         {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
-        <PwaInstall />
+        <PwaInstall toolbarId="mrg-install-toolbar" />
         <main className="live-main">{children}</main>
         <nav className="live-tabbar" aria-label={t("Navigasi utama", "Main navigation")}>
           {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon /><span>{t(idText, enText)}</span></Link>)}

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ArrowLeft, ExternalLink, LineChart, RefreshCw, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ExternalLink, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMarket, useArticle } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { LiveShell } from "@/components/live/live-shell";
 import { ErrorBox, Field, LoadingBlock, PageIntro, Panel } from "@/components/live/live-ui";
-import { TermHelp } from "@/components/live/term-help";
-import { TradingViewChart } from "@/components/live/tradingview-chart";
+import { TechnicalOverview } from "@/components/live/technical-overview";
 import type { CalendarEvent } from "@shared/live-types";
 import { calendarIsFresh } from "@shared/live-types";
 
@@ -62,7 +61,6 @@ export default function AnalysisPage() {
   const [to, setTo] = useState("");
   const [keyword, setKeyword] = useState("");
   const [eventPage, setEventPage] = useState(1);
-  const [chartOpen, setChartOpen] = useState(false);
   const context = market.context.data;
   const analysis = context?.history.analysis;
   const events = context?.calendar.events ?? [];
@@ -71,7 +69,6 @@ export default function AnalysisPage() {
   const requestedTab = new URLSearchParams(search).get("tab");
   const activeTab = articleSlug ? "news" : requestedTab === "calendar" || requestedTab === "news" ? requestedTab : "technical";
   const selectTab = (tab: "technical" | "calendar" | "news") => {
-    setChartOpen(false);
     setLocation(`/analysis?tab=${tab}`);
   };
   const filteredEvents = useMemo(() => events.filter((event) => {
@@ -95,12 +92,12 @@ export default function AnalysisPage() {
     setArticleSlug(new URLSearchParams(window.location.search).get("article"));
   }, [location, search]);
   return <LiveShell>
+    <div className="live-analysis-page">
     <PageIntro kicker={t("Analisis pasar · XUL10", "Market analysis · XUL10")} title={t("Konteks, bukan sinyal.", "Context, not signals.")}>
-      {t("Indikator harian, kalender, chart eksternal opsional, dan bacaan Newsmaker dengan sumber yang terlihat.", "Daily indicators, calendar, optional external chart, and Newsmaker reading with visible sources.")}
+      {t("Indikator harian, kalender, dan berita Newsmaker dengan sumber yang jelas. Chart visual dimuat otomatis hanya saat tab Teknikal aktif.", "Daily indicators, calendar, and Newsmaker news with clear sources. The visual chart loads automatically only while the Technical tab is active.")}
     </PageIntro>
-    {activeTab === "technical" && <div className="live-trust-strip" role="note">{t("LGD Daily D1 adalah referensi harga emas, bukan harga XUL10 yang identik.", "LGD Daily D1 is a gold-price reference, not an identical XUL10 price.")}</div>}
     {!market.context.isLoading && !calendarFresh && <div className="live-alert live-source-warning" role="alert">{t("Kalender tidak tersedia atau kedaluwarsa. Jadwal lama hanya referensi; komponen indeks agenda tidak digunakan.", "Calendar is unavailable or stale. Any old schedule is reference only; the event index component is not used.")}</div>}
-    {market.context.isError && <div style={{ marginTop: 16 }}><ErrorBox message={t("Sebagian atau seluruh konteks gagal dimuat. Angka yang tidak tersedia tidak digantikan.", "Some or all context failed to load. Unavailable values are not substituted.")} retry={() => void market.refresh()} /></div>}
+    {market.context.isError && <div style={{ marginTop: 10 }}><ErrorBox message={t("Sebagian atau seluruh konteks gagal dimuat. Angka yang tidak tersedia tidak digantikan.", "Some or all context failed to load. Unavailable values are not substituted.")} retry={() => void market.refresh()} /></div>}
     <div className="live-tabs" role="tablist" aria-label={t("Bagian analisis", "Analysis sections")} onKeyDown={(event) => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
@@ -112,29 +109,15 @@ export default function AnalysisPage() {
     }}>
       {(["technical", "calendar", "news"] as const).map((tab) => <button key={tab} type="button" role="tab" data-analysis-tab={tab} id={`analysis-tab-${tab}`} aria-selected={activeTab === tab} tabIndex={activeTab === tab ? 0 : -1} onClick={() => selectTab(tab)}>{tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}</button>)}
     </div>
-    <div className="live-grid">
-      {activeTab === "technical" && <div className="live-tabpanel" role="tabpanel" id="analysis-panel-technical" aria-labelledby="analysis-tab-technical">
-      <Panel className="live-span-7" title={t("Referensi teknikal D1", "D1 technical reference")} eyebrow={t("LGD Daily · basis harga emas", "LGD Daily · gold-price basis")} action={<span className="live-pill">D1</span>}>
-        {market.context.isLoading ? <LoadingBlock label={t("Memuat analisis", "Loading analysis")} /> : analysis ? <>
-          <div className="live-inline-help"><span className="live-small">{t("LGD Daily · referensi harian", "LGD Daily · daily reference")}</span><TermHelp term="d1"/></div>
-          <div className="live-alert">{t("LGD Daily adalah referensi emas dan tidak identik dengan harga kontrak XUL10. Indikator ini konteks historis, bukan prediksi.", "LGD Daily is a gold reference and is not identical to XUL10 contract prices. These historical indicators are context, not predictions.")}</div>
-          <div className="live-grid" style={{ margin: "14px 0 0" }}>
-            <div className="live-metric live-span-6"><span className="live-inline-help"><span className="live-small">{t("Tren · MA20 / MA50", "Trend · MA20 / MA50")}</span><TermHelp term="ma"/></span><strong style={{ fontSize: 18 }}>{analysis.trend === "up" ? t("Naik", "Up") : analysis.trend === "down" ? t("Turun", "Down") : t("Campuran", "Mixed")}</strong><div className="live-small">{analysis.ma20.toLocaleString()} / {analysis.ma50.toLocaleString()}</div></div>
-            <div className="live-metric live-span-6"><span className="live-inline-help"><span className="live-small">{t("Volatilitas · ATR14", "Volatility · ATR14")}</span><TermHelp term="atr"/></span><strong>{analysis.atr14.toLocaleString()}</strong><div className="live-small">{analysis.atrPercent.toFixed(2)}% · {t("median dasar", "baseline median")} {analysis.atrBaseline.toLocaleString()}</div></div>
-            <div className="live-metric live-span-6"><span className="live-inline-help"><span className="live-small">{t("Rentang 20 hari", "20-day range")}</span><TermHelp term="support"/><TermHelp term="resistance"/></span><strong style={{ fontSize: 16 }}>{analysis.support20.toLocaleString()} — {analysis.resistance20.toLocaleString()}</strong></div>
-            <div className="live-metric live-span-6"><span className="live-small">{t("Candle / rentang", "Candles / date range")}</span><strong style={{ fontSize: 15 }}>{analysis.candleCount}</strong><div className="live-small">{analysis.firstDate} — {analysis.lastDate}</div></div>
-          </div>
-          <div className="live-small" style={{ marginTop: 12 }}>{t("Penutupan referensi terakhir", "Last reference close")}: {analysis.lastClose.toLocaleString()} · {t("diterima", "received")}: {dateTime(context?.history.receivedAt ?? null)}</div>
-        </> : <div className="live-alert">{context?.history.message?.[language] ?? t("Analisis harian belum tersedia.", "Daily analysis is unavailable.")}</div>}
-      </Panel>
-      <Panel className="live-span-5" title={t("Chart visual", "Visual chart")} eyebrow="TRADINGVIEW · OANDA:XAUUSD">
-        <div className="live-alert">{t("Widget hanya visual. OANDA:XAUUSD adalah referensi berbeda dari XUL10 dan tidak digunakan untuk indeks atau simulasi. Widget dimuat hanya setelah Anda membukanya; permintaan akan dikirim ke TradingView.", "Visual widget only. OANDA:XAUUSD is a different reference from XUL10 and is not used for the index or simulation. It loads only when opened; a request is sent to TradingView.")}</div>
-        {!chartOpen ? <button className="live-button primary" style={{ marginTop: 14 }} onClick={() => setChartOpen(true)}><LineChart size={16}/>{t("Buka chart", "Open chart")}</button> : <>
-          <div className="live-row" style={{ marginTop: 12, justifyContent: "end" }}><button className="live-icon-btn" onClick={() => setChartOpen(false)} aria-label={t("Tutup chart", "Close chart")}><X size={15}/></button></div>
-          <TradingViewChart />
-          <div className="live-small">{t("Sumber chart", "Chart source")}: <a className="live-link" href="https://www.tradingview.com/" target="_blank" rel="noreferrer">TradingView <ExternalLink size={12}/></a></div>
-        </>}
-      </Panel>
+    <div className={`live-grid${activeTab === "technical" ? " live-technical-grid" : ""}`}>
+      {activeTab === "technical" && <div className="live-tabpanel live-technical-tabpanel" role="tabpanel" id="analysis-panel-technical" aria-labelledby="analysis-tab-technical">
+        <TechnicalOverview
+          analysis={analysis}
+          historyMessage={context?.history.message?.[language]}
+          receivedAt={context?.history.receivedAt ?? null}
+          isLoading={market.context.isLoading}
+          online={market.online}
+        />
       </div>}
       {activeTab === "calendar" && <div className="live-tabpanel" role="tabpanel" id="analysis-panel-calendar" aria-labelledby="analysis-tab-calendar">
       <Panel className="live-span-12" title={t("Agenda ekonomi", "Economic calendar")} eyebrow={`${userTimezone} · ${calendarFresh ? t("data lengkap dan baru", "complete and fresh") : t("belum lengkap / kedaluwarsa", "incomplete / stale")}`} action={<button className="live-icon-btn" onClick={() => void market.refresh()} aria-label={t("Perbarui data", "Refresh data")}><RefreshCw size={15}/></button>}>
@@ -171,6 +154,7 @@ export default function AnalysisPage() {
           !articleSlug && (context?.news.status !== "ready" || !context.news.items.length) && <div className="live-alert">{context?.news.message?.[language] ?? t("Berita belum tersedia.", "News is unavailable.")} <a className="live-link" href="https://www.newsmaker.id" target="_blank" rel="noreferrer">{t("Kunjungi sumber umum", "Visit source home")} <ExternalLink size={12}/></a></div>}
        </Panel>
        </div>}
+     </div>
     </div>
   </LiveShell>;
 }
