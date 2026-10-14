@@ -4,6 +4,7 @@ import type { Position, PositionSettings } from "@shared/live-types";
 import { evaluatePositionRisk, stressScenarios, summarizePositions } from "@shared/position-risk";
 import { useMarket } from "@/hooks/use-market";
 import { usePositionSimulation } from "@/hooks/use-position-simulation";
+import { usePanelHistory, type PositionPanel } from "@/hooks/use-panel-history";
 import { usePortfolio } from "@/lib/portfolio-context";
 import { useLanguage } from "@/lib/language-context";
 import { LiveShell } from "@/components/live/live-shell";
@@ -14,7 +15,7 @@ import { TermHelp } from "@/components/live/term-help";
 const show = (value: number | null, digits = 3) => value === null ? "—" : new Intl.NumberFormat(undefined, { maximumFractionDigits: digits }).format(value);
 const positive = (raw: string) => raw.trim() !== "" && Number.isFinite(Number(raw)) && Number(raw) > 0;
 type PositionForm = { side: Position["side"]; entry: string; lots: string; enteredAt: string };
-type ActivePanel = "entry" | "settings" | "simulation" | null;
+type ActivePanel = PositionPanel | null;
 const blankPosition = (side: Position["side"] = "buy"): PositionForm => ({ side, entry: "", lots: "", enteredAt: "" });
 function numberText(value: number | null) { return value === null ? "" : String(value); }
 function localDateTime(value: string) {
@@ -33,7 +34,25 @@ export default function PositionsPage() {
   simulationCleanup.current = { buy: buySim.close, sell: sellSim.close };
   const [form, setForm] = useState<PositionForm>(blankPosition());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
+  const { activePanel, openPanel, dismissPanel } = usePanelHistory((next, previous, nested) => {
+    if (previous === "entry") discardEntry();
+    if (previous === "settings") discardSettings();
+    const resume = next === "simulation" && previous === "settings" &&
+      simulationPausedForSettings && !!sim.snapshot;
+    const pause = next === "settings" && previous === "simulation" && nested && !!sim.snapshot;
+    if (pause) {
+      setSimulationPausedForSettings(true);
+      setRecordConfirm(false);
+    } else if (!resume) {
+      discardSimulation();
+    }
+    if (next === "settings") discardSettings();
+    if (next === "simulation") {
+      setSimulationPausedForSettings(false);
+      setRecordConfirm(false);
+    }
+    if (next === "entry") discardEntry();
+  });
   const [formError, setFormError] = useState("");
   const [actionError, setActionError] = useState("");
   const [settings, setSettings] = useState<PositionSettings>(portfolio.settings);
@@ -66,44 +85,37 @@ export default function PositionsPage() {
   };
   const openEntry = (opener?: HTMLElement) => {
     if (opener) panelOpenerRef.current = opener;
-    if (activePanel === "simulation") closeSimulation();
-    if (activePanel === "settings") closeSettings();
-    if (simulationPausedForSettings) closeSimulation();
+    discardSimulation();
+    discardSettings();
     setActionError("");
-    setActivePanel("entry");
+    openPanel("entry");
   };
-  const closeEntry = () => {
-    setActivePanel(null);
+  const discardEntry = () => {
     setEditingId(null);
     setForm(blankPosition());
     setFormError("");
   };
+  const closeEntry = dismissPanel;
   const openSettings = (opener?: HTMLElement) => {
     if (opener) panelOpenerRef.current = opener;
-    if (activePanel === "simulation") closeSimulation();
-    if (activePanel === "entry") closeEntry();
-    setSettings(portfolio.settings);
-    setSettingsError("");
-    setSettingsFieldErrors({});
-    setSettingsSaved(false);
-    setActivePanel("settings");
+    discardSimulation();
+    discardEntry();
+    discardSettings();
+    openPanel("settings");
   };
   const switchFromSimulationToSettings = () => {
-    panelOpenerRef.current = document.getElementById("simulation-controls");
     setSimulationPausedForSettings(true);
+    setRecordConfirm(false);
+    discardSettings();
+    openPanel("settings", true);
+  };
+  const discardSettings = () => {
     setSettings(portfolio.settings);
     setSettingsError("");
     setSettingsFieldErrors({});
     setSettingsSaved(false);
-    setActivePanel("settings");
   };
-  const closeSettings = () => {
-    setActivePanel(null);
-    setSettings(portfolio.settings);
-    setSettingsFieldErrors({});
-    setSettingsError("");
-    setSettingsSaved(false);
-  };
+  const closeSettings = dismissPanel;
   const submitPosition = () => {
     const errors: string[] = [];
     if (!positive(form.entry)) errors.push(t("Harga masuk harus berupa angka positif.", "Entry price must be a positive number."));
@@ -127,27 +139,20 @@ export default function PositionsPage() {
     setForm({ side: position.side, entry: String(position.entry), lots: String(position.lots), enteredAt: position.enteredAt ? localDateTime(position.enteredAt) : "" });
     setFormError("");
     setActionError("");
-    setActivePanel("entry");
+    discardSimulation();
+    discardSettings();
+    openPanel("entry");
   };
   const openSimulation = (opener?: HTMLElement) => {
+    if (simulationPausedForSettings) {
+      dismissPanel();
+      return;
+    }
     if (opener) panelOpenerRef.current = opener;
-    if (simulationPausedForSettings && sim.snapshot) {
-      setSimulationPausedForSettings(false);
-      setActivePanel("simulation");
-      return;
-    }
-    if (activePanel === "simulation") {
-      closeSimulation();
-      setActivePanel("simulation");
-      return;
-    }
-    if (activePanel === "entry") closeEntry();
-    if (activePanel === "settings") closeSettings();
-    setActionError("");
-    setRecordConfirm(false);
-    setCandidateEntry("");
-    setCandidateLots("");
-    setActivePanel("simulation");
+    discardEntry();
+    discardSettings();
+    discardSimulation();
+    openPanel("simulation");
   };
   const startSimulation = () => {
     setActionError("");
@@ -162,7 +167,7 @@ export default function PositionsPage() {
     sim.update({ [key]: raw.trim() && Number.isFinite(Number(raw)) ? Number(raw) : 0 });
     setRecordConfirm(false);
   };
-  const closeSimulation = () => {
+  const discardSimulation = () => {
     buySim.close();
     sellSim.close();
     setSimulationPausedForSettings(false);
@@ -170,11 +175,11 @@ export default function PositionsPage() {
     setCandidateEntry("");
     setCandidateLots("");
     setActionError("");
-    setActivePanel((current) => current === "simulation" ? null : current);
   };
+  const closeSimulation = dismissPanel;
   const onSimulationOpenChange = (open: boolean) => {
     if (!open) closeSimulation();
-    else setActivePanel("simulation");
+    else openSimulation();
   };
   const record = () => {
     if (blocked) {
@@ -211,7 +216,7 @@ export default function PositionsPage() {
       setSettingsFieldErrors({});
       setSettingsSaved(true);
       setActionError("");
-      if (!simulationPausedForSettings) setActivePanel(null);
+      if (!simulationPausedForSettings) dismissPanel();
     }
     catch (error) { setSettingsError(error instanceof Error ? error.message : t("Pengaturan gagal disimpan.", "Settings could not be saved.")); }
   };
@@ -293,7 +298,7 @@ export default function PositionsPage() {
       <div className="live-span-12 live-small">{t("Data posisi tersimpan lokal tanpa cloud sync. Reset lokal juga menghapus preferensi MRG dan skenario kalkulator dasar yang tersimpan.", "Position data stays local without cloud sync. Local reset also removes MRG preferences and saved basic calculator scenarios.")}</div>
     </div>
 
-    <AdaptivePanel open={activePanel === "entry"} onOpenChange={(open) => open ? setActivePanel("entry") : closeEntry()} onCloseAutoFocus={onPanelCloseAutoFocus}
+    <AdaptivePanel open={activePanel === "entry"} onOpenChange={(open) => open ? openEntry() : closeEntry()} onCloseAutoFocus={onPanelCloseAutoFocus}
       title={editingId ? t("Ubah posisi", "Edit position") : t("Tambah catatan posisi", "Add a position record")}
       description={t("Input pengguna · tidak terhubung ke broker", "User input · not connected to a broker")}
       panelId="position-entry-controls" testId="positions-entry" closeLabel={t("Tutup form posisi", "Close position form")}
@@ -311,7 +316,7 @@ export default function PositionsPage() {
       {formError && <div className="live-error" role="alert" style={{ marginTop: 10 }}>{formError}</div>}
     </AdaptivePanel>
 
-    <AdaptivePanel open={activePanel === "settings"} onOpenChange={(open) => open ? setActivePanel("settings") : closeSettings()} onCloseAutoFocus={onPanelCloseAutoFocus}
+    <AdaptivePanel open={activePanel === "settings"} onOpenChange={(open) => open ? openSettings() : closeSettings()} onCloseAutoFocus={onPanelCloseAutoFocus}
       title={t("Batas & preferensi", "Limits & preferences")}
       description={t("Input pribadi untuk perbandingan; bukan target atau rekomendasi.", "Personal inputs for comparison; not a target or recommendation.")}
       panelId="settings-panel-controls" testId="positions-settings-dialog" closeLabel={t("Tutup pengaturan", "Close settings")}

@@ -3,3 +3,4 @@
 - [Browser verification quirks](browser-verification.md) — storage-denial tests also affect Replit's injected preview banner; separate those errors from application failures.
 - [Quote feed documentation scope](quote-feed-shapes.md) — the guide describes a wrapper, while the direct feed exposes native timestamps; validate per-symbol times in both.
 - [Newsmaker visual identity](newsmaker-identity.md) — MRG should feel like a Newsmaker feature, without copying the portal's news-homepage layout.
+- [Panel navigation semantics](panel-navigation.md) — Forward is navigation, not undo: cancelled drafts and abandoned simulation snapshots must stay discarded.
