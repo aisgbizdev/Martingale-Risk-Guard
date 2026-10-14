@@ -39,3 +39,7 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[postMerge]
+path = "script/post-merge.sh"
+timeoutMs = 240000

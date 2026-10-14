@@ -100,3 +100,7 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 ### Development Tools
 - Replit-specific plugins: runtime error overlay, cartographer, dev banner
 - PostCSS with Tailwind and autoprefixer
+
+### Post-merge Setup
+- `script/post-merge.sh` restores dependencies from the committed npm lockfile, checks TypeScript and core tests, and rebuilds the production app/PWA shell.
+- The platform then reconciles workflows. The script does not launch another server, run database migrations, or change browser-local portfolios.
