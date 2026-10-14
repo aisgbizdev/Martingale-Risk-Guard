@@ -151,9 +151,11 @@ try {
   await sleep(150);
   check("Focused input remains reachable in a reduced-height viewport (not a real keyboard)", await evaluate(`(() => {
     const r = document.activeElement.getBoundingClientRect();
-    const nav = document.querySelector('.live-tabbar').getBoundingClientRect();
-    return document.activeElement.id==='harga-masuk-xul10' && r.top>=0 && r.bottom<=nav.top;
+    const body = document.querySelector('.mrg-panel-body').getBoundingClientRect();
+    const footer = document.querySelector('.mrg-panel-footer').getBoundingClientRect();
+    return document.activeElement.id==='harga-masuk-xul10' && r.top>=body.top && r.bottom<=footer.top;
   })()`));
+  check("Persistent panel actions fit the reduced viewport", await evaluate("document.querySelector('.mrg-panel-footer').getBoundingClientRect().bottom <= innerHeight + 1"));
   await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await evaluate("document.querySelector('[aria-label=\"Tutup form posisi\"]').click(); window.scrollTo(0,0)");
   await evaluate(`(() => {

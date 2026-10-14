@@ -82,7 +82,7 @@ const copy: Record<Term, { label: string; labelEn: string; id: string; en: strin
 export function TermHelp({ term }: { term: Term }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ left: 16, top: 16 });
+  const [position, setPosition] = useState({ left: 16, top: 16, width: 280, maxHeight: 170 });
   const id = useId();
   const root = useRef<HTMLSpanElement>(null);
   const detail = copy[term];
@@ -92,36 +92,51 @@ export function TermHelp({ term }: { term: Term }) {
     const onPointerDown = (event: PointerEvent) => {
       if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
     const close = () => setOpen(false);
+    const viewport = window.visualViewport;
     document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
+    viewport?.addEventListener("resize", close);
+    viewport?.addEventListener("scroll", close);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
+      viewport?.removeEventListener("resize", close);
+      viewport?.removeEventListener("scroll", close);
     };
   }, [open]);
 
-  return <span className="live-term-help" ref={root}>
+  return <span className="live-term-help" ref={root} onKeyDownCapture={(event) => {
+    if (open && event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(false);
+    }
+  }}>
     <button type="button" className="live-term-help-trigger" aria-label={t(`Bantuan istilah: ${detail.label}`, `Term help: ${detail.labelEn}`)} aria-expanded={open} aria-controls={id} onClick={(event) => {
       if (!open) {
         const rect = event.currentTarget.getBoundingClientRect();
-        const width = Math.min(300, window.innerWidth - 32);
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const estimatedHeight = Math.min(170, window.innerHeight - 32);
+        const viewport = window.visualViewport;
+        const viewLeft = viewport?.offsetLeft ?? 0;
+        const viewTop = viewport?.offsetTop ?? 0;
+        const viewWidth = viewport?.width ?? window.innerWidth;
+        const viewHeight = viewport?.height ?? window.innerHeight;
+        const width = Math.min(300, viewWidth - 32);
+        const spaceBelow = viewTop + viewHeight - rect.bottom;
+        const maxHeight = Math.max(24, viewHeight - 32);
+        const estimatedHeight = Math.min(170, maxHeight);
+        const maxTop = Math.max(viewTop + 8, viewTop + viewHeight - estimatedHeight - 8);
         setPosition({
-          left: Math.min(Math.max(16, rect.left), Math.max(16, window.innerWidth - width - 16)),
-          top: spaceBelow >= estimatedHeight + 8 ? rect.bottom + 8 : Math.max(16, rect.top - estimatedHeight - 8),
+          left: Math.min(Math.max(viewLeft + 16, rect.left), Math.max(viewLeft + 16, viewLeft + viewWidth - width - 16)),
+          top: spaceBelow >= estimatedHeight + 8 ? Math.min(maxTop, rect.bottom + 8) : Math.min(maxTop, Math.max(viewTop + 8, rect.top - estimatedHeight - 8)),
+          width,
+          maxHeight,
         });
       }
       setOpen((value) => !value);
-    }}>
+  }}>
       {open ? <X size={15} aria-hidden="true" /> : <CircleHelp size={16} aria-hidden="true" />}
     </button>
     <span className="live-term-help-popover" id={id} style={position} hidden={!open} role="region" aria-label={t(`Penjelasan ${detail.label}`, `${detail.labelEn} explanation`)}>

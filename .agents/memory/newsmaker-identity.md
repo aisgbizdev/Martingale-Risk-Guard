@@ -31,4 +31,10 @@ Desktop and mobile must have intentionally adapted layouts and interaction behav
 
 **Why:** The user repeated that responsive work was incomplete after an expanded settings form left a large blank desktop column.
 
-**How to apply:** Evaluate useful screen space and the complete interaction state, not only horizontal overflow. Discuss a changed form-opening pattern before implementing it.
+**How to apply:** Evaluate useful screen space and the complete interaction state, not only horizontal overflow.
+
+The user chose separate adaptive panels for recording positions, editing limits, and comparing simulations: wide on PC/tablet, nearly full-screen with one-column fields on phones.
+
+**Why:** The user approved this pattern instead of keeping long forms in the page or a narrow sidebar.
+
+**How to apply:** Keep the dashboard compact and risk warnings available inside the active panel. Preserve the directly visible chart and adapt controls to orientation and available keyboard space.

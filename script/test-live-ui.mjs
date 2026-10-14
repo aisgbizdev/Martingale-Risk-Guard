@@ -38,7 +38,8 @@ const has = (s) => `!!document.body && document.body.innerText.includes(${JSON.s
 const stored = () => evaluate('JSON.parse(localStorage.getItem("mrg_portfolio_v1") || "null")');
 const click = async (label, aria = false) => {
   await evaluate(`(async () => {
-    const el = [...document.querySelectorAll('button')].find(e => ${aria ? `e.getAttribute('aria-label')` : `e.textContent.trim()`} === ${JSON.stringify(label)});
+    const scope = document.querySelector('[role="dialog"][data-state="open"]') || document;
+    const el = [...scope.querySelectorAll('button')].find(e => ${aria ? `e.getAttribute('aria-label')` : `e.textContent.trim()`} === ${JSON.stringify(label)});
     if (!el || el.disabled) throw new Error('Missing or disabled button: ' + ${JSON.stringify(label)});
     for (let parent = el.parentElement; parent; parent = parent.parentElement) {
       if (parent.tagName === 'DETAILS') parent.open = true;
@@ -46,13 +47,15 @@ const click = async (label, aria = false) => {
     if (!el.getClientRects().length) throw new Error('Button not visible: ' + ${JSON.stringify(label)});
     el.scrollIntoView({block:'center',behavior:'instant'});
     await new Promise(resolve => requestAnimationFrame(resolve));
+    el.focus();
     el.click();
   })()`);
   await sleep(150);
 };
 const fill = async (label, value) => {
   await evaluate(`(() => {
-    const label = [...document.querySelectorAll('label')].find(e => e.textContent.replace(' *','').trim() === ${JSON.stringify(label)});
+    const scope = document.querySelector('[role="dialog"][data-state="open"]') || document;
+    const label = [...scope.querySelectorAll('label')].find(e => e.textContent.replace(' *','').trim() === ${JSON.stringify(label)});
     const el = label && document.getElementById(label.htmlFor);
     if (!el) throw new Error('Missing field: ' + ${JSON.stringify(label)});
     for (let parent = el.parentElement; parent; parent = parent.parentElement) {
@@ -73,6 +76,21 @@ const navigate = async (path, expected) => {
   await waitFor(`performance.timeOrigin !== ${previousDocument} && ${has(expected)}`);
 };
 const noOverflow = () => evaluate("document.documentElement.scrollWidth <= innerWidth + 1");
+const panelFits = () => evaluate(`(() => {
+  const panel = document.querySelector('[role="dialog"][data-state="open"]');
+  if (!panel) return false;
+  const r = panel.getBoundingClientRect(), footer = panel.querySelector('.mrg-panel-footer').getBoundingClientRect();
+  const v = visualViewport, top = v?.offsetTop ?? 0, left = v?.offsetLeft ?? 0;
+  const height = v?.height ?? innerHeight, width = v?.width ?? innerWidth;
+  return r.left >= left - 1 && r.right <= left + width + 1 && r.top >= top - 1 &&
+    r.bottom <= top + height + 1 && footer.bottom <= top + height + 1 &&
+    panel.scrollWidth <= panel.clientWidth + 1;
+})()`);
+const panelScreenshot = async (name) => {
+  await mkdir("generated-artifacts/panels", { recursive: true });
+  const shot = await command("Page.captureScreenshot", { format: "jpeg", quality: 75 });
+  await writeFile(`generated-artifacts/panels/${name}.jpg`, Buffer.from(shot.data, "base64"));
+};
 
 try {
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -154,12 +172,14 @@ try {
     if (width >= 1024) check(`Collapsed entry remains compact at ${width}px`, await evaluate("document.getElementById('position-entry-controls').getBoundingClientRect().height <= 100"));
   }
   await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
-  await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
+  await evaluate("const step = document.querySelector('[aria-label=\"Langkah penggunaan\"] button'); step.focus(); step.click()");
   await waitFor("document.getElementById('harga-masuk-xul10') !== null");
+  check("Entry opens in one separate modal, with in-panel risk caveats", await evaluate("document.querySelectorAll('[role=\"dialog\"][data-state=\"open\"]').length === 1 && document.querySelector('[role=\"dialog\"]').innerText.includes('indeks belum dikalibrasi')") && await panelFits());
   await click("Bantuan istilah: Lot", true);
   check("Novice help opens by tap without filling the screen", await evaluate("document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]') !== null"));
   await command("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
   check("Novice help dismisses with Escape", await evaluate("!document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]')"));
+  check("Escape closes only help, not the entry panel", await evaluate("document.querySelector('[role=\"dialog\"][data-state=\"open\"]') !== null"));
   await click("Catat posisi");
   check("Empty position shows positive-price validation", (await text()).includes("Harga masuk harus berupa angka positif"));
   await fill("Harga masuk XUL10", 100); await fill("Lot", 1); await fill("Waktu masuk (opsional)", "2026-10-14T19:00:15");
@@ -171,6 +191,8 @@ try {
   await fill("Harga masuk XUL10", 110); await fill("Lot", 1.5); await click("Simpan perubahan");
   check("Editing changes rather than duplicates a position", (await stored()).positions.length === 1 && (await stored()).positions[0].entry === 110);
   check("Editing preserves local entry time", (await stored()).positions[0].enteredAt === enteredAt);
+  await click("Ubah posisi", true); await fill("Harga masuk XUL10", 999); await click("Batal");
+  check("Cancelled edit does not overwrite the recorded entry", (await stored()).positions[0].entry === 110);
   await click("Tampilkan pengaturan", true);
   await fill("Batas total lot", 0); await fill("Batas jumlah layer", 2.5); await click("Simpan batas");
   check("Invalid limits show field errors", (await text()).includes("jumlah layer 1–200"));
@@ -178,13 +200,19 @@ try {
   await fill("Modal (opsional)", 10000); await fill("Ekuitas berjalan (opsional)", 9000);
   await fill("Target jarak harga (opsional)", 30); await fill("Jarak layer (opsional)", 20); await click("Simpan batas");
   check("Limits, equity, target and layer spacing are independent", (await stored()).settings.equity === 9000 && (await stored()).settings.targetPriceDistance === 30 && (await stored()).settings.layerSpacingPrice === 20);
-  for (const [width, height] of [[320, 740], [768, 1024], [1024, 768], [1280, 900]]) {
+  await click("Tampilkan pengaturan", true);
+  for (const [width, height] of [[320, 740], [390, 844], [768, 1024], [1024, 768], [1280, 900], [844, 390], [390, 360]]) {
     await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
-    await sleep(150);
-    check(`Populated positions and expanded limits fit ${width}x${height}`, await noOverflow());
-    if (width >= 1024) check(`Settings sidebar stays beside the populated workspace at ${width}px`, await evaluate("document.getElementById('settings-controls').getBoundingClientRect().left >= document.querySelector('[data-testid=\"positions-entry-records\"]').getBoundingClientRect().right - 1"));
+    await sleep(300);
+    check(`Open settings panel and persistent actions fit ${width}x${height}`, await noOverflow() && await panelFits());
+    check(`Expanded settings do not lengthen the dashboard at ${width}px`, await evaluate("document.querySelectorAll('#settings-controls input').length === 0 && document.querySelectorAll('[role=\"dialog\"][data-state=\"open\"]').length === 1"));
+    if ([390, 768, 1280].includes(width) && height > 400) await panelScreenshot(`settings-${width}x${height}`);
   }
   await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
+  for (let i = 0; i < 18; i++) await command("Input.dispatchKeyEvent", { type: "keyDown", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 });
+  check("Tab focus stays within the active panel", await evaluate("document.activeElement.closest('[role=\"dialog\"]') !== null"));
+  await fill("Batas total lot", 999); await click("Batalkan perubahan");
+  check("Cancel discards settings drafts and returns focus to the launcher", (await stored()).settings.maxLots === 10 && await evaluate("!document.querySelector('[role=\"dialog\"][data-state=\"open\"]') && document.activeElement.getAttribute('aria-label') === 'Tampilkan pengaturan'"));
   check("Model details collapse on mobile", await evaluate("[...document.querySelectorAll('details.live-details')].some(el => el.querySelector('summary').textContent.includes('rincian indeks') && !el.open)"));
   await evaluate("document.querySelectorAll('[aria-label=\"Langkah penggunaan\"] button')[2].click()");
   await click("Buat simulasi");
@@ -200,8 +228,9 @@ try {
   check("Cancelling record confirmation leaves positions unchanged", (await stored()).positions.length === 1);
   await click("Catat sebagai posisi manual"); await click("Ya, tambahkan ke catatan");
   check("Confirmed simulation adds one manual layer", (await stored()).positions.length === 2 && (await stored()).positions[1].lots === 3);
-  await click("Buat simulasi"); await click("Tampilkan pengaturan", true);
+  await click("Buat simulasi"); await click("Atur batas");
   await fill("Batas total lot", 12); await click("Simpan batas");
+  await click("Kembali ke simulasi");
   check("Changing limits marks the frozen simulation outdated", (await text()).includes("Snapshot usang"));
   await click("Tutup simulasi");
   await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
