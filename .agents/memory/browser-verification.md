@@ -1,6 +1,6 @@
 ---
 name: Browser verification quirks
-description: Storage-fault attribution, browser-target selection, and external widget verification quirks.
+description: Storage-fault attribution, browser-target selection, external widgets, and limits of PWA verification.
 ---
 
 Replit's development preview injects a banner script outside the application. A browser-wide simulated denial of Storage access also affects that script, even when the application correctly catches the denial and displays its own error state.
@@ -26,3 +26,8 @@ Third-party widget loaders can remove their own script tag after creating a work
 **Why:** TradingView's official loader removed its tag after generating the chart; requiring that tag to remain in the DOM produced a false test failure.
 
 **How to apply:** Verify the loader's resource request and the generated iframe's expected origin and configuration, rather than requiring a persistent script element.
+PWA readiness checks in desktop Chromium are not evidence of installation or persistence on a physical Android or iPhone. A local production-build fixture is not a production deployment.
+
+**Why:** Mobile viewport emulation and synthetic installation events cannot validate the OS launcher, standalone launch, software keyboard, safe-area insets, or device restart behavior.
+
+**How to apply:** State browser version, test environment and simulated conditions explicitly. Keep physical-device results unverified until supported by an approved device session or Newsmaker programmer recordings/report; obtain any production URL from deployment metadata.

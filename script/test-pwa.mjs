@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { resolve, extname } from "node:path";
 import { spawn } from "node:child_process";
 import WebSocket from "ws";
@@ -42,6 +42,13 @@ const pending = new Map();
 let socket, sequence = 0;
 const checks = [];
 const errors = [];
+const evidenceRoot = resolve("generated-artifacts/pwa");
+await mkdir(evidenceRoot, { recursive: true });
+let browserVersion;
+const screenshot = async (name) => {
+  const { data } = await command("Page.captureScreenshot", { format: "jpeg", quality: 80 });
+  await writeFile(resolve(evidenceRoot, name + ".jpg"), Buffer.from(data, "base64"));
+};
 const check = (name, valid) => { assert.ok(valid, name); checks.push(name); console.log("PASS", name); };
 const command = (method, params = {}) => new Promise((done, fail) => {
   const id = ++sequence;
@@ -77,6 +84,8 @@ try {
     if (message.method === "Runtime.exceptionThrown") errors.push(message.params.exceptionDetails.text);
   });
   await new Promise((done) => socket.once("open", done));
+  browserVersion = await command("Browser.getVersion");
+  console.log("Environment: desktop headless Chromium with mobile viewport emulation; NOT Android hardware.", browserVersion.product);
   await command("Page.enable"); await command("Runtime.enable"); await command("Network.enable");
   await command("Network.setCacheDisabled", { cacheDisabled: true });
   await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -96,12 +105,57 @@ try {
   check("Chromium reports no PWA installability errors", installability.installabilityErrors.length === 0);
   await waitFor("document.body.innerText.includes('Terbaru')");
   await evaluate(`localStorage.setItem('mrg_portfolio_v1', JSON.stringify({
-    version:1, positions:[{id:'offline-check',symbol:'XUL10',side:'buy',entry:4090,lots:1,enteredAt:null}],
+    version:1, positions:[
+      {id:'offline-check',symbol:'XUL10',side:'buy',entry:4090,lots:1,enteredAt:'2026-10-14T12:00:15.000Z'},
+      {id:'sell-check',symbol:'XUL10',side:'sell',entry:4120,lots:0.5,enteredAt:null}
+    ],
     settings:${JSON.stringify({ ...EMPTY_SETTINGS, maxLots: 10, maxLayers: 5 })}
   }))`);
+  const savedPortfolio = await evaluate("localStorage.getItem('mrg_portfolio_v1')");
   await command("Page.navigate", { url: origin + "/positions" });
   await waitFor("document.body.innerText.includes('Catat, lalu bandingkan')");
   await waitFor("document.querySelector('.live-riskbar') !== null");
+  const noOverflow = () => evaluate("document.documentElement.scrollWidth <= innerWidth + 1");
+  check("Portrait 390x844 position screen has no horizontal overflow", await noOverflow());
+  await screenshot("positions-portrait");
+  await command("Emulation.setDeviceMetricsOverride", { width: 844, height: 390, deviceScaleFactor: 1, mobile: true });
+  await sleep(200);
+  check("Landscape 844x390 position screen has no horizontal overflow", await noOverflow());
+  await screenshot("positions-landscape");
+  await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
+  await waitFor("document.getElementById('harga-masuk-xul10') !== null");
+  check("Position inputs, action buttons and term help have 44px touch height", await evaluate(`[
+    ...document.querySelectorAll('#position-entry-controls input, #position-entry-controls select, #position-entry-controls .live-button, #position-entry-controls .live-term-help-trigger')
+  ].filter(el=>el.getClientRects().length).every(el=>el.getBoundingClientRect().height >= 44)`));
+  await evaluate(`(() => {
+    const trigger = document.querySelector('[aria-label="Bantuan istilah: Lot"]');
+    trigger.scrollIntoView({block:'center',behavior:'instant'});
+  })()`);
+  await sleep(150);
+  await evaluate("document.querySelector('[aria-label=\"Bantuan istilah: Lot\"]').click()");
+  await waitFor("document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]') !== null");
+  check("Tapped term explanation stays inside portrait viewport", await evaluate(`(() => {
+    const r = document.querySelector('.live-term-help-popover:not([hidden])').getBoundingClientRect();
+    return r.left>=0 && r.right<=innerWidth && r.top>=0 && r.bottom<=innerHeight;
+  })()`));
+  await screenshot("term-help");
+  await command("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+  check("Term explanation can be dismissed", await evaluate("!document.querySelector('.live-term-help-trigger[aria-expanded=\"true\"]')"));
+  // Reduced viewport tests scrollability only, not an Android software keyboard.
+  await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 360, deviceScaleFactor: 1, mobile: true });
+  await evaluate(`(() => {
+    const input = document.getElementById('harga-masuk-xul10');
+    input.focus(); input.scrollIntoView({block:'center',behavior:'instant'});
+  })()`);
+  await sleep(150);
+  check("Focused input remains reachable in a reduced-height viewport (not a real keyboard)", await evaluate(`(() => {
+    const r = document.activeElement.getBoundingClientRect();
+    const nav = document.querySelector('.live-tabbar').getBoundingClientRect();
+    return document.activeElement.id==='harga-masuk-xul10' && r.top>=0 && r.bottom<=nav.top;
+  })()`));
+  await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await evaluate("document.querySelector('[aria-label=\"Tutup form posisi\"]').click(); window.scrollTo(0,0)");
   await evaluate(`(() => {
     window.__pwaPrompts=0;
     const event=new Event('beforeinstallprompt',{cancelable:true});
@@ -120,6 +174,7 @@ try {
   await evaluate("document.querySelector('a[href=\"/analysis\"]').click()");
   await waitFor("document.body.innerText.includes('Konteks, bukan sinyal')");
   check("Installed state survives in-app navigation", await evaluate("!document.querySelector('[aria-label=\"Install aplikasi\"]')"));
+  check("Navigation and viewport changes preserve every local record and setting", await evaluate("localStorage.getItem('mrg_portfolio_v1')") === savedPortfolio);
   await command("Page.navigate", { url: origin + "/positions" });
   await waitFor("document.querySelector('.live-riskbar') !== null");
   await command("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
@@ -138,7 +193,8 @@ try {
   await waitFor(`performance.timeOrigin !== ${beforeReload} && document.body?.innerText.includes('Catat, lalu bandingkan')`);
   await waitFor("document.body.innerText.includes('Offline')");
   check("Production position screen reloads offline with HTTP cache disabled", await evaluate("document.querySelector('.live-riskbar') !== null"));
-  check("Local records survive offline reload", await evaluate("JSON.parse(localStorage.getItem('mrg_portfolio_v1')).positions[0].id === 'offline-check'"));
+  check("Every local record, timestamp, direction and setting survives offline reload unchanged", await evaluate("localStorage.getItem('mrg_portfolio_v1')") === savedPortfolio);
+  await screenshot("positions-offline");
   check("No live API responses exist in the PWA cache", await evaluate(`(async()=>{
     for(const key of await caches.keys()){
       if(!key.startsWith('martingale-risk-guard-'))continue;
@@ -151,8 +207,17 @@ try {
   await evaluate("delete navigator.onLine; window.dispatchEvent(new Event('online'))");
   await waitFor("!document.body.innerText.includes('Offline ·')");
   check("Reconnection clears the offline banner", true);
+  check("Reconnection permits a fresh network API request", await evaluate("fetch('/api/market/quotes').then(r=>r.ok).catch(()=>false)"));
+  check("Reconnection preserves the complete local portfolio", await evaluate("localStorage.getItem('mrg_portfolio_v1')") === savedPortfolio);
   check("No uncaught production application errors", errors.length === 0);
-  console.log(`Verified ${checks.length} production PWA checks.`);
+  await writeFile(resolve(evidenceRoot, "checks.json"), JSON.stringify({
+    checkedAt: new Date().toISOString(),
+    environment: "Local production-build fixture; desktop headless Chromium, mobile viewport emulation. Not a deployed production URL or Android OS.",
+    browser: browserVersion, viewports: ["390x844", "844x390", "390x360"],
+    checks, errors,
+    notVerified: ["Android OS installation", "Actual standalone launch", "Physical safe area", "Android software keyboard", "Browser restart on Android", "Production deployment"],
+  }, null, 2));
+  console.log(`Verified ${checks.length} local production-build PWA checks. Evidence: generated-artifacts/pwa/`);
 } catch (error) {
   console.error("PWA diagnostics:", await evaluate("({url:location.href,title:document.title,body:document.body?.innerText.slice(0,700),html:document.documentElement.outerHTML.slice(0,700)})").catch(() => null), errors);
   throw error;
