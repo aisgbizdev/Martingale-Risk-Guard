@@ -1,1 +1,2 @@
 - [Dependency setup constraints](dependency-setup.md) — preserve the imported framework major when resolving blocked transitive dependencies.
+- [Live risk analysis direction](live-risk-analysis.md) — real-time prices and technical/fundamental analysis are being explored, not yet approved for implementation.
