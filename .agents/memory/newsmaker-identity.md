@@ -26,3 +26,9 @@ Remove dropdowns that only contain a short explanatory description, along with t
 **Why:** The user said the other pages were also messy and asked to remove dropdowns containing only one line of explanation.
 
 **How to apply:** Prefer useful controls and data over decorative explanations. Preserve meaningful form/filter/data disclosures, novice term help, and essential visible risk/source warnings.
+
+Desktop and mobile must have intentionally adapted layouts and interaction behavior, not merely scaled elements. Check expanded forms as well as the closed dashboard.
+
+**Why:** The user repeated that responsive work was incomplete after an expanded settings form left a large blank desktop column.
+
+**How to apply:** Evaluate useful screen space and the complete interaction state, not only horizontal overflow. Discuss a changed form-opening pattern before implementing it.
