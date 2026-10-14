@@ -52,7 +52,7 @@ function LiveRiskPreview({ score, status, isCalculating, t }: {
   };
 
   const getStatusLabel = () => {
-    if (status === "AMAN") return t("AMAN", "SAFE");
+    if (status === "AMAN") return t("RISIKO RELATIF RENDAH", "RELATIVELY LOW");
     if (status === "BERISIKO") return t("BERISIKO", "RISKY");
     return t("TIDAK LAYAK", "NOT VIABLE");
   };
@@ -73,9 +73,9 @@ function LiveRiskPreview({ score, status, isCalculating, t }: {
         </div>
       </div>
       <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden flex">
-        <div className="flex-1 bg-emerald-400/30" />
-        <div className="flex-1 bg-amber-400/30" />
-        <div className="flex-1 bg-rose-400/30" />
+        <div style={{ width: "35%" }} className="bg-emerald-400/30" />
+        <div style={{ width: "25%" }} className="bg-amber-400/30" />
+        <div style={{ width: "40%" }} className="bg-rose-400/30" />
       </div>
       <div 
         className="h-2 rounded-full -mt-2 transition-all duration-500"
@@ -182,11 +182,8 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
         <div className="flex justify-between items-center mb-4 gap-2">
-          <Link href="/literasi">
-            <Button variant="default" size="sm" className="gap-2" data-testid="link-literasi">
-              <BookOpen className="w-4 h-4" />
-              {t("Literasi Risiko", "Risk Literacy")}
-            </Button>
+          <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">
+            <Shield className="w-4 h-4" />{t("Kembali ke ringkasan live", "Back to live overview")}
           </Link>
           <Button
             variant="default"
@@ -203,7 +200,7 @@ export default function Home() {
           <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <img src={appLogo} alt="Martingale Risk Guard Logo" className="w-10 h-10 sm:w-12 sm:h-12" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-              Martingale Risk Guard
+              {t("Simulasi Dasar", "Basic Simulation")}
             </h1>
           </div>
           

@@ -1,8 +1,8 @@
-# RiskCheck XUL10
+# Martingale Risk Guard
 
 ## Overview
 
-RiskCheck XUL10 is a risk assessment educational web application for evaluating Martingale vs Linear Averaging trading strategies on XUL10 (SPA PBK) gold transactions. The app provides risk status classifications (AMAN/BERISIKO/TIDAK LAYAK) with scores based on thesis research parameters. This is strictly an educational risk mitigation tool - not a trading platform or signal provider.
+Martingale Risk Guard (MRG / RiskCheck XUL10) is an educational risk-information application for Newsmaker readers. It combines live XUL10 prices, a clearly labelled daily gold reference, economic events, local manual position records and hypothetical layer comparisons. The original thesis calculator remains separate under `/basic`. Newsmaker is not a broker; there is no order execution, account connection, or trading-signal workflow.
 
 ## User Preferences
 
@@ -12,11 +12,12 @@ Preferred communication style: Simple, everyday language.
 
 - Use the **Run** button / **Start application** workflow, which runs `npm run dev`.
 - Express serves the React app and API together on `0.0.0.0:5000`.
-- No API keys, database connection, or additional secrets are needed for the current risk calculator. The database configuration is optional scaffolding, not part of the running app.
+- The basic calculator needs no API credentials. Live calendar/news require the server-only `NEWSMAKER_API_TOKEN` secret. Never copy a token from the supplied PDFs into code, logs, or browser requests.
+- No portfolio database or login is used. Live position records/preferences are local to each browser, without cloud sync.
 - Install dependencies with `npm ci` when setting up a fresh checkout.
 - Build with `npm run build`; run the built app with `npm start`.
 - Setup verification: homepage rendered in preview, valid calculation returned HTTP 200, invalid input returned HTTP 400, and production build passed.
-- Known imported issue: `npm run check` fails because unused `server/storage.ts` imports `User` and `InsertUser`, which are absent from `shared/schema.ts`. This does not block the current app or production build.
+- Validate with `npm run check`, `npm test`, and `npm run build`.
 - Express remains on version 4. The `proxy-addr` override selects a patched release because the imported locked release was blocked by Replit's package security policy.
 
 ## System Architecture
@@ -37,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **Development**: tsx for TypeScript execution, Vite dev server for HMR
 
 ### Data Flow
-1. User submits risk parameters via form on home page
+1. User submits basic risk parameters via form on `/basic`
 2. Parameters passed as URL query strings to result page
 3. Result page fetches risk calculation from `/api/calculate-risk` endpoint
 4. Server applies rule-based scoring algorithm from thesis research
@@ -48,7 +49,23 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - Hardcoded performance metrics (PF, ROM, ER, MC Risk) per strategy/target combination
 - Modal ratio scoring against optimal USD 200,000 benchmark
 - Weighted factors: strategy type, market conditions, experience level, layer count
-- Score ranges: 0-39 (AMAN), 40-69 (BERISIKO), 70-100 (TIDAK LAYAK)
+- Internal legacy enums are preserved; score ranges are 0–35, 36–60, and 61–100. UI labels use relative risk and historical-study context, not claims of safety.
+
+### Live MRG data and model
+- Routes: `/` overview, `/positions` manual records/simulation, `/analysis` daily reference/calendar/articles, `/basic` original calculator, plus existing results/literacy/policies.
+- `/api/market/quotes` normalizes the documented Newsmaker quote upstream, preserving the XUL10 per-symbol tick timestamp and optional bid/ask. Shared cache/poll interval is about 5 seconds. A connected response or fresh top-level timestamp is not evidence of a fresh symbol.
+- `/api/market/context` loads the documented LGD Daily OHLC, the PDF section 3.2 calendar API, and Newsmaker news. Calendar fetches all bounded pages for this-week and next-week; incomplete or changing pagination fails explicitly.
+- Only closed daily candles are used. MA20/MA50, Wilder ATR14, previous-20-ATR median and 20-day high/low are reference context, not forecasts. LGD Daily is not assumed identical to XUL10.
+- The user approved D1/reference use and initial index weights: 40 lot capacity, 20 layer capacity, 15 adverse distance relative to daily reference ATR, 15 volatility, 10 nearby high-impact USD events. Formulas are visible in the UI and implemented/tested in shared code.
+- The index is an initial, uncalibrated heuristic for a same-direction series, not a loss probability or whole-account financial risk. Buy/sell are never netted or averaged together.
+- Current initial freshness checks: symbol timestamp no older than 20 seconds; calendar source generation no older than 15 minutes; last closed daily candle no older than 4 calendar days. These are explicit conservative operating limits, not provider SLA guarantees or verified market-close calendars.
+- Missing user limits, missing/stale prices, insufficient/stale candles, incomplete/stale calendars or unclear relevant USD event timing produce an unavailable aggregate index, not synthetic zero components.
+- Simulation freezes base positions, settings, quote, context and assessment time. Inputs remain hypothetical; only an explicit confirmation adds a manual record. No transaction is sent or verified.
+- Target and layer spacing are separate fixed preferences in raw price units. XUL10 point/contract conversion is not verified; monetary P/L, free margin, margin-call prices and automatic adaptive targets are deliberately not implemented.
+- External TradingView OANDA:XAUUSD chart is optional/on-demand display only and clearly separate from calculation sources. Market/news API credentials remain server-side. Full articles are rendered as plain text.
+- API logs omit payloads. Portfolio changes and simulations are calculated locally, not posted to external providers.
+- Browser storage failure/corruption is reported and existing unreadable records are not silently overwritten. Local reset clears only MRG records/preferences and saved basic scenarios.
+- Generated test outputs belong in `/generated-artifacts/`, excluded from Git and publishing.
 
 ### Shared Code
 - `shared/schema.ts`: Zod schemas for input validation and TypeScript types
@@ -65,7 +82,7 @@ Located in `server/rules.ts`, implements thesis-derived metrics:
 - **ORM**: Drizzle ORM configured for PostgreSQL
 - **Schema Location**: `shared/schema.ts`
 - **Migrations**: `migrations/` directory via drizzle-kit
-- **Current State**: Schema defined but storage currently uses in-memory implementation (`MemStorage` class)
+- **Current State**: Unused import scaffold only. Live portfolios use browser storage; do not introduce a database migration or new authentication without a separate request.
 
 ### UI Component Dependencies
 - Radix UI primitives for accessible components

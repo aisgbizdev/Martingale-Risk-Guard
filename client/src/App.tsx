@@ -10,11 +10,18 @@ import Literasi from "@/pages/literasi";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Terms from "@/pages/terms";
 import NotFound from "@/pages/not-found";
+import LiveOverview from "@/pages/live/overview";
+import PositionsPage from "@/pages/live/positions";
+import AnalysisPage from "@/pages/live/analysis";
+import { PortfolioProvider } from "@/lib/portfolio-context";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={LiveOverview} />
+      <Route path="/positions" component={PositionsPage} />
+      <Route path="/analysis" component={AnalysisPage} />
+      <Route path="/basic" component={Home} />
       <Route path="/result" component={Result} />
       <Route path="/literasi" component={Literasi} />
       <Route path="/privacy" component={PrivacyPolicy} />
@@ -30,7 +37,9 @@ function App() {
       <LanguageProvider>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <PortfolioProvider>
+            <Router />
+          </PortfolioProvider>
         </TooltipProvider>
       </LanguageProvider>
     </QueryClientProvider>

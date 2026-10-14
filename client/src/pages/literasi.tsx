@@ -70,11 +70,8 @@ export default function Literasi() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
         <div className="flex justify-between items-center mb-6">
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2" data-testid="button-kembali">
-              <ArrowLeft className="w-4 h-4" />
-              {t("Kembali", "Back")}
-            </Button>
+          <Link href="/" className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted" data-testid="button-kembali">
+            <ArrowLeft className="w-4 h-4" />{t("Kembali", "Back")}
           </Link>
           <Button
             variant="default"
@@ -85,6 +82,10 @@ export default function Literasi() {
             <Globe className="w-4 h-4" />
             {language === "id" ? "English" : "Indonesia"}
           </Button>
+        </div>
+
+        <div className="mb-6 rounded-md border border-primary/25 bg-primary/5 p-4 text-sm text-muted-foreground">
+          {t("Angka kinerja yang dirujuk berasal dari studi historis, bukan perkiraan hasil pribadi, kondisi live, jaminan margin, atau rekomendasi perubahan modal dan strategi.", "Performance figures referenced here are historical study outputs, not personal outcome forecasts, live conditions, margin guarantees, or recommendations to change capital or strategy.")}
         </div>
 
         <div className="text-center mb-8 sm:mb-10">
@@ -527,11 +528,8 @@ export default function Literasi() {
         </div>
 
         <div className="mt-8 text-center">
-          <Link href="/">
-            <Button size="lg" className="h-11 sm:h-12" data-testid="button-mulai-cek">
-              <Shield className="w-5 h-5 mr-2" />
-              {t("Mulai Cek Risiko", "Start Risk Check")}
-            </Button>
+          <Link href="/basic" className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground" data-testid="button-mulai-cek">
+            <Shield className="w-5 h-5" />{t("Buka Simulasi Dasar", "Open Basic Simulation")}
           </Link>
         </div>
 

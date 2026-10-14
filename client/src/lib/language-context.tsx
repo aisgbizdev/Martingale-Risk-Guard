@@ -6,6 +6,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (id: string, en: string) => string;
+  languageStorageAvailable: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -13,18 +14,20 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("id");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [languageStorageAvailable, setLanguageStorageAvailable] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("language") as Language;
-    if (stored === "id" || stored === "en") {
-      setLanguageState(stored);
-    }
+    try {
+      const stored = localStorage.getItem("language") as Language;
+      if (stored === "id" || stored === "en") setLanguageState(stored);
+    } catch { setLanguageStorageAvailable(false); }
     setIsHydrated(true);
   }, []);
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem("language", language);
+      try { localStorage.setItem("language", language); }
+      catch { setLanguageStorageAvailable(false); }
     }
   }, [language, isHydrated]);
 
@@ -35,7 +38,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (id: string, en: string) => (language === "id" ? id : en);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, languageStorageAvailable }}>
       {children}
     </LanguageContext.Provider>
   );

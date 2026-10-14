@@ -1,5 +1,9 @@
-import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
+
+// Unused import scaffold; these types do not introduce authentication or storage
+// for the live MRG portfolio, which remains local to the browser.
+interface InsertUser { username: string; password: string }
+interface User extends InsertUser { id: string }
 
 // modify the interface with any CRUD methods
 // you might need

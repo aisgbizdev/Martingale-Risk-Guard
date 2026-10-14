@@ -44,9 +44,9 @@ function RiskScoreMeter({ score, status, t }: { score: number; status: string; t
   return (
     <div className="relative w-full max-w-md mx-auto">
       <div className="h-3 sm:h-4 bg-muted rounded-full overflow-hidden flex">
-        <div className="flex-1 bg-emerald-400/20 dark:bg-emerald-400/30" />
-        <div className="flex-1 bg-amber-400/20 dark:bg-amber-400/30" />
-        <div className="flex-1 bg-rose-400/20 dark:bg-rose-400/30" />
+        <div style={{ width: "35%" }} className="bg-emerald-400/20 dark:bg-emerald-400/30" />
+        <div style={{ width: "25%" }} className="bg-amber-400/20 dark:bg-amber-400/30" />
+        <div style={{ width: "40%" }} className="bg-rose-400/20 dark:bg-rose-400/30" />
       </div>
       <div 
         className="absolute top-0 h-3 sm:h-4 rounded-full transition-all duration-700 ease-out"
@@ -56,9 +56,9 @@ function RiskScoreMeter({ score, status, t }: { score: number; status: string; t
         }}
       />
       <div className="flex justify-between mt-2 text-[10px] sm:text-xs text-muted-foreground">
-        <span>{t("AMAN", "SAFE")}</span>
-        <span>{t("BERISIKO", "RISKY")}</span>
-        <span>{t("TIDAK LAYAK", "NOT VIABLE")}</span>
+        <span>{t("Rendah · relatif", "Low · relative")}</span>
+        <span>{t("Sedang · relatif", "Moderate · relative")}</span>
+        <span>{t("Tinggi · relatif", "High · relative")}</span>
       </div>
     </div>
   );
@@ -71,7 +71,7 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
         <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 dark:text-emerald-400" />
         <div className="text-left">
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-700 dark:text-emerald-300 block">
-            {t("AMAN", "SAFE")}
+            {t("RISIKO RELATIF RENDAH", "RELATIVELY LOW RISK")}
           </span>
         </div>
       </div>
@@ -83,7 +83,7 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
         <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 dark:text-amber-400" />
         <div className="text-left">
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 block">
-            {t("BERISIKO", "RISKY")}
+            {t("RISIKO RELATIF SEDANG", "RELATIVELY MODERATE RISK")}
           </span>
         </div>
       </div>
@@ -94,7 +94,7 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
       <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 dark:text-rose-400" />
       <div className="text-left">
         <span className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-300 block">
-          {t("TIDAK LAYAK", "NOT VIABLE")}
+          {t("RISIKO RELATIF TINGGI", "RELATIVELY HIGH RISK")}
         </span>
       </div>
     </div>
@@ -106,10 +106,7 @@ function DetailedMetricCard({
   icon: Icon, 
   label, 
   value, 
-  meaning,
   status,
-  cause,
-  recommendation,
   statusColor,
   t
 }: { 
@@ -158,16 +155,16 @@ function DetailedMetricCard({
       
       <div className="space-y-2 text-xs sm:text-sm">
         <div className="flex gap-2">
-          <span className="font-medium text-foreground min-w-[60px]">{t("Arti:", "Meaning:")}</span>
-          <span className="text-muted-foreground">{meaning}</span>
+          <span className="font-medium text-foreground min-w-[60px]">{t("Konteks studi:", "Study context:")}</span>
+          <span className="text-muted-foreground">{t("Angka ini berasal dari keluaran historis studi, bukan perkiraan hasil pribadi atau kondisi live.", "This figure is a historical study output, not a personal outcome forecast or live assessment.")}</span>
         </div>
         <div className="flex gap-2">
           <span className="font-medium text-foreground min-w-[60px]">{t("Sebab:", "Cause:")}</span>
-          <span className="text-muted-foreground">{cause}</span>
+          <span className="text-muted-foreground">{t("Metrik menjelaskan parameter historis yang dipilih; spesifikasi kontrak dan kondisi aktual tidak dievaluasi di sini.", "This metric describes the selected historical parameters; contract specifications and current conditions are not assessed here.")}</span>
         </div>
         <div className="flex gap-2">
           <span className="font-medium text-foreground min-w-[60px]">{t("Saran:", "Advice:")}</span>
-          <span className={`${colors.text} font-medium`}>{recommendation}</span>
+          <span className={`${colors.text} font-medium`}>{t("Bukan rekomendasi. Gunakan hanya sebagai bahan membaca keluaran studi historis.", "Not a recommendation. Use only to interpret historical study output.")}</span>
         </div>
       </div>
     </div>
@@ -178,198 +175,55 @@ function DetailedMetricCard({
 function getMetricExplanation(
   metricType: "pf" | "rom" | "er" | "mc",
   value: number | string,
-  params: { strategy: string; targetPoin: string; modal: number; maxLayer: string; marketCondition: string },
+  _params: { strategy: string; targetPoin: string; modal: number; maxLayer: string; marketCondition: string },
   t: (id: string, en: string) => string
 ): { meaning: string; status: string; cause: string; recommendation: string; statusColor: "green" | "yellow" | "red" } {
-  
+  const resultText = typeof value === "string" ? Number.parseFloat(value.replace("%", "")) : value;
+  const number = Number.isFinite(resultText) ? resultText : null;
+  const modelNote = t(
+    "Keluaran aturan kalkulator lama untuk simulasi studi historis; bukan estimasi rekening atau hasil pribadi.",
+    "Legacy calculator-rule output for a historical-study simulation; not an account or personal-outcome estimate."
+  );
+  const noAdvice = t("Bukan rekomendasi atau saran mengubah modal, strategi, atau posisi.", "Not advice to change capital, strategy, or positions.");
+  const base = {
+    meaning: modelNote,
+    cause: t("Label mengikuti aturan model lama dan parameter simulasi yang dipilih; kondisi live tidak dinilai.", "The label follows legacy model rules and selected simulation inputs; live conditions are not assessed."),
+    recommendation: noAdvice,
+  };
+
   if (metricType === "pf") {
-    const pf = typeof value === "string" ? parseFloat(value) : value;
-    if (pf >= 3) {
-      return {
-        meaning: t(
-          `Dengan ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition}, setiap Rp1 kerugian menghasilkan Rp${pf.toFixed(1)} keuntungan`, 
-          `With ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition, every $1 loss generates $${pf.toFixed(1)} profit`
-        ),
-        status: t("Bagus", "Good"),
-        cause: t(
-          `Data backtesting tesis menunjukkan kombinasi ini produktif pada kondisi ${params.marketCondition}`, 
-          `Thesis backtest data shows this combination is productive in ${params.marketCondition} condition`
-        ),
-        recommendation: t("Pertahankan parameter - jangan ubah tanpa alasan kuat", "Maintain parameters - don't change without strong reason"),
-        statusColor: "green"
-      };
-    } else if (pf >= 1) {
-      return {
-        meaning: t(
-          `${params.strategy} + ${params.targetPoin}pts masih untung tipis (PF ${pf.toFixed(2)}) - margin error kecil`, 
-          `${params.strategy} + ${params.targetPoin}pts still slightly profitable (PF ${pf.toFixed(2)}) - small margin of error`
-        ),
-        status: t("Hati-hati", "Caution"),
-        cause: t(
-          `Target ${params.targetPoin}pts dengan ${params.strategy} pada kondisi ${params.marketCondition} kurang optimal`, 
-          `${params.targetPoin}pts target with ${params.strategy} in ${params.marketCondition} condition is suboptimal`
-        ),
-        recommendation: t("Pertimbangkan Linear Averaging + 30pts untuk stabilitas", "Consider Linear Averaging + 30pts for stability"),
-        statusColor: "yellow"
-      };
-    } else {
-      return {
-        meaning: t(
-          `RUGI BERSIH: ${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} menghasilkan kerugian lebih besar dari keuntungan`, 
-          `NET LOSS: ${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition generates losses exceeding profits`
-        ),
-        status: t("Buruk", "Poor"),
-        cause: t(
-          `Kombinasi parameter Anda tidak sesuai data backtesting tesis untuk kondisi pasar ini`, 
-          `Your parameter combination doesn't match thesis backtest data for this market condition`
-        ),
-        recommendation: t("SEGERA ganti ke Linear Averaging + 30pts + Sideways", "IMMEDIATELY switch to Linear Averaging + 30pts + Sideways"),
-        statusColor: "red"
-      };
-    }
+    return {
+      ...base,
+      status: t("Label PF dari aturan studi", "Study-rule PF label"),
+      statusColor: number !== null && number >= 3 ? "green" : number !== null && number >= 1 ? "yellow" : "red",
+    };
   }
-  
   if (metricType === "rom") {
-    const rom = typeof value === "string" ? parseFloat(value.replace("%", "")) : value;
-    const modalRatio = params.modal / 200000;
-    if (rom >= 300) {
-      return {
-        meaning: t(
-          `Modal USD ${params.modal.toLocaleString()} dengan ${params.strategy} + ${params.targetPoin}pts berpotensi return ${rom.toFixed(0)}%`, 
-          `USD ${params.modal.toLocaleString()} capital with ${params.strategy} + ${params.targetPoin}pts potentially returns ${rom.toFixed(0)}%`
-        ),
-        status: t("Sangat Baik", "Excellent"),
-        cause: t(
-          `Rasio modal ${(modalRatio * 100).toFixed(0)}% dari optimal (USD 200.000) memberikan efisiensi tinggi`, 
-          `${(modalRatio * 100).toFixed(0)}% capital ratio from optimal (USD 200,000) provides high efficiency`
-        ),
-        recommendation: t("Pertahankan - kombinasi modal dan strategi Anda sudah efisien", "Maintain - your capital and strategy combination is efficient"),
-        statusColor: "green"
-      };
-    } else if (rom >= 100) {
-      return {
-        meaning: t(
-          `Return ${rom.toFixed(0)}% dengan modal USD ${params.modal.toLocaleString()} - masih wajar untuk ${params.strategy}`, 
-          `${rom.toFixed(0)}% return with USD ${params.modal.toLocaleString()} capital - still reasonable for ${params.strategy}`
-        ),
-        status: t("Cukup", "Adequate"),
-        cause: t(
-          `Modal ${(modalRatio * 100).toFixed(0)}% dari optimal membatasi potensi return`, 
-          `${(modalRatio * 100).toFixed(0)}% of optimal capital limits return potential`
-        ),
-        recommendation: t("Tambah modal ke USD 200.000 untuk memaksimalkan ROM", "Increase capital to USD 200,000 to maximize ROM"),
-        statusColor: "yellow"
-      };
-    } else {
-      return {
-        meaning: t(
-          `Return hanya ${rom.toFixed(0)}% - modal USD ${params.modal.toLocaleString()} tidak bekerja efisien untuk ${params.strategy}`, 
-          `Only ${rom.toFixed(0)}% return - USD ${params.modal.toLocaleString()} capital not working efficiently for ${params.strategy}`
-        ),
-        status: t("Rendah", "Low"),
-        cause: t(
-          `Modal terlalu jauh dari optimal (hanya ${(modalRatio * 100).toFixed(0)}%)`, 
-          `Capital too far from optimal (only ${(modalRatio * 100).toFixed(0)}%)`
-        ),
-        recommendation: t("Tambah modal signifikan atau ganti ke strategi lebih hemat modal", "Add significant capital or switch to more capital-efficient strategy"),
-        statusColor: "red"
-      };
-    }
+    return {
+      ...base,
+      meaning: t("ROM keluaran aturan studi; bukan proyeksi return atau ukuran margin akun.", "ROM output from study rules; not a return forecast or account-margin measure."),
+      status: t("ROM keluaran aturan studi", "Study-rule ROM output"),
+      statusColor: number !== null && number >= 300 ? "green" : number !== null && number >= 100 ? "yellow" : "red",
+    };
   }
-  
   if (metricType === "er") {
-    const er = typeof value === "string" ? parseFloat(value) : value;
-    if (er >= 1) {
-      return {
-        meaning: t(
-          `${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} bekerja di atas rata-rata (ER ${er.toFixed(2)})`, 
-          `${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition works above average (ER ${er.toFixed(2)})`
-        ),
-        status: t("Efisien", "Efficient"),
-        cause: t(
-          `Data backtesting tesis menunjukkan kombinasi ini optimal untuk kondisi ${params.marketCondition}`, 
-          `Thesis backtest data shows this combination is optimal for ${params.marketCondition} condition`
-        ),
-        recommendation: t("Lanjutkan parameter - sudah sesuai rekomendasi tesis", "Continue parameters - already matches thesis recommendation"),
-        statusColor: "green"
-      };
-    } else if (er >= 0.7) {
-      return {
-        meaning: t(
-          `Efisiensi ${params.strategy} + ${params.targetPoin}pts masih wajar (ER ${er.toFixed(2)}) tapi bisa ditingkatkan`, 
-          `${params.strategy} + ${params.targetPoin}pts efficiency still reasonable (ER ${er.toFixed(2)}) but can be improved`
-        ),
-        status: t("Sedang", "Moderate"),
-        cause: t(
-          `Kondisi ${params.marketCondition} tidak sepenuhnya optimal untuk ${params.strategy} berdasarkan data tesis`, 
-          `${params.marketCondition} condition not fully optimal for ${params.strategy} based on thesis data`
-        ),
-        recommendation: t("Pertimbangkan kondisi Sideways untuk efisiensi lebih tinggi", "Consider Sideways condition for higher efficiency"),
-        statusColor: "yellow"
-      };
-    } else {
-      return {
-        meaning: t(
-          `${params.strategy} + ${params.targetPoin}pts pada kondisi ${params.marketCondition} sangat tidak efisien (ER ${er.toFixed(2)})`, 
-          `${params.strategy} + ${params.targetPoin}pts in ${params.marketCondition} condition is very inefficient (ER ${er.toFixed(2)})`
-        ),
-        status: t("Tidak Efisien", "Inefficient"),
-        cause: t(
-          `Data tesis menunjukkan kombinasi parameter Anda tidak cocok untuk kondisi pasar ini`, 
-          `Thesis data shows your parameter combination doesn't match this market condition`
-        ),
-        recommendation: t("Ganti ke Linear Averaging + 30pts + Sideways sesuai rekomendasi tesis", "Switch to Linear Averaging + 30pts + Sideways per thesis recommendation"),
-        statusColor: "red"
-      };
-    }
+    return {
+      ...base,
+      status: t("Label ER dari aturan studi", "Study-rule ER label"),
+      statusColor: number !== null && number >= 1 ? "green" : number !== null && number >= 0.7 ? "yellow" : "red",
+    };
   }
-  
-  // MC Risk
   const mcText = typeof value === "string" ? value.toLowerCase() : "";
-  const modalRatioMc = params.modal / 200000;
-  if (mcText.includes("rendah") || mcText.includes("low") || mcText.includes("very low")) {
-    return {
-      meaning: t(
-        `Modal USD ${params.modal.toLocaleString()} dengan ${params.maxLayer} layer cukup aman dari margin call`, 
-        `USD ${params.modal.toLocaleString()} capital with ${params.maxLayer} layers is relatively safe from margin call`
-      ),
-      status: t("Aman", "Safe"),
-      cause: t(
-        `Rasio modal ${(modalRatioMc * 100).toFixed(0)}% dari optimal memberikan buffer yang cukup untuk ${params.strategy}`, 
-        `${(modalRatioMc * 100).toFixed(0)}% capital ratio from optimal provides sufficient buffer for ${params.strategy}`
-      ),
-      recommendation: t("Pertahankan disiplin - jangan tambah layer melebihi batas", "Maintain discipline - don't add layers beyond limit"),
-      statusColor: "green"
-    };
-  } else if (mcText.includes("sedang") || mcText.includes("medium")) {
-    return {
-      meaning: t(
-        `Modal USD ${params.modal.toLocaleString()} dengan ${params.strategy} + ${params.maxLayer} layer berisiko margin call jika pasar bergerak ekstrem`, 
-        `USD ${params.modal.toLocaleString()} with ${params.strategy} + ${params.maxLayer} layers risks margin call if market moves extremely`
-      ),
-      status: t("Waspada", "Alert"),
-      cause: t(
-        `${params.maxLayer} layer memerlukan modal lebih besar untuk floating loss maksimum`, 
-        `${params.maxLayer} layers require larger capital for maximum floating loss`
-      ),
-      recommendation: t(`Kurangi ke ${parseInt(params.maxLayer) - 1} layer atau tambah modal ke USD 200.000`, `Reduce to ${parseInt(params.maxLayer) - 1} layers or increase capital to USD 200,000`),
-      statusColor: "yellow"
-    };
-  } else {
-    return {
-      meaning: t(
-        `BAHAYA: ${params.strategy} dengan ${params.maxLayer} layer dan modal USD ${params.modal.toLocaleString()} sangat rentan margin call`, 
-        `DANGER: ${params.strategy} with ${params.maxLayer} layers and USD ${params.modal.toLocaleString()} capital is very vulnerable to margin call`
-      ),
-      status: t("Bahaya", "Danger"),
-      cause: t(
-        `Data tesis menunjukkan kombinasi ${params.strategy} + ${params.maxLayer} layer + kondisi ${params.marketCondition} pernah mengalami margin call`, 
-        `Thesis data shows ${params.strategy} + ${params.maxLayer} layers + ${params.marketCondition} condition has experienced margin call`
-      ),
-      recommendation: t("SEGERA: Ganti ke Linear Averaging + 3 layer + tambah modal", "IMMEDIATELY: Switch to Linear Averaging + 3 layers + increase capital"),
-      statusColor: "red"
-    };
-  }
+  const mcLevel = mcText.includes("rendah") || mcText.includes("low") || mcText.includes("very low")
+    ? "low"
+    : mcText.includes("sedang") || mcText.includes("medium") ? "moderate" : "high";
+  return {
+    ...base,
+    meaning: t("Label MC dari aturan studi; bukan hitungan margin call aktual.", "MC label from study rules; not an actual margin-call calculation."),
+    status: t("Label MC dari aturan studi", "Study-rule MC label"),
+    cause: t("Spesifikasi kontrak, ekuitas, leverage, margin, dan stop-out tidak dievaluasi oleh kalkulator dasar.", "Contract specifications, equity, leverage, margin, and stop-out are not evaluated by the basic calculator."),
+    statusColor: mcLevel === "low" ? "green" : mcLevel === "moderate" ? "yellow" : "red",
+  };
 }
 
 function parseLocalizedText(text: string, language: "id" | "en"): string {
@@ -387,6 +241,7 @@ export default function Result() {
   
   // State untuk fitur Compare Scenarios
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const [scenariosLoaded, setScenariosLoaded] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   
   // Load saved scenarios dari localStorage saat mount
@@ -395,20 +250,22 @@ export default function Result() {
     if (saved) {
       try {
         setSavedScenarios(JSON.parse(saved));
-      } catch (e) {
+      } catch {
         console.error("Failed to load scenarios");
       }
     }
+    setScenariosLoaded(true);
   }, []);
   
   // Save ke localStorage ketika scenarios berubah
   useEffect(() => {
+    if (!scenariosLoaded) return;
     if (savedScenarios.length > 0) {
       localStorage.setItem("riskcheck_scenarios", JSON.stringify(savedScenarios));
     } else {
       localStorage.removeItem("riskcheck_scenarios");
     }
-  }, [savedScenarios]);
+  }, [savedScenarios, scenariosLoaded]);
   
   const params: RiskInput = {
     modal: parseFloat(searchParams.get("modal") || "0"),
@@ -443,9 +300,9 @@ export default function Result() {
   
   // Helper untuk translate status
   const getStatusLabel = (status: string) => {
-    if (status === "AMAN") return t("AMAN", "SAFE");
-    if (status === "BERISIKO") return t("BERISIKO", "RISKY");
-    return t("TIDAK LAYAK", "NOT VIABLE");
+    if (status === "AMAN") return t("Relatif rendah · keluaran studi", "Relatively low · study output");
+    if (status === "BERISIKO") return t("Relatif sedang · keluaran studi", "Relatively moderate · study output");
+    return t("Relatif tinggi · keluaran studi", "Relatively high · study output");
   };
 
   // Helper functions untuk scenario management
@@ -505,11 +362,8 @@ export default function Result() {
             <p className="text-sm text-muted-foreground mb-4">
               {t("Gagal menghitung risiko.", "Failed to calculate risk.")}
             </p>
-            <Link href="/">
-              <Button data-testid="button-kembali-error">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {t("Kembali", "Back")}
-              </Button>
+            <Link href="/basic" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground" data-testid="button-kembali-error">
+              <ArrowLeft className="w-4 h-4" />{t("Kembali", "Back")}
             </Link>
           </CardContent>
         </Card>
@@ -543,14 +397,17 @@ export default function Result() {
               </h1>
             </div>
           </div>
+          <div className="mx-auto mb-4 max-w-2xl rounded-md border border-primary/25 bg-primary/5 px-4 py-3 text-left text-xs leading-relaxed text-muted-foreground">
+            {t("Simulasi Dasar menampilkan keluaran studi historis dan aturan lama. Angka bukan perkiraan profit pribadi, margin call, margin safety, atau analisis pasar live; bukan rekomendasi untuk menambah modal atau mengubah strategi.", "Basic Simulation shows historical study outputs from the legacy rules. Figures are not personal profit, margin-call, margin-safety, or live-market forecasts; they are not recommendations to add capital or change strategies.")}
+          </div>
           
           <StatusBadge status={result.status} t={t} />
           
           {result.status === "AMAN" && (
             <p className="mt-3 text-xs sm:text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 rounded-md px-3 py-2 max-w-md mx-auto">
               {t(
-                "Status AMAN tidak berarti bebas risiko. Tetap disiplin dan pahami batas eksposur.",
-                "Safe status doesn't mean risk-free. Stay disciplined and understand exposure limits."
+                "Kategori ini hanya klasifikasi relatif dari model studi historis, bukan penilaian posisi live atau klaim aman.",
+                "This category is only a relative classification from a historical study model, not a live position assessment or safety claim."
               )}
             </p>
           )}
@@ -576,16 +433,8 @@ export default function Result() {
             
             {/* Tombol Simpan & Bandingkan Skenario */}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <Link href="/">
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="gap-2"
-                  data-testid="button-buat-skenario-top"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t("Buat Skenario", "Create Scenario")}
-                </Button>
+              <Link href="/basic" className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" data-testid="button-buat-skenario-top">
+                <Plus className="w-4 h-4" />{t("Buat Skenario", "Create Scenario")}
               </Link>
               
               <Button
@@ -606,7 +455,7 @@ export default function Result() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setLocation("/")}
+                  onClick={() => setLocation("/basic")}
                   className="gap-2"
                   data-testid="button-add-next-scenario"
                 >
@@ -729,7 +578,7 @@ export default function Result() {
             ) : (
               <Card 
                 className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
-                onClick={() => setLocation("/")}
+                onClick={() => setLocation("/basic")}
                 data-testid="card-parameters-edit"
               >
                 <CardHeader className="pb-2 px-4 sm:px-6">
@@ -782,8 +631,8 @@ export default function Result() {
                 </CardTitle>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {t(
-                    `Metrik produktivitas untuk ${params.strategy} + ${params.targetPoin}pts (data backtesting tesis 2024-2025)`,
-                    `Productivity metrics for ${params.strategy} + ${params.targetPoin}pts (thesis backtest data 2024-2025)`
+                    "Keluaran historis aturan studi untuk parameter terpilih (backtest tesis 2024–2025); bukan perkiraan hasil pribadi.",
+                    "Historical study-rule output for the selected inputs (2024–2025 thesis backtest); not a personal outcome forecast."
                   )}
                 </p>
               </CardHeader>
@@ -830,12 +679,12 @@ export default function Result() {
               <CardHeader className="pb-3 px-4 sm:px-6">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  <span>{t("Metrik Berdasarkan Modal Anda", "Your Capital-Based Metrics")}</span>
+                  <span>{t("Keluaran aturan studi · input modal", "Study-rule output · capital input")}</span>
                 </CardTitle>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {t(
-                    `Disesuaikan dengan modal USD ${params.modal.toLocaleString()} (referensi optimal tesis: USD 200.000)`,
-                    `Adjusted for USD ${params.modal.toLocaleString()} capital (thesis optimal reference: USD 200,000)`
+                    `Input modal simulasi USD ${params.modal.toLocaleString()}; USD 200.000 adalah nilai acuan historis model, bukan modal optimal pribadi.`,
+                    `Simulation capital input USD ${params.modal.toLocaleString()}; USD 200,000 is a historical model reference, not a personal optimal capital amount.`
                   )}
                 </p>
               </CardHeader>
@@ -846,7 +695,7 @@ export default function Result() {
                     return (
                       <DetailedMetricCard 
                         icon={Percent} 
-                        label="Return on Margin (ROM)" 
+                        label={t("ROM keluaran aturan studi", "Study-rule ROM output")}
                         value={result.metrics.expectedROM}
                         meaning={romExpl.meaning}
                         status={romExpl.status}
@@ -863,7 +712,7 @@ export default function Result() {
                     return (
                       <DetailedMetricCard 
                         icon={AlertTriangle} 
-                        label={t("Risiko Margin Call", "Margin Call Risk")}
+                        label={t("Label MC dari aturan studi", "Study-rule MC label")}
                         value={mcValue}
                         meaning={mcExpl.meaning}
                         status={mcExpl.status}
@@ -876,7 +725,7 @@ export default function Result() {
                   })()}
                 </div>
                 <p className="text-[10px] sm:text-xs text-muted-foreground mt-4 text-center">
-                  {t("Referensi optimal: USD 200.000 (Tesis Iriawan, UNDIP 2025)", "Optimal reference: USD 200,000 (Iriawan Thesis, UNDIP 2025)")}
+                  {t("Nilai acuan historis model: USD 200.000 (Tesis Iriawan, UNDIP 2025); bukan rekomendasi modal.", "Historical model reference: USD 200,000 (Iriawan Thesis, UNDIP 2025); not a capital recommendation.")}
                 </p>
               </CardContent>
             </Card>
@@ -888,10 +737,10 @@ export default function Result() {
           <CardHeader className="pb-3 px-4 sm:px-6">
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
               <Info className="w-5 h-5 text-primary" />
-              <span>{t("Analisis Temuan", "Analysis Findings")}</span>
+              <span>{t("Catatan keluaran aturan studi lama", "Legacy study-rule output notes")}</span>
             </CardTitle>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {t("Berdasarkan framework Financial Engineering dari Tesis Iriawan (UNDIP, 2025)", "Based on Financial Engineering framework from Iriawan Thesis (UNDIP, 2025)")}
+              {t("Catatan berikut berasal dari aturan kalkulator historis; bukan penilaian posisi live atau saran personal.", "The following notes come from historical calculator rules; they are not a live-position assessment or personal advice.")}
             </p>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
@@ -904,7 +753,7 @@ export default function Result() {
                     <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${isEmpirical ? 'bg-primary/10' : 'bg-muted'}`}>
                       <span className={`text-[10px] sm:text-xs font-mono font-bold ${isEmpirical ? 'text-primary' : 'text-muted-foreground'}`}>{index + 1}</span>
                     </div>
-                    <span className="text-muted-foreground leading-relaxed">{text}</span>
+                    <span className="text-muted-foreground leading-relaxed">{t("Keluaran aturan studi lama:", "Legacy study-rule output:")} {text}</span>
                   </li>
                 );
               })}
@@ -921,7 +770,7 @@ export default function Result() {
                 <span>{t("Peringatan Empiris", "Empirical Warnings")}</span>
               </CardTitle>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                {t("Data historis dari backtesting tesis 2024-2025", "Historical data from 2024-2025 thesis backtesting")}
+                {t("Konteks historis studi 2024–2025; bukan proyeksi pribadi, kondisi live, atau jaminan margin.", "Historical 2024–2025 study context; not a personal forecast, live condition, or margin guarantee.")}
               </p>
             </CardHeader>
             <CardContent className="px-4 sm:px-6">
@@ -929,7 +778,7 @@ export default function Result() {
                 {result.warnings.map((warning, index) => (
                   <li key={index} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm p-2 sm:p-3 bg-amber-500/5 border border-amber-500/10 rounded-md">
                     <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground leading-relaxed">{parseLocalizedText(warning, language)}</span>
+                    <span className="text-muted-foreground leading-relaxed">{t("Catatan historis model:", "Historical model note:")} {parseLocalizedText(warning, language)}</span>
                   </li>
                 ))}
               </ul>
@@ -1001,17 +850,11 @@ export default function Result() {
         </Card>
 
         <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/">
-            <Button size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-buat-skenario">
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              {t("Buat Skenario Baru", "Create New Scenario")}
-            </Button>
+          <Link href="/basic" className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground" data-testid="button-buat-skenario">
+            <Plus className="w-5 h-5" />{t("Buat Skenario Baru", "Create New Scenario")}
           </Link>
-          <Link href="/literasi">
-            <Button variant="outline" size="lg" className="h-11 sm:h-12 text-sm sm:text-base" data-testid="button-literasi-result">
-              <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              {t("Literasi Risiko", "Risk Literacy")}
-            </Button>
+          <Link href="/literasi" className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm" data-testid="button-literasi-result">
+            <FileText className="w-5 h-5" />{t("Literasi Risiko", "Risk Literacy")}
           </Link>
         </div>
 
@@ -1154,8 +997,8 @@ export default function Result() {
                     const betterName = getScenarioName(better.nameKey);
                     
                     return t(
-                      `${betterName} memiliki risiko lebih rendah dengan selisih ${diff} poin. Pertimbangkan parameter ini untuk manajemen risiko yang lebih baik.`,
-                      `${betterName} has lower risk with a ${diff} point difference. Consider these parameters for better risk management.`
+                      `${betterName} menghasilkan skor aturan studi lama ${diff} poin lebih rendah pada perbandingan tersimpan; ini bukan bukti risiko personal lebih rendah atau saran memilih parameter.`,
+                      `${betterName} has a ${diff}-point lower legacy study-rule score in this saved comparison; this is not evidence of lower personal risk or advice to select these inputs.`
                     );
                   })()}
                 </p>

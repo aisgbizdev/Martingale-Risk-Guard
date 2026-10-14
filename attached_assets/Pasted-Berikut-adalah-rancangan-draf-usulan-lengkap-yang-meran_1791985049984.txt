@@ -1,0 +1,39 @@
+Berikut adalah rancangan draf usulan lengkap yang merangkum poin-poin dari sesi awal hingga pertimbangan fitur lanjutan (UI/UX, Stress Test, dan Disclaimer). Formatnya disusun sebagai bahan diskusi dan refleksi terbuka agar agen Replit dapat mempertimbangkannya sesuai arsitektur teknis yang sedang dibangun:
+
+---
+
+### Draf Usulan Diskusi untuk Agen Replit (Martingale Risk Guard / MRG)
+
+#### 1. Klarifikasi Sumber Data dan Pelabelan (*LGD Daily* vs *XUL10*)
+
+* **Bahan Diskusi:** Pemisahan antara data *LGD Daily* (sebagai referensi emas historis harian) dan *XUL10* (harga berjalan) sudah sangat baik untuk menjaga batasan analitis tanpa asumsi kontrak broker yang identik.
+* **Poin Refleksi untuk Replit:** Apakah perlu ditambahkan indikator visual atau *tooltip* penjelas di antarmuka agar pengguna paham bahwa data harian ini berfungsi sebagai pembanding volatilitas makro, bukan spesifikasi persis dari instrumen tertentu?
+
+#### 2. Transparansi dan Kalibrasi Indeks Tekanan Awal (40/20/15/15/10)
+
+* **Bahan Diskusi:** Komposisi bobot 60% internal (kapasitas lot/layer) dan 40% eksternal (harga, volatilitas, agenda ekonomi) adalah titik awal yang logis untuk indeks transparan (skor 0-100), bukan sebagai kalkulator rugi/laba mutlak.
+* **Poin Refleksi untuk Replit:** Bagaimana jika ke depannya formula ini diuji terhadap skenario pasar *sideways* vs *trending* yang ekstrem? Jika data tidak lengkap, sistem sudah tepat menampilkan status *"belum dapat dinilai"* alih-alih angka nol.
+
+#### 3. Evaluasi UI/UX Khusus Mobile (*Mobile-First*)
+
+* **Bahan Diskusi:** Mengingat pergerakan XUL10 yang cepat (*fast-moving market*), tampilan antarmuka di ponsel perlu dijaga agar tidak terlalu padat.
+* **Poin Refleksi untuk Replit:**
+* Penggunaan elemen interaktif seperti *tab* atau *collapsible section* (bagian yang bisa dilipat) untuk memecah informasi berat.
+* Penerapan *gradient alert* (Hijau Stabil, Kuning Waspada, Merah Kritis) yang disertai teks naratif ringkas (misal: *"Layer mendekati batas ketahanan"*).
+* Tombol *shortcut* cepat seperti *"Ambil Harga Saat Ini"* untuk mempermudah input harga di perangkat seluler.
+
+
+
+#### 4. Penambahan Fitur Skenario Ekstrem (*Stress Test / Black Swan*) & *Buffer Zone*
+
+* **Bahan Diskusi:** Mengingat strategi *Martingale* melipatgandakan lot per layer, penambahan modul simulasi *Worst-Case Scenario* (misal: pengujian lonjakan harga ekstrem secara mendadak) dapat menjadi *reality check* yang sangat baik bagi pengguna.
+* **Poin Refleksi untuk Replit:** Apakah memungkinkan untuk menyelipkan indikator jarak aman (*buffer zone*) dalam bentuk poin atau persentase dari harga saat ini ke batas risiko teoretis, serta *toggle* pemisah antara **[Mode Edukasi/Teori]** dan **[Mode Monitor Live]**?
+
+#### 5. Aspek Kepatuhan & *Disclaimer* Hukum
+
+* **Bahan Diskusi:** Karena aplikasi ini berfokus pada edukasi manajemen risiko pialang/trading, kepatuhan hukum sangat krusial.
+* **Poin Refleksi untuk Replit:** Memastikan adanya *disclaimer* yang menyatakan bahwa aplikasi ini bukan pemberi sinyal finansial atau penasihat investasi resmi, yang diletakkan pada *footer* aplikasi maupun *onboarding pop-up* saat pertama kali dibuka.
+
+---
+
+Silakan salin draf di atas untuk didiskusikan langsung dengan agen di Replit agar mereka dapat mempertimbangkannya sebagai bahan pengembangan selanjutnya!
