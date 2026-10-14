@@ -1,0 +1,1 @@
+- [Dependency setup constraints](dependency-setup.md) — preserve the imported framework major when resolving blocked transitive dependencies.

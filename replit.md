@@ -8,6 +8,17 @@ RiskCheck XUL10 is a risk assessment educational web application for evaluating 
 
 Preferred communication style: Simple, everyday language.
 
+## Running on Replit
+
+- Use the **Run** button / **Start application** workflow, which runs `npm run dev`.
+- Express serves the React app and API together on `0.0.0.0:5000`.
+- No API keys, database connection, or additional secrets are needed for the current risk calculator. The database configuration is optional scaffolding, not part of the running app.
+- Install dependencies with `npm ci` when setting up a fresh checkout.
+- Build with `npm run build`; run the built app with `npm start`.
+- Setup verification: homepage rendered in preview, valid calculation returned HTTP 200, invalid input returned HTTP 400, and production build passed.
+- Known imported issue: `npm run check` fails because unused `server/storage.ts` imports `User` and `InsertUser`, which are absent from `shared/schema.ts`. This does not block the current app or production build.
+- Express remains on version 4. The `proxy-addr` override selects a patched release because the imported locked release was blocked by Replit's package security policy.
+
 ## System Architecture
 
 ### Frontend Architecture
