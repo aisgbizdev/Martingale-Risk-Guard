@@ -7,6 +7,10 @@ RiskCheck is already presented as a feature in the Newsmaker eBook portal; acces
 
 The user chose automatically updated risk scores and warnings, rather than instructions to add or hold positions. A hypothetical add-position simulator is being discussed, not yet approved. For this upgrade, the user explicitly wants to treat RiskCheck as a separate application and exclude portal/login integration.
 
+The user selected daily technical analysis for the first release rather than waiting for H1 candles. Live quotes and daily indicators have separate update frequencies; do not describe daily technical analysis as tick-by-tick.
+
+**Why (timeframe):** The user approved starting with daily candles. This does not itself verify that the daily-history price basis matches XUL10.
+
 **Why:** Newsmaker does not provide brokerage or trading execution. The supplied docs suggest sources, but the real-time/history price-basis alignment, feed permissions, event-cache freshness, and precise analysis rules still need confirmation.
 
 **How to apply:** Do not treat portal embedding or login as a new feature to build unless the user says the current integration is broken. Keep Newsmaker's role limited to information and analysis, not brokerage or order execution. Use TradingView only for chart display; use a separate structured feed for calculations. Before implementing technical triggers, agree on what the user-facing output should mean and confirm XUL10 live quotes and historical candles share an appropriate price basis, calendar payload fields and cache refresh policy, data rights, fundamental-data scope, and risk limits. Use the PDF's Newsmaker calendar endpoint rather than the TradePilot calendar route when the user requests it. Treat bearer tokens shown in attached documentation as exposed; never copy them into client code or persistent notes. Do not introduce broker integration or automated order placement.
