@@ -383,7 +383,7 @@ export default function Result() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
         <div className="flex justify-end mb-4">
           <Button
             variant="default"

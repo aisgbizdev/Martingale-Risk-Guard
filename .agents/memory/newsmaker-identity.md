@@ -20,3 +20,9 @@ The user approved a chart-first Technical view, with the chart directly visible 
 **Why:** The user called the scattered empty areas and introductory band awkward, and approved automatically requesting TradingView when entering the Technical tab.
 
 **How to apply:** Preserve this chart-first direction in later UI refinements. Keep technical source distinctions and critical warnings readable; reduce duplicate text and unused spacing rather than hiding risk information.
+
+Remove dropdowns that only contain a short explanatory description, along with the redundant description. Keep the layout consistent across pages, not just Technical.
+
+**Why:** The user said the other pages were also messy and asked to remove dropdowns containing only one line of explanation.
+
+**How to apply:** Prefer useful controls and data over decorative explanations. Preserve meaningful form/filter/data disclosures, novice term help, and essential visible risk/source warnings.

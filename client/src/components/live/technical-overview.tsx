@@ -55,15 +55,6 @@ export function TechnicalOverview({
         )}
       </p>
       <TradingViewChart online={online} />
-      <details className="live-details mrg-chart-details">
-        <summary>{t("Tentang chart dan sumber", "About the chart and source")}</summary>
-        <p className="live-small">
-          {t(
-            "Widget TradingView adalah konten pihak ketiga. Keberadaan bingkai tidak membuktikan isi chart berhasil dimuat. Gunakan tautan langsung jika tampilan kosong atau dibatasi.",
-            "The TradingView widget is third-party content. The presence of its frame does not prove the chart loaded successfully. Use the direct link if it appears blank or restricted.",
-          )}
-        </p>
-      </details>
     </section>
 
     <section className="live-card mrg-indicator-panel" aria-labelledby="technical-indicators-title">
@@ -121,15 +112,6 @@ export function TechnicalOverview({
         {timeReceived && <div className="mrg-received-time">
           <span>{t("Data diterima", "Data received")}</span><strong>{timeReceived}</strong>
         </div>}
-        <details className="live-details mrg-indicator-details">
-          <summary>{t("Cara membaca indikator", "How to read these indicators")}</summary>
-          <p className="live-small">
-            {t(
-              "Semua indikator dihitung dari riwayat harian LGD. MA20 dan MA50 merangkum harga penutupan; ATR14 dan baseline memberi konteks volatilitas; support dan resistance menunjukkan rentang historis 20 hari. Ini konteks historis, bukan prediksi atau sinyal.",
-              "All indicators are calculated from LGD daily history. MA20 and MA50 summarize closes; ATR14 and its baseline provide volatility context; support and resistance show the 20-day historical range. These are historical context, not predictions or signals.",
-            )}
-          </p>
-        </details>
       </> : <div className="mrg-history-unavailable" role="status">
         <strong>{t("Riwayat teknikal tidak tersedia", "Technical history unavailable")}</strong>
         <span>{historyMessage ?? t("Analisis harian belum tersedia. Indikator tidak ditaksir atau diganti.", "Daily analysis is unavailable. Indicators are not estimated or substituted.")}</span>

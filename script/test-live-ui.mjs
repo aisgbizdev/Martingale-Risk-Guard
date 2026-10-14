@@ -132,6 +132,7 @@ try {
   await click("Mengerti, lanjutkan");
   check("Introduction choice persists locally", await evaluate('localStorage.getItem("mrg_welcome_seen") === "1"'));
   check("Mobile overview does not overflow", await noOverflow());
+  check("Overview has no redundant page-description dropdown", await evaluate("![...document.querySelectorAll('summary')].some(el=>el.textContent.includes('Tentang halaman ini'))"));
   await waitFor("document.querySelector('.live-brand img')?.naturalWidth > 0");
   check("Newsmaker logo and identity render from a local asset", await evaluate("document.querySelector('.live-brand img').getAttribute('src') === '/newsmaker-logo-white.png' && document.body.innerText.includes('MRG · Newsmaker')"));
   check("Header uses the official Newsmaker blue", await evaluate("getComputedStyle(document.querySelector('.live-header')).backgroundColor === 'rgb(16, 97, 179)'"));
@@ -145,6 +146,14 @@ try {
   await navigate("/positions", "Catat, lalu bandingkan");
   check("Introduction stays dismissed on another route", !(await text()).includes("Sebelum menggunakan MRG"));
   check("Entry form is not stacked into the initial position screen", await evaluate("!document.getElementById('harga-masuk-xul10')"));
+  check("Positions has no redundant page-description dropdown", await evaluate("![...document.querySelectorAll('summary')].some(el=>el.textContent.includes('Tentang halaman ini'))"));
+  for (const [width, height] of [[320, 740], [768, 1024], [1024, 768], [1280, 900]]) {
+    await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+    await sleep(150);
+    check(`Empty collapsed positions fit ${width}x${height}`, await noOverflow());
+    if (width >= 1024) check(`Collapsed entry remains compact at ${width}px`, await evaluate("document.getElementById('position-entry-controls').getBoundingClientRect().height <= 100"));
+  }
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   await evaluate("document.querySelector('[aria-label=\"Langkah penggunaan\"] button').click()");
   await waitFor("document.getElementById('harga-masuk-xul10') !== null");
   await click("Bantuan istilah: Lot", true);
@@ -169,6 +178,13 @@ try {
   await fill("Modal (opsional)", 10000); await fill("Ekuitas berjalan (opsional)", 9000);
   await fill("Target jarak harga (opsional)", 30); await fill("Jarak layer (opsional)", 20); await click("Simpan batas");
   check("Limits, equity, target and layer spacing are independent", (await stored()).settings.equity === 9000 && (await stored()).settings.targetPriceDistance === 30 && (await stored()).settings.layerSpacingPrice === 20);
+  for (const [width, height] of [[320, 740], [768, 1024], [1024, 768], [1280, 900]]) {
+    await command("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: width < 768 });
+    await sleep(150);
+    check(`Populated positions and expanded limits fit ${width}x${height}`, await noOverflow());
+    if (width >= 1024) check(`Settings sidebar stays beside the populated workspace at ${width}px`, await evaluate("document.getElementById('settings-controls').getBoundingClientRect().left >= document.querySelector('[data-testid=\"positions-entry-records\"]').getBoundingClientRect().right - 1"));
+  }
+  await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   check("Model details collapse on mobile", await evaluate("[...document.querySelectorAll('details.live-details')].some(el => el.querySelector('summary').textContent.includes('rincian indeks') && !el.open)"));
   await evaluate("document.querySelectorAll('[aria-label=\"Langkah penggunaan\"] button')[2].click()");
   await click("Buat simulasi");
@@ -228,10 +244,12 @@ try {
   await fill("Mata uang", "USD"); await fill("Dampak", "high");
   check("Calendar currency/impact filters affect visible events", await evaluate("[...document.querySelectorAll('.live-event')].every(e => e.innerText.includes('USD') && e.innerText.includes('Dampak tinggi'))"));
   check("Calendar labels the displayed timezone", (await text()).toLowerCase().includes("asia/jakarta"));
+  check("Calendar has no redundant one-paragraph description dropdown", await evaluate("![...document.querySelectorAll('summary')].some(el=>/Tentang halaman ini|Tentang sumber & waktu/.test(el.textContent))"));
   check("TradingView is not requested on the calendar tab", !widgetRequested && await evaluate("document.querySelector('iframe') === null"));
   await click("Teknikal");
   check("Tabs replace the long calendar stack", await evaluate("document.querySelectorAll('.live-event').length === 0"));
   check("Chart is automatic rather than behind open/close controls", await evaluate("![...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='Buka chart' || b.getAttribute('aria-label')==='Tutup chart')"));
+  check("Technical omits explanatory-only dropdowns but retains source caveats", await evaluate("![...document.querySelectorAll('summary')].some(el=>/Tentang chart dan sumber|Cara membaca indikator/.test(el.textContent)) && document.querySelector('.mrg-chart-warning').textContent.includes('XUL10') && document.querySelector('.mrg-lgd-warning').textContent.includes('XUL10')"));
   await waitFor("document.querySelector('.live-chart-frame iframe') !== null");
   check("Technical content spans the available width without an empty grid column", await evaluate("document.querySelector('.live-technical-tabpanel').getBoundingClientRect().width >= document.querySelector('.live-main').getBoundingClientRect().width * .95"));
   check("Mobile chart comes before indicators without horizontal overflow", await evaluate("document.querySelector('.mrg-chart-panel').getBoundingClientRect().top < document.querySelector('.mrg-indicator-panel').getBoundingClientRect().top && document.documentElement.scrollWidth <= innerWidth + 1"));
@@ -299,6 +317,7 @@ try {
   await command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await navigate("/", "Lihat eksposur");
   check("Desktop overview does not overflow", await noOverflow());
+  check("Overview primary price and agenda cards share a row without a blank column", await evaluate("Math.abs(document.querySelector('.overview-quote').getBoundingClientRect().top - document.querySelector('.overview-agenda').getBoundingClientRect().top) < 2"));
   for (const [width,height] of [[768,1024],[1024,768],[844,390]]) {
     await command("Emulation.setDeviceMetricsOverride", {width,height,deviceScaleFactor:1,mobile:width<1024});
     check(`Responsive ${width}x${height} overview keeps content and navigation in bounds`, await noOverflow() && await evaluate("[...document.querySelectorAll('.live-header a,.live-tabbar a')].filter(el=>el.getClientRects().length).some(el=>el.getAttribute('href')==='/positions' && el.getBoundingClientRect().left>=0 && el.getBoundingClientRect().right<=innerWidth)"));

@@ -441,6 +441,49 @@ footer.live-footer .live-link:hover { color:#fff; }
   .live-header .live-icon-btn { padding-inline:9px; }
   .live-grid > #position-entry-controls,.live-grid > #settings-controls { grid-column:span 12; }
 }
+
+/* Compact MRG layouts: keep primary information adjacent and controls grouped. */
+.live-overview-grid > * { order: 3; }
+.live-overview-grid > .overview-quote,
+.live-overview-grid > .overview-agenda { order: 0; }
+.live-overview-grid > .overview-exposure { order: 1; }
+.live-overview-grid > .live-disclosure { order: 2; }
+.live-position-left-column {
+  grid-column: span 7;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  align-self: start;
+  gap: 12px;
+  min-width: 0;
+}
+.live-position-left-column > #position-entry-controls,
+.live-position-left-column > .live-position-records { grid-column: 1; align-self: start; }
+.live-position-settings { grid-column: span 5; align-self: start; }
+.live-position-workspace > .live-disclosure,
+.live-position-workspace > .live-position-simulation,
+.live-position-workspace > button#simulation-controls,
+.live-position-workspace > .live-small { grid-column: span 12; }
+
+.live-card > .live-row:first-child { flex-wrap: wrap; }
+.live-card > .live-row:first-child > :first-child { flex: 1 1 180px; min-width: 0; }
+.live-card > .live-row:first-child > :last-child { flex: 0 1 auto; min-width: 0; }
+.live-card > .live-row:first-child h2,
+.live-card > .live-row:first-child h3 { overflow-wrap: anywhere; }
+.live-card > .live-row:first-child .live-button { max-width: 100%; white-space: normal; }
+.live-section-toggle { min-width: 0; }
+.live-section-copy { overflow-wrap: anywhere; }
+.live-section-cta { flex: 0 0 auto; }
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .live-position-left-column { grid-column: span 7; }
+  .live-position-settings { grid-column: span 5; }
+  .live-position-workspace > #settings-controls { grid-column: span 5; }
+}
+@media (max-width: 767px) {
+  .live-position-left-column,
+  .live-position-settings { grid-column: span 12; }
+}
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }
 
 /**

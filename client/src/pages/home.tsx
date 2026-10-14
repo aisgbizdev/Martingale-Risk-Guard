@@ -28,15 +28,7 @@ function LiveRiskPreview({ score, status, isCalculating, t }: {
     );
   }
 
-  if (score === null || status === null) {
-    return (
-      <div className="p-4 bg-muted/30 rounded-md border border-dashed border-border">
-        <p className="text-sm text-muted-foreground text-center">
-          {t("Masukkan modal untuk melihat preview risiko", "Enter capital to see risk preview")}
-        </p>
-      </div>
-    );
-  }
+  if (score === null || status === null) return null;
 
   const getStatusColor = () => {
     if (status === "AMAN") return "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300";
@@ -179,7 +171,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-12">
+      <div className="max-w-4xl mx-auto px-4 py-3 sm:px-6 sm:py-6 md:px-8 md:py-8">
         <div className="flex justify-between items-center mb-4 gap-2">
           <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">
             <Shield className="w-4 h-4" />{t("Kembali ke ringkasan live", "Back to live overview")}
@@ -195,15 +187,15 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="text-center mb-5 sm:mb-8">
+          <div className="inline-flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
             <img src="/newsmaker-favicon.png" alt="Newsmaker" className="w-10 h-10 sm:w-12 sm:h-12" />
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
               {t("Simulasi Dasar", "Basic Simulation")}
             </h1>
           </div>
           
-          <p className="text-primary text-xs font-semibold tracking-wide mb-3">MRG · Newsmaker</p>
+          <p className="text-primary text-xs font-semibold tracking-wide mb-2">MRG · Newsmaker</p>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed px-2">
             {t(
               "Asesmen risiko berbasis framework Financial Engineering dan Behavioral Finance untuk strategi Martingale vs Linear Averaging pada XUL10.",
@@ -211,7 +203,7 @@ export default function Home() {
             )}
           </p>
           
-          <div className="mt-4 sm:mt-5 inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
+          <div className="mt-3 sm:mt-4 inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 rounded-md">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
             <span className="text-xs sm:text-sm text-amber-700 dark:text-amber-300 text-left">
               {t("Edukasi & mitigasi risiko", "For education & risk mitigation only")}
@@ -220,14 +212,14 @@ export default function Home() {
         </div>
 
         <div className="max-w-2xl mx-auto">
-          <div className="sticky top-0 z-50 bg-background pb-4">
+          {(isCalculating || (liveScore !== null && liveStatus !== null)) && <div className="sticky top-0 z-50 bg-background pb-4">
             <LiveRiskPreview 
               score={liveScore} 
               status={liveStatus} 
               isCalculating={isCalculating}
               t={t}
             />
-          </div>
+          </div>}
 
           <Card>
             <CardHeader className="pb-4 sm:pb-6 px-4 sm:px-6">

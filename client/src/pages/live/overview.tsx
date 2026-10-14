@@ -29,9 +29,7 @@ export default function LiveOverview() {
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const nextEvent = context?.calendar.events.filter((event) => event.currency === "USD" && event.at && Date.parse(event.at) >= market.now).sort((a, b) => Date.parse(a.at!) - Date.parse(b.at!))[0];
   return <LiveShell>
-    <PageIntro kicker={t("Gambaran pasar · XUL10", "Market view · XUL10")} title={t("Lihat eksposur dengan jernih.", "See exposure clearly.")}>
-      {t("Konteks pasar dan catatan posisi manual, tanpa order, klaim keamanan, atau perkiraan hasil uang.", "Market context and manually recorded positions, without orders, safety claims, or monetary outcome estimates.")}
-    </PageIntro>
+    <PageIntro compact kicker={t("Gambaran pasar · XUL10", "Market view · XUL10")} title={t("Lihat eksposur dengan jernih.", "See exposure clearly.")} />
     <div className="live-trust-strip" role="note">{t("LGD Daily D1 adalah referensi harga emas, bukan harga XUL10 yang identik.", "LGD Daily D1 is a gold-price reference, not an identical XUL10 price.")}</div>
     {storageError && <div style={{ marginTop: 16 }}><ErrorBox message={storageError} /></div>}
     <div className="live-grid live-overview-grid">

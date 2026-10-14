@@ -93,9 +93,7 @@ export default function AnalysisPage() {
   }, [location, search]);
   return <LiveShell>
     <div className="live-analysis-page">
-    <PageIntro kicker={t("Analisis pasar · XUL10", "Market analysis · XUL10")} title={t("Konteks, bukan sinyal.", "Context, not signals.")}>
-      {t("Indikator harian, kalender, dan berita Newsmaker dengan sumber yang jelas. Chart visual dimuat otomatis hanya saat tab Teknikal aktif.", "Daily indicators, calendar, and Newsmaker news with clear sources. The visual chart loads automatically only while the Technical tab is active.")}
-    </PageIntro>
+    <PageIntro compact kicker={t("Analisis pasar · XUL10", "Market analysis · XUL10")} title={t("Konteks, bukan sinyal.", "Context, not signals.")} />
     {!market.context.isLoading && !calendarFresh && <div className="live-alert live-source-warning" role="alert">{t("Kalender tidak tersedia atau kedaluwarsa. Jadwal lama hanya referensi; komponen indeks agenda tidak digunakan.", "Calendar is unavailable or stale. Any old schedule is reference only; the event index component is not used.")}</div>}
     {market.context.isError && <div style={{ marginTop: 10 }}><ErrorBox message={t("Sebagian atau seluruh konteks gagal dimuat. Angka yang tidak tersedia tidak digantikan.", "Some or all context failed to load. Unavailable values are not substituted.")} retry={() => void market.refresh()} /></div>}
     <div className="live-tabs" role="tablist" aria-label={t("Bagian analisis", "Analysis sections")} onKeyDown={(event) => {
@@ -121,7 +119,6 @@ export default function AnalysisPage() {
       </div>}
       {activeTab === "calendar" && <div className="live-tabpanel" role="tabpanel" id="analysis-panel-calendar" aria-labelledby="analysis-tab-calendar">
       <Panel className="live-span-12" title={t("Agenda ekonomi", "Economic calendar")} eyebrow={`${userTimezone} · ${calendarFresh ? t("data lengkap dan baru", "complete and fresh") : t("belum lengkap / kedaluwarsa", "incomplete / stale")}`} action={<button className="live-icon-btn" onClick={() => void market.refresh()} aria-label={t("Perbarui data", "Refresh data")}><RefreshCw size={15}/></button>}>
-        <details className="live-details"><summary>{t("Tentang sumber & waktu", "About source & timing")}</summary><p className="live-small">{t("Kalender mencakup halaman server untuk pekan ini dan berikutnya. Waktu ditampilkan dalam zona waktu pengguna bila tersedia. Kesegaran maksimal 15 menit; kegagalan bukan berarti tidak ada agenda.", "Calendar includes server-paginated this-week and next-week data. Times use the user's timezone where available. Maximum freshness is 15 minutes; failure does not mean there are no events.")}</p></details>
         <div style={{ marginTop: 14 }}>
           <div className="live-field live-calendar-search"><label htmlFor="calendar-keyword">{t("Cari acara, negara, atau mata uang", "Search event, country, or currency")}</label><input id="calendar-keyword" type="search" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t("Contoh: CPI, AS, USD", "e.g. CPI, US, USD")} /></div>
         </div>
