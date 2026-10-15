@@ -1,0 +1,21 @@
+{
+  "name": "@workspace/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "hello": "tsx ./src/hello.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@workspace/mrg-shared": "workspace:*",
+    "express": "^5.3.0",
+    "pixelmatch": "^8.0.0",
+    "playwright-core": "1.64.0",
+    "pngjs": "^7.0.0",
+    "vite": "catalog:",
+    "ws": "^8.18.0",
+    "@types/node": "catalog:",
+    "tsx": "catalog:"
+  }
+}

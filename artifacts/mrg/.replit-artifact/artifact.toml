@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Martingale Risk Guard"
+description = "Aplikasi Martingale Risk Guard dengan identitas Newsmaker untuk mempelajari risiko strategi, memantau pasar, serta mengelola portofolio dan posisi manual tanpa eksekusi broker."
+version = "1.0.0"
+id = "artifacts/mrg"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23901
+
+[services.development]
+run = "pnpm --filter @workspace/mrg run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mrg", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mrg/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23901"
+BASE_PATH = "/"

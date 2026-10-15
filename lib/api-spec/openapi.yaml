@@ -1,0 +1,239 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /market/quotes:
+    get:
+      operationId: getMarketQuotes
+      summary: Separate XUL10 price feed; never TradingView chart data
+      responses:
+        "200":
+          description: Feed envelope, including unavailable and stale-price states
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuoteResponse" }
+  /market/context:
+    get:
+      operationId: getMarketContext
+      summary: LGD Daily gold-reference history, calendar and Newsmaker news
+      responses:
+        "200":
+          description: Independent provider availability states
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketContext" }
+  /market/news/{slug}:
+    get:
+      operationId: getMarketArticle
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string, pattern: "^[a-z0-9-]{1,220}$" }
+      responses:
+        "200":
+          description: Plain-text bilingual article
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Article" }
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "503":
+          $ref: "#/components/responses/ErrorResponse"
+  /calculate-risk:
+    post:
+      operationId: calculateRisk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RiskInput" }
+      responses:
+        "200":
+          description: Educational risk assessment; no broker execution
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RiskResult" }
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ErrorResponse"
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  responses:
+    ErrorResponse:
+      description: Request or provider error
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error: { type: string }
+              details: { type: array, items: { type: object, additionalProperties: true } }
+  schemas:
+    Copy:
+      type: object
+      required: [id, en]
+      properties:
+        id: { type: string }
+        en: { type: string }
+    LiveQuote:
+      type: object
+      required: [symbol, price, bid, ask, asOf, source]
+      properties:
+        symbol: { type: string, enum: [XUL10] }
+        price: { type: number }
+        bid: { type: [number, "null"] }
+        ask: { type: [number, "null"] }
+        asOf: { type: [string, "null"] }
+        source: { type: string }
+    QuoteResponse:
+      type: object
+      required: [status, quote, receivedAt, message]
+      properties:
+        status: { type: string, enum: [ready, unavailable] }
+        quote: { anyOf: [{ $ref: "#/components/schemas/LiveQuote" }, { type: "null" }] }
+        receivedAt: { type: string }
+        message: { anyOf: [{ $ref: "#/components/schemas/Copy" }, { type: "null" }] }
+    DailyAnalysis:
+      type: object
+      required: [source, timeframe, basis, candleCount, firstDate, lastDate, lastClose, ma20, ma50, atr14, atrBaseline, atrPercent, support20, resistance20, trend]
+      properties:
+        source: { type: string, enum: [LGD Daily] }
+        timeframe: { type: string, enum: [D1] }
+        basis: { type: string, enum: [gold-reference] }
+        candleCount: { type: integer }
+        firstDate: { type: string }
+        lastDate: { type: string }
+        lastClose: { type: number }
+        ma20: { type: number }
+        ma50: { type: number }
+        atr14: { type: number }
+        atrBaseline: { type: number }
+        atrPercent: { type: number }
+        support20: { type: number }
+        resistance20: { type: number }
+        trend: { type: string, enum: [up, down, mixed] }
+    CalendarEvent:
+      type: object
+      required: [id, name, currency, impact, date, time, at, previous, forecast, actual, explanation, source]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        country: { type: [string, "null"] }
+        currency: { type: string }
+        impact: { type: string, enum: [high, medium, low, unknown] }
+        date: { type: [string, "null"] }
+        time: { type: string }
+        at: { type: [string, "null"] }
+        previous: { type: [string, "null"] }
+        forecast: { type: [string, "null"] }
+        actual: { type: [string, "null"] }
+        explanation: { type: [string, "null"] }
+        source: { type: [string, "null"] }
+    NewsItem:
+      type: object
+      required: [slug, title, titleEn, publishedAt, category, source]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        titleEn: { type: string }
+        publishedAt: { type: [string, "null"] }
+        category: { type: string }
+        source: { type: string }
+    Article:
+      allOf:
+        - { $ref: "#/components/schemas/NewsItem" }
+        - type: object
+          required: [content, contentEn]
+          properties:
+            content: { type: string }
+            contentEn: { type: string }
+    MarketContext:
+      type: object
+      required: [history, calendar, news]
+      properties:
+        history:
+          type: object
+          required: [status, analysis, receivedAt, message]
+          properties:
+            status: { type: string, enum: [ready, unavailable] }
+            analysis: { anyOf: [{ $ref: "#/components/schemas/DailyAnalysis" }, { type: "null" }] }
+            receivedAt: { type: string }
+            message: { anyOf: [{ $ref: "#/components/schemas/Copy" }, { type: "null" }] }
+        calendar:
+          type: object
+          required: [status, complete, events, generatedAt, receivedAt, timezone, message]
+          properties:
+            status: { type: string, enum: [ready, unavailable] }
+            complete: { type: boolean }
+            events: { type: array, items: { $ref: "#/components/schemas/CalendarEvent" } }
+            generatedAt: { type: [string, "null"] }
+            receivedAt: { type: string }
+            timezone: { type: string }
+            message: { anyOf: [{ $ref: "#/components/schemas/Copy" }, { type: "null" }] }
+        news:
+          type: object
+          required: [status, items, receivedAt, message]
+          properties:
+            status: { type: string, enum: [ready, unavailable] }
+            items: { type: array, items: { $ref: "#/components/schemas/NewsItem" } }
+            receivedAt: { type: string }
+            message: { anyOf: [{ $ref: "#/components/schemas/Copy" }, { type: "null" }] }
+    RiskInput:
+      type: object
+      required: [modal, targetPoin, strategy, maxLayer, experience, marketCondition]
+      properties:
+        modal: { type: number, minimum: 1 }
+        targetPoin: { type: string, enum: ["30", "40", "50"] }
+        strategy: { type: string, enum: [Martingale, Linear Averaging] }
+        maxLayer: { type: string, enum: ["3", "4", "5"] }
+        experience: { type: string, enum: [Pemula, Berpengalaman] }
+        marketCondition: { type: string, enum: [Sideways, Trending] }
+    RiskResult:
+      type: object
+      required: [status, score, reasons, warnings, psychologyNotes, metrics]
+      properties:
+        status: { type: string, enum: [AMAN, BERISIKO, TIDAK LAYAK] }
+        score: { type: number }
+        reasons: { type: array, items: { type: string } }
+        warnings: { type: array, items: { type: string } }
+        psychologyNotes: { type: array, items: { type: string } }
+        metrics:
+          type: object
+          required: [expectedPF, expectedROM, expectedER, marginCallRisk]
+          properties:
+            expectedPF: { type: string }
+            expectedROM: { type: string }
+            expectedER: { type: string }
+            marginCallRisk: { type: string }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

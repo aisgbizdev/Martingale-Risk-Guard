@@ -1,4 +1,8 @@
-/generated-artifacts/
-/test/visual/
-/script/visual/
-/script/test-live-visual.mjs
+# The format of this file is identical to `.dockerignore`.
+# It is used to reduce the size of deployed images to make the process of publishing faster.
+
+# No need to store the pnpm store twice.
+.local
+.migration-backup
+generated-artifacts
+attached_assets

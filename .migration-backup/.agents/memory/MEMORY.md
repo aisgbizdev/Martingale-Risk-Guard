@@ -1,0 +1,7 @@
+- [Dependency setup constraints](dependency-setup.md) — preserve the imported framework major when resolving blocked transitive dependencies.
+- [Live risk boundaries](live-risk-analysis.md) — approved D1 gold-reference use, transparent initial weights, and no brokerage execution.
+- [Browser verification quirks](browser-verification.md) — storage-denial tests also affect Replit's injected preview banner; separate those errors from application failures.
+- [Quote feed documentation scope](quote-feed-shapes.md) — the guide describes a wrapper, while the direct feed exposes native timestamps; validate per-symbol times in both.
+- [Newsmaker visual identity](newsmaker-identity.md) — MRG should feel like a Newsmaker feature, without copying the portal's news-homepage layout.
+- [Panel navigation semantics](panel-navigation.md) — Forward is navigation, not undo: cancelled drafts and abandoned simulation snapshots must stay discarded.
+- [PWA update boundaries](pwa-update-boundaries.md) — isolate complete shell updates; preserve saved notes and avoid automatic reload of unsaved work.
