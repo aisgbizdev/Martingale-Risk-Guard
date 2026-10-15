@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/mrg-project-deck/"
+title = "Martingale Risk Guard · Newsmaker"
+description = "Presentasi 8 slide berbahasa Indonesia tentang tujuan MRG, konteks pasar, simulator eksposur, desain lintas perangkat, kesiapan rilis dan pengembangan berikutnya."
+version = "1.0.0"
+id = "artifacts/mrg-project-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/mrg-project-deck/" ]
+localPort = 22704
+
+[services.development]
+run = "pnpm --filter @workspace/mrg-project-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mrg-project-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mrg-project-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22704"
+BASE_PATH = "/mrg-project-deck/"

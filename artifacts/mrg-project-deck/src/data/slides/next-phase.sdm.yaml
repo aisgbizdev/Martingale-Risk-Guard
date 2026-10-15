@@ -1,0 +1,66 @@
+format: replit.sdm
+version: 1
+size: {width: 1920, height: 1080}
+background: {kind: solid, color: {kind: token, token: navy}}
+theme:
+  colors: {background: "#f7f8fb", foreground: "#17345a", accent: "#1061b3", navy: "#083d79", surface: "#eaf2fb", white: "#ffffff"}
+  fonts: {display: Newsreader, body: DM Sans}
+elements:
+  - id: sectionLabel
+    type: text
+    frame: {x: 120, y: 88, width: 1500, height: 50}
+    body:
+      paragraphs:
+        - {runs: [{text: "08  /  USULAN · BELUM DITERAPKAN"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 16, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 0}
+  - id: title
+    type: text
+    frame: {x: 120, y: 180, width: 1680, height: 250}
+    body:
+      paragraphs:
+        - {runs: [{text: "Tahap berikutnya:\npengalaman yang lebih kuat."}], defaultRunStyle: {font: {kind: token, token: display}, sizePt: 48, weight: 600, color: {kind: token, token: white}}, lineHeight: 1.05, spaceAfterPt: 0}
+  - id: updates
+    type: shape
+    frame: {x: 120, y: 490, width: 800, height: 200}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: accent}}
+    body:
+      insetsPt: {top: 16, right: 22, bottom: 16, left: 22}
+      paragraphs:
+        - {runs: [{text: "Notifikasi pembaruan"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 10}
+        - {runs: [{text: "Muat ulang dengan persetujuan."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 19, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: speed
+    type: shape
+    frame: {x: 1000, y: 490, width: 800, height: 200}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: accent}}
+    body:
+      insetsPt: {top: 16, right: 22, bottom: 16, left: 22}
+      paragraphs:
+        - {runs: [{text: "Pembukaan lebih cepat"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 10}
+        - {runs: [{text: "Optimasi tanpa merusak offline."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 19, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: nativeTesting
+    type: shape
+    frame: {x: 120, y: 740, width: 800, height: 200}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: accent}}
+    body:
+      insetsPt: {top: 16, right: 22, bottom: 16, left: 22}
+      paragraphs:
+        - {runs: [{text: "Verifikasi perangkat asli"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 10}
+        - {runs: [{text: "Android, iPhone, dan standalone."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 19, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: tabProtection
+    type: shape
+    frame: {x: 1000, y: 740, width: 800, height: 200}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: accent}}
+    body:
+      insetsPt: {top: 16, right: 22, bottom: 16, left: 22}
+      paragraphs:
+        - {runs: [{text: "Perlindungan antar-tab"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 10}
+        - {runs: [{text: "Cegah perubahan saling tertimpa."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 19, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: footer
+    type: text
+    frame: {x: 120, y: 1030, width: 1500, height: 40}
+    body:
+      paragraphs:
+        - {runs: [{text: "MRG · NEWSMAKER  /  08 — 08"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 14.4, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 0}

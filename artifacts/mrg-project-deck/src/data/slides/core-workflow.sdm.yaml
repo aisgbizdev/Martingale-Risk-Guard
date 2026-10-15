@@ -1,0 +1,72 @@
+format: replit.sdm
+version: 1
+size: {width: 1920, height: 1080}
+background: {kind: solid, color: {kind: token, token: background}}
+theme:
+  colors: {background: "#f7f8fb", foreground: "#17345a", accent: "#1061b3", navy: "#083d79", surface: "#eaf2fb", white: "#ffffff"}
+  fonts: {display: Newsreader, body: DM Sans}
+elements:
+  - id: sectionLabel
+    type: text
+    frame: {x: 120, y: 88, width: 1500, height: 50}
+    body:
+      paragraphs:
+        - {runs: [{text: "03  /  FUNGSI UTAMA"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 16, weight: 700, color: {kind: token, token: accent}}, lineHeight: 1.2, spaceAfterPt: 0}
+  - id: title
+    type: text
+    frame: {x: 120, y: 160, width: 1680, height: 190}
+    body:
+      paragraphs:
+        - {runs: [{text: "MRG menghubungkan konteks dan catatan posisi."}], defaultRunStyle: {font: {kind: token, token: display}, sizePt: 40, weight: 600, color: {kind: token, token: foreground}}, lineHeight: 1.05, spaceAfterPt: 0}
+  - id: overview
+    type: shape
+    frame: {x: 120, y: 395, width: 800, height: 220}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: surface}}
+    body:
+      insetsPt: {top: 18, right: 22, bottom: 18, left: 22}
+      paragraphs:
+        - {runs: [{text: "01   Ringkasan pasar"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: accent}}, lineHeight: 1.2, spaceAfterPt: 12}
+        - {runs: [{text: "Harga, agenda, dan konteks D1."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 20, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: manualNotes
+    type: shape
+    frame: {x: 1000, y: 395, width: 800, height: 220}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: surface}}
+    body:
+      insetsPt: {top: 18, right: 22, bottom: 18, left: 22}
+      paragraphs:
+        - {runs: [{text: "02   Catat posisi"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: accent}}, lineHeight: 1.2, spaceAfterPt: 12}
+        - {runs: [{text: "Input manual di browser."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 20, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: personalLimits
+    type: shape
+    frame: {x: 120, y: 665, width: 800, height: 220}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: surface}}
+    body:
+      insetsPt: {top: 18, right: 22, bottom: 18, left: 22}
+      paragraphs:
+        - {runs: [{text: "03   Atur batas pribadi"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: accent}}, lineHeight: 1.2, spaceAfterPt: 12}
+        - {runs: [{text: "Batas lot dan layer pribadi."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 20, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: layerSimulation
+    type: shape
+    frame: {x: 1000, y: 665, width: 800, height: 220}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: navy}}
+    body:
+      insetsPt: {top: 18, right: 22, bottom: 18, left: 22}
+      paragraphs:
+        - {runs: [{text: "04   Bandingkan layer"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 24, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 12}
+        - {runs: [{text: "Skenario tanpa transaksi."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 20, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: storageBoundary
+    type: text
+    frame: {x: 120, y: 940, width: 1680, height: 70}
+    body:
+      paragraphs:
+        - {runs: [{text: "Catatan hanya di browser ini. Batas pribadi bukan kapasitas aman."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 19, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: footer
+    type: text
+    frame: {x: 120, y: 1030, width: 1500, height: 40}
+    body:
+      paragraphs:
+        - {runs: [{text: "MRG · NEWSMAKER  /  03 — 08"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 14.4, color: {kind: token, token: foreground}}, lineHeight: 1.2, spaceAfterPt: 0}

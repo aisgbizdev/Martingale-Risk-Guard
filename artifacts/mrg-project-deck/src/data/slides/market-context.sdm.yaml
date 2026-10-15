@@ -1,0 +1,56 @@
+format: replit.sdm
+version: 1
+size: {width: 1920, height: 1080}
+background: {kind: solid, color: {kind: token, token: background}}
+theme:
+  colors: {background: "#f7f8fb", foreground: "#17345a", accent: "#1061b3", navy: "#083d79", surface: "#eaf2fb", white: "#ffffff"}
+  fonts: {display: Newsreader, body: DM Sans}
+elements:
+  - id: sectionLabel
+    type: text
+    frame: {x: 120, y: 88, width: 1500, height: 50}
+    body:
+      paragraphs:
+        - {runs: [{text: "02  /  MASALAH YANG DISELESAIKAN"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 16, weight: 700, color: {kind: token, token: accent}}, lineHeight: 1.2, spaceAfterPt: 0}
+  - id: title
+    type: text
+    frame: {x: 120, y: 160, width: 1680, height: 190}
+    body:
+      paragraphs:
+        - {runs: [{text: "Angka statis belum menjelaskan kondisi pasar."}], defaultRunStyle: {font: {kind: token, token: display}, sizePt: 40, weight: 600, color: {kind: token, token: foreground}}, lineHeight: 1.05, spaceAfterPt: 0}
+  - id: staticPanel
+    type: shape
+    frame: {x: 120, y: 415, width: 780, height: 460}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: surface}}
+    body:
+      insetsPt: {top: 24, right: 24, bottom: 24, left: 24}
+      paragraphs:
+        - {runs: [{text: "Hitungan statis"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 26, weight: 700, color: {kind: token, token: foreground}}, lineHeight: 1.2, spaceAfterPt: 20}
+        - {runs: [{text: "Jarak poin tetap."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 12}
+        - {runs: [{text: "Pasar dapat berubah."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 12}
+        - {runs: [{text: "Posisi terus bertambah."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 12}
+  - id: contextPanel
+    type: shape
+    frame: {x: 1020, y: 415, width: 780, height: 460}
+    geometry: {kind: preset, preset: roundRect, cornerRadius: 20}
+    fill: {kind: solid, color: {kind: token, token: navy}}
+    body:
+      insetsPt: {top: 24, right: 24, bottom: 24, left: 24}
+      paragraphs:
+        - {runs: [{text: "Konteks yang dibutuhkan"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 26, weight: 700, color: {kind: token, token: white}}, lineHeight: 1.2, spaceAfterPt: 20}
+        - {runs: [{text: "Harga dan kondisi data."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 12}
+        - {runs: [{text: "Berita dan agenda ekonomi."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 12}
+        - {runs: [{text: "Dampak tambahan eksposur."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: white}}, lineHeight: 1.25, spaceAfterPt: 12}
+  - id: qualification
+    type: text
+    frame: {x: 120, y: 920, width: 1680, height: 90}
+    body:
+      paragraphs:
+        - {runs: [{text: "Konteks membantu memahami eksposur; bukan memastikan posisi aman."}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 22, color: {kind: token, token: foreground}}, lineHeight: 1.25, spaceAfterPt: 0}
+  - id: footer
+    type: text
+    frame: {x: 120, y: 1030, width: 1500, height: 40}
+    body:
+      paragraphs:
+        - {runs: [{text: "MRG · NEWSMAKER  /  02 — 08"}], defaultRunStyle: {font: {kind: token, token: body}, sizePt: 14.4, color: {kind: token, token: foreground}}, lineHeight: 1.2, spaceAfterPt: 0}
