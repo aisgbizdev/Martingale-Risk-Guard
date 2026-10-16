@@ -62,3 +62,9 @@ Periksa dokumentasi API Newsmaker dan feed yang sudah dikirim sebelum meminta pe
 **Why:** Pengguna berulang kali mengingatkan bahwa API berita, harga, dan data lain sudah diberikan dalam dokumentasi sebelumnya.
 
 **How to apply:** Bedakan endpoint sumber yang memang terdokumentasi dari atribut penilaian tambahan yang belum terbukti tersedia. Jangan menganggap ketiadaan atribut interpretasi berarti API berita tidak ada, dan jangan mengklaim atribut tersebut tersedia tanpa verifikasi.
+
+MRG adalah edukasi, bukan penjual sinyal. Buy dan Sell wajib tersedia setara, dan pengguna bebas memilih arah sendiri.
+
+**Why:** Pengguna menegaskan “jgn hanya buy saja, karena kita tidak jualan signal, kita edukasi orang, mereka mau pilih yg mana ya silahkan”.
+
+**How to apply:** Harga berjalan, grafik skenario, layer, TP, dan perhitungan risiko harus mendukung kedua arah. Analisis pasar menjelaskan konteks dan batas skenario, bukan memilihkan arah, memberi label arah terbaik, atau menghilangkan salah satu pilihan.
