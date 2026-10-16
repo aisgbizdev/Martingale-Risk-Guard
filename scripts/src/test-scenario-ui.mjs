@@ -3,11 +3,13 @@ import { execFileSync } from "node:child_process";
 import { mkdir, writeFile, access } from "node:fs/promises";
 import { resolve } from "node:path";
 import express from "express";
-import { chromium } from "playwright-core";
+import { chromium, firefox, webkit } from "playwright-core";
 import { fixture, highImpactEvent, NOW, viewports } from "./scenario-ui/fixtures.mjs";
+import { browserProfile } from "./scenario-ui/browser-config.mjs";
 
+const profile = browserProfile(process.argv.slice(2));
 const buildRoot = resolve("generated-artifacts/scenario-ui-app");
-const output = resolve("generated-artifacts/scenario-ui");
+const output = resolve("generated-artifacts/scenario-ui", profile.outputSuffix);
 await access(resolve(buildRoot, "index.html")); // Never silently test an unbuilt app.
 await mkdir(output, { recursive: true });
 const app = express();
@@ -16,7 +18,8 @@ app.get("/{*path}", (_req, res) => res.sendFile(resolve(buildRoot, "index.html")
 const server = app.listen(0, "127.0.0.1");
 await new Promise(r => server.once("listening", r));
 const origin = `http://127.0.0.1:${server.address().port}`;
-const report = { fixtureTime: NOW, syntheticData: true, physicalDevices: false, results: [] };
+const report = { ...profile, platform: process.platform, architecture: process.arch,
+  fixtureTime: NOW, syntheticData: true, physicalDevices: false, status: "not-started", results: [] };
 const id = (page, name) => page.getByTestId(name);
 const result = page => id(page, "scenario-result");
 const calculate = page => id(page, "button-calculate-scenario").click();
@@ -125,9 +128,21 @@ assert.ok(selectedCases.length, "At least one UI case must be selected");
 report.selectedCases = selectedCases.map(c => c[0]);
 let browser;
 try {
-  const executablePath = process.env.MRG_CHROMIUM ?? execFileSync("which", ["chromium"], { encoding: "utf8" }).trim();
-  browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+  try {
+    if (profile.engine === "chromium") {
+      const executablePath = process.env.MRG_CHROMIUM ?? execFileSync("which", ["chromium"], { encoding: "utf8" }).trim();
+      browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
+    } else {
+      // Use the matching Playwright binaries, never a spoofed user-agent or Chromium fallback.
+      browser = await ({ firefox, webkit })[profile.engine].launch({ headless: true });
+    }
+  } catch (error) {
+    report.status = "unavailable";
+    report.environmentError = error.message;
+    throw error;
+  }
   report.browser = browser.version();
+  report.status = "running";
   for (const viewport of viewports) for (const [name, change, run] of selectedCases) {
     const entry = { name, viewport, passed: false };
     const data = fixture(); change?.(data);
@@ -166,6 +181,7 @@ try {
       }
       console.log(`PASS ${viewport.width}px ${name}`);
     } catch (error) {
+      entry.passed = false;
       entry.error = error.stack ?? String(error);
       await page.screenshot({ path: `${output}/${viewport.width}-${name}-failed.jpg`, type: "jpeg", quality: 70, fullPage: true }).catch(() => {});
       console.error(`FAIL ${viewport.width}px ${name}: ${error.message}`);
@@ -181,8 +197,10 @@ try {
   await new Promise(r => server.close(r));
   report.passed = report.results.filter(r => r.passed).length;
   report.failed = report.results.filter(r => !r.passed).length;
+  report.expectedCases = viewports.length * selectedCases.length;
+  if (report.status !== "unavailable") report.status = report.failed || report.results.length !== report.expectedCases ? "failed" : "passed";
   await writeFile(`${output}/${only ? "report-focused" : "report"}.json`, JSON.stringify(report, null, 2) + "\n");
 }
 assert.equal(report.results.length, viewports.length * selectedCases.length, "All selected viewport cases must run");
-assert.equal(report.failed, 0, `${report.failed} UI regressions failed; see generated-artifacts/scenario-ui/${only ? "report-focused" : "report"}.json`);
-console.log(`${report.passed}/${report.results.length} deterministic UI cases passed. Synthetic fixtures; emulated viewports, not physical devices or live-feed verification.`);
+assert.equal(report.failed, 0, `${report.failed} UI regressions failed; see ${output}/${only ? "report-focused" : "report"}.json`);
+console.log(`${profile.browserProduct} ${report.browser} on ${process.platform}: ${report.passed}/${report.results.length} deterministic UI cases passed. Synthetic fixtures; emulated viewports, not physical devices, Apple Safari or live-feed verification.`);

@@ -1,5 +1,8 @@
 # Regresi interaksi kalkulator MRG
 
+Dukungan engine Firefox/WebKit dan batas klaim Safari dijelaskan di
+[pemeriksaan browser](mrg-browser-compatibility.md).
+
 Jalankan dari root proyek: `pnpm test:scenario-ui`.
 
 Perintah membangun aplikasi produksi ke folder output pengujian, kemudian

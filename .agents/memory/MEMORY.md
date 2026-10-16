@@ -4,3 +4,4 @@
 - [AI evidence validation](ai-evidence-validation.md) — select original passages instead of generating quotations; provenance is not interpretation accuracy.
 - [React type boundaries](react-type-boundaries.md) — preserve MRG's React major when shared tooling exposes incompatible JSX types.
 - [UI regression fixtures](ui-regression-fixtures.md) — preflight entry/summary expectations before browser runs; do not report partially executed checks as a clean matrix.
+- [Browser engine evidence](browser-engine-evidence.md) — distinguish actual engines from Safari/device claims; WebKit's versioned runtime needs more than a successful download.
