@@ -20,3 +20,9 @@ Pengguna menyetujui satu halaman utama yang menyatukan enam isian simulator awal
 **Why:** Pengguna kembali bingung dengan fungsi pada halaman Posisi dan merasa tidak sama dengan MRG lama, lalu menyetujui rancangan satu halaman. Setelah perubahan ia kembali mengatakan hasilnya semakin rumit karena menu-menu yang tidak jelas.
 
 **How to apply:** Pertahankan alur inti pada satu halaman adaptif: isian dan hasil berdampingan di layar besar, berurutan di HP. Jangan pertahankan menu dashboard yang bersaing dengan kalkulator. Konteks pasar dan rincian mendukung kalkulator, bukan membentuk aplikasi lain; jangan memaksa seluruh isi muat dalam satu viewport ponsel.
+
+Kalkulator harus didasari teknikal, fundamental/berita, dan kalender ekonomi, dengan default seperti Simulasi Dasar.
+
+**Why:** Pengguna menegaskan bahwa menyederhanakan kalkulator tidak berarti menghilangkan dasar analisis pasar yang merupakan tujuan pengembangannya.
+
+**How to apply:** Jangan menyamakan menampilkan data pasar dengan menggunakannya untuk penilaian. Sepakati aturan pengaruh data terhadap hasil dan makna default sebelum mengubah perhitungan; pertahankan aturan dasar tanpa menyebutnya analisis realtime.
