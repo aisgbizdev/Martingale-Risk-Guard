@@ -41,7 +41,10 @@ Ini temuan pada respons yang diperiksa, bukan klaim bahwa data tidak ada di sist
 ## Perilaku MRG sampai data siap
 - Tidak memakai AI atau mengubah ketiadaan penilaian menjadi netral.
 - Simulasi default/manual Buy dan Sell dari harga XUL10 tetap bisa digunakan.
-- Saran pasar lengkap tetap belum tersedia; pivot/Fibonacci dapat ditampilkan
+- Sesuai persetujuan pengguna, saran terbatas Linear maksimal dua layer dapat
+  tersedia jika sumber wajib segar dan lolos kalender/modal; label dampak berita
+  belum dinilai tetap terlihat. Ini bukan penilaian pasar lengkap.
+- Pivot/Fibonacci dapat ditampilkan
   sebagai referensi tetapi belum mengubah parameter. LGD Daily tidak dianggap
   identik dengan XUL10.
 

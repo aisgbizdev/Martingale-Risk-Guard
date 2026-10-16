@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildScenario, type ScenarioSide } from "@shared/scenario-plan";
+import { marketScenario } from "@shared/market-scenario";
+import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import { quoteIsFresh } from "@shared/live-types";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
@@ -55,13 +57,23 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
     return () => query.removeEventListener("change", changed);
   }, []);
   const [c, setC] = useState<Controls>({ side: null, ...DEFAULTS });
-  const [snap, setSnap] = useState<{ plan: Scenario; key: string } | null>(null);
+  const [inputMode, setInputMode] = useState<"market" | "manual">("market");
+  const [snap, setSnap] = useState<{ plan: Scenario; key: string; suggestion?: SuggestionSnapshot } | null>(null);
+  const [sourceInvalidated, setSourceInvalidated] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [directionInvalidated, setDirectionInvalidated] = useState(false);
   const money = (n: number) => n.toLocaleString(language === "id" ? "id-ID" : "en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
   const cap = Number(capital);
   const quote = market.usableQuote && quoteIsFresh(market.usableQuote, market.now) ? market.usableQuote : null;
   const capOk = capital.trim() !== "" && Number.isFinite(cap) && cap > 0;
+  const sources = {
+    quote: market.usableQuote, context: market.context.isError ? null : market.context.data,
+    online: market.online, connectionRevision: market.connectionRevision,
+  };
+  const marketState = snap?.suggestion ? suggestionSnapshotState(snap.suggestion, cap, sources, market.now) : null;
+  useEffect(() => {
+    if (marketState?.dataChanged) setSourceInvalidated(true);
+  }, [marketState?.dataChanged]);
   const upd = (p: Partial<Controls>) => {
     setErr(null);
     if (p.side && p.side !== c.side && snap) setDirectionInvalidated(true);
@@ -76,9 +88,32 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
     try {
       const plan = buildScenario({ side: next.side, capital: cap, entry: q.price, spacing: next.spacing, target: next.target, layers: next.layers, strategy: next.strategy, asOf: q.asOf!, mode: "manual" });
       setSnap({ plan, key: keyOf(next, cap) });
+      setSourceInvalidated(false);
       setDirectionInvalidated(false);
       setErr(null);
     } catch (e) { setErr(e instanceof Error ? e.message : t("Input tidak valid.", "Invalid input.")); }
+  };
+  const suggest = () => {
+    if (!c.side) return setErr(t("Pilih arah Buy atau Sell lebih dulu.", "Choose Buy or Sell first."));
+    if (!capOk) return setErr(t("Isi modal positif pada kolom Modal.", "Enter positive capital in the Capital field."));
+    const capture = captureSuggestion(cap, sources, Date.now(), true);
+    const result = capture.result;
+    if (!result.selected || !["limited", "offered"].includes(result.status)) {
+      const heading = result.status === "deferred" ? t("Saran ditunda.", "Suggestion deferred.") :
+        result.status === "no-fit" ? t("Tidak ada kandidat yang lolos batas modal.", "No candidate passes the capital limits.") :
+        t("Data wajib belum lengkap.", "Required data is incomplete.");
+      const reason = result.status === "no-fit" ? result.reasons.at(-1) : result.reasons.slice(0, 2).join(" ");
+      return setErr(`${heading} ${reason ?? ""}`);
+    }
+    try {
+      const plan = marketScenario(result, c.side);
+      const next: Controls = { side: c.side, strategy: plan.strategy, layers: plan.layers, target: plan.target, spacing: plan.spacing };
+      setC(next);
+      setSnap({ plan, key: keyOf(next, cap), suggestion: capture });
+      setDirectionInvalidated(false);
+      setSourceInvalidated(false);
+      setErr(null);
+    } catch (e) { setErr(e instanceof Error ? e.message : t("Saran tidak valid.", "Invalid suggestion.")); }
   };
   const useDefault = () => { const n = { ...c, ...DEFAULTS }; setC(n); calculate(n); };
 
@@ -109,6 +144,10 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
         <div className="live-card min-w-0">
           <h2>{t("Kalkulator skenario", "Scenario calculator")}</h2>
           <p className="live-small mt-1">{t("Edukasi: Anda yang memilih arah. MRG tidak menyarankan Buy atau Sell.", "Education: you choose the direction. MRG does not recommend Buy or Sell.")}</p>
+          <div className="flex gap-2 mt-3" role="group" aria-label={t("Cara mengisi", "Input method")}>
+            <button type="button" className={seg(inputMode === "market")} aria-pressed={inputMode === "market"} onClick={() => { setInputMode("market"); setErr(null); }} data-testid="mode-market">{t("Saran MRG", "MRG suggestion")}</button>
+            <button type="button" className={seg(inputMode === "manual")} aria-pressed={inputMode === "manual"} onClick={() => { setInputMode("manual"); setErr(null); }} data-testid="mode-manual">{t("Isi Manual", "Manual input")}</button>
+          </div>
           <div className="live-stack mt-3">
             <div className="rounded-lg bg-muted/70 p-3" data-testid="scenario-price">
               <span className="live-label">{t("Harga XUL10 (polling)", "XUL10 price (polling)")}</span>
@@ -120,7 +159,7 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
               <button type="button" className={seg(c.side === "sell")} aria-pressed={c.side === "sell"} onClick={() => upd({ side: "sell" })} data-testid="button-side-sell">Sell</button>
             </div>
-            <details className="live-details">
+            {inputMode === "manual" && <details className="live-details" open>
             <summary>{t("Atur parameter", "Adjust parameters")} · {c.strategy === "Martingale" ? "Martingale" : "Linear"} · {c.layers} layer · TP {c.target}</summary>
             <div className="grid grid-cols-2 gap-3 mt-3">
               <div className="live-field"><label htmlFor="sc-strategy">{t("Strategi", "Strategy")}</label>
@@ -134,18 +173,27 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
               <div className="live-field"><label htmlFor="sc-spacing">{t("Jarak layer (poin)", "Layer spacing (points)")}</label>
                 <input id="sc-spacing" className={num} type="number" min="1" step="any" value={c.spacing} onChange={e => upd({ spacing: Number(e.target.value) })} data-testid="input-sc-spacing" /></div>
             </div>
-            </details>
+            </details>}
             {err && <p role="alert" className="live-error" data-testid="text-scenario-error">{err}</p>}
             <div className="flex gap-2 flex-wrap">
-              <Button type="button" className="flex-1 min-h-[44px]" disabled={!quote} onClick={() => calculate(c)} data-testid="button-calculate-scenario">{t("Hitung skenario", "Calculate scenario")}</Button>
-              <Button type="button" variant="outline" className="flex-1 min-h-[44px]" disabled={!quote || !c.side} onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>
+              <Button type="button" className="flex-1 min-h-[44px]" disabled={!quote || (inputMode === "market" && market.context.isPending)} onClick={() => inputMode === "market" ? suggest() : calculate(c)} data-testid="button-calculate-scenario">{inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung manual", "Calculate manually")}</Button>
+              {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" disabled={!quote || !c.side} onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
-            <p className="live-small" data-testid="text-default-disclosure">{t("Default manual: Linear · 3 layer · lot awal 0,1 · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.", "Manual defaults: Linear · 3 layers · first lot 0.1 · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.")}</p>
+            <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
+              t("Saran memakai harga XUL10, ATR D1, kalender dan status penilaian berita. Dampak berita belum dinilai: hanya Linear, maksimal 2 layer. Bukan penilaian pasar lengkap.", "Suggestions use XUL10 price, D1 ATR, calendar and news assessment status. Unassessed news impact: Linear only, up to 2 layers. Not a complete market assessment.") :
+              t("Default manual: Linear · 3 layer · lot awal 0,1 · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.", "Manual defaults: Linear · 3 layers · first lot 0.1 · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.")}</p>
           </div>
         </div>
 
         <div className={`live-card min-w-0 ${view === "scenario" ? "" : "hidden"} lg:block`} aria-live="polite" data-testid="scenario-result">
           <h2>{t("Hasil skenario", "Scenario result")}</h2>
+          {snap?.suggestion?.result.status === "limited" && <p role="alert" className="live-error mt-2" data-testid="limited-suggestion-warning">{t("SARAN TERBATAS · Dampak berita belum dinilai, bukan netral. Linear maksimal 2 layer; bukan penilaian pasar lengkap atau jaminan keamanan.", "LIMITED SUGGESTION · News impact is unassessed, not neutral. Linear, up to 2 layers; not a full market assessment or safety guarantee.")}</p>}
+          {snap?.suggestion && <details className="live-details mt-2"><summary>{t("Dasar saran & sumber", "Suggestion basis & sources")}</summary>
+            <p className="live-small">{t("Evaluasi", "Evaluated")}: {snap.suggestion.result.evaluatedAt}</p>
+            <ul className="live-small space-y-2 mt-2">{snap.suggestion.result.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>
+            <p className="live-small mt-2">{t("Kalender dibuat", "Calendar generated")}: {snap.suggestion.result.calendar?.generatedAt} · D1 {snap.suggestion.result.reference.analysis?.lastDate}</p>
+          </details>}
+          {snap?.suggestion && (sourceInvalidated || marketState?.dataChanged) && <p role="status" className="live-error mt-2" data-testid="suggestion-source-changed">{t("Data berubah/tidak lagi segar. Ini snapshot lama, bukan saran terkini. Tekan Lihat Saran MRG untuk evaluasi baru; level tidak bergeser otomatis.", "Data changed or expired. This is an old snapshot, not a current suggestion. Press View MRG suggestion to reassess; levels never move automatically.")}</p>}
           {!plan && <p className="live-small mt-2">{t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
           {plan && <div className="live-stack mt-2">
             <p className="live-small"><strong>{t("Skenario manual hipotetis", "Hypothetical manual scenario")}</strong> · {plan.side === "buy" ? "Buy" : "Sell"} · {plan.strategy} · {t("snapshot", "snapshot")} {plan.asOf} · {t("harga masuk", "entry")} {plan.entry.toFixed(2)}</p>

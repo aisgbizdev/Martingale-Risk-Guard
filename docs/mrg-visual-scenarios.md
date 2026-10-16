@@ -1,5 +1,20 @@
 # Grafik pasar dan skenario MRG
 
+## Saran terbatas yang disetujui
+- Alur utama: modal → pilih Buy/Sell → Lihat Saran MRG → diagram dan angka.
+- Saran memakai harga XUL10 serta aturan ATR/kalender/modal yang disetujui.
+  Saat penilaian dampak berita belum valid, statusnya `limited`: Linear saja,
+  maksimal dua layer, peringatan terlihat. Bukan fundamental netral atau lengkap.
+- Tiga layer tetap mungkin pada jalur penilaian lengkap dengan kondisi/modal
+  yang memenuhi aturan lama, atau dipelajari lewat Isi Manual/Simulasi Default.
+  Modal besar sendiri tidak menghapus ketidakpastian berita.
+- Gangguan/kedaluwarsa harga, D1, kalender, atau sumber berita tetap memblokir
+  saran; agenda USD pada jendela larangan tetap menunda. Tidak memaksa kandidat
+  yang gagal batas margin/stress. Rincian alasan dapat dibuka, bukan kode artikel.
+- Saran dan diagram menangkap sumber/waktu yang sama. Pembaruan data menandai
+  snapshot lama dan memerlukan evaluasi eksplisit; tidak menggeser entry/TP.
+- Default manual lama, pilihan dua arah dan asumsi kontrak tidak berubah.
+
 ## Batas implementasi
 - Identitas tetap Newsmaker. Referensi TradePilot bukan perubahan merek.
 - Pengguna mengisi modal sekali, lalu memilih Buy/Sell setara, tanpa default arah.

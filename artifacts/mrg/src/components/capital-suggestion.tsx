@@ -29,7 +29,7 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
     if (!capital.trim() || !Number.isFinite(value) || value <= 0 || value > 1e12) { setInputError(true); return; }
     setInputError(false);
     setInvalidated(false);
-    setCapture(captureSuggestion(value, sources, Date.now()));
+    setCapture(captureSuggestion(value, sources, Date.now(), true));
   };
   const apply = () => {
     // Check wall-clock freshness again: a click can occur before the next timer render.
@@ -54,11 +54,13 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
     </aside>}
     {snapshot && <div className="rounded-lg border border-border p-3 live-stack" aria-live="polite" data-testid="suggestion-result">
       <h2 className="font-bold">{stale ? t("Modal berubah—hitung ulang saran", "Capital changed—recalculate") :
+        snapshot.status === "limited" ? t("Saran MRG terbatas · maksimal 2 layer", "Limited MRG suggestion · up to 2 layers") :
         snapshot.status === "offered" ? (applied ? t("Skenario MRG yang dipakai", "Applied MRG scenario") : t("Usulan skenario MRG", "Proposed MRG scenario")) :
         snapshot.status === "deferred" ? t("Saran MRG ditunda", "MRG suggestion deferred") :
         snapshot.status === "no-fit" ? t("Tidak ada kandidat yang lolos", "No candidate passes") :
         t("Saran MRG belum lengkap", "MRG suggestion incomplete")}</h2>
       <p className="live-small">{t("Snapshot evaluasi", "Evaluation snapshot")}: {snapshot.evaluatedAt} · {money(snapshot.capital)}</p>
+      {snapshot.status === "limited" && <p role="alert" className="live-error">{t("Dampak berita belum dinilai, bukan netral. Saran dibatasi Linear, maksimal 2 layer. Bukan penilaian pasar lengkap atau jaminan keamanan.", "News impact is unassessed, not neutral. Limited to Linear, up to 2 layers. Not a complete market assessment or safety guarantee.")}</p>}
       {stale && <p role="status" className="live-error">{t("Hasil sebelumnya tidak berlaku untuk modal ini. Tekan Lihat Saran MRG.", "The previous result does not apply to this capital. Press View MRG Suggestion.")}</p>}
       {dataChanged && !stale && <p role="status" className="live-small" data-testid="suggestion-data-changed">{t("Data berubah atau tidak lagi segar. Snapshot tidak diganti; tekan Lihat Saran MRG untuk meninjau penyesuaian baru.", "Data changed or is no longer fresh. The snapshot is unchanged; press View MRG Suggestion to review a new adjustment.")}</p>}
       {!stale && <>

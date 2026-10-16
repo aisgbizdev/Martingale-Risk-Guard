@@ -43,7 +43,7 @@ export interface Candidate {
 }
 
 export interface CapitalSuggestion {
-  status: "incomplete" | "deferred" | "no-fit" | "offered";
+  status: "incomplete" | "deferred" | "no-fit" | "offered" | "limited";
   capital: number;
   evaluatedAt: string;
   reasons: string[];
@@ -83,7 +83,7 @@ const fresh = (at: string | null | undefined, now: number, max: number) => {
 
 export function suggestFromCapital(
   capital: number, context: MarketContext | null | undefined, quote: LiveQuote | null,
-  now = Date.now(), online = true,
+  now = Date.now(), online = true, allowLimited = false,
 ): CapitalSuggestion {
   const reference = getStudyReference(context, now, online);
   const fundamental = context?.news.fundamental ?? null;
@@ -101,12 +101,15 @@ export function suggestFromCapital(
   if (!reference.analysis) result.reasons.push("Referensi LGD Daily D1 tertutup belum memenuhi pemeriksaan data.");
   const calendar = context?.calendar;
   if (!calendarIsFresh(calendar, now) || calendar?.timezone !== "Asia/Jakarta") result.reasons.push("Kalender wajib lengkap, berzona WIB, dan dibuat maksimal 15 menit.");
-  if (context?.news.status !== "ready" || !fundamental || fundamental.status !== "assessed" ||
-    !fresh(fundamental.evaluatedAt, now, 15 * 60_000) || !fundamental.evidence.length ||
-    fundamental.evidence.some(e => !fresh(e.publishedAt, now, 24 * 3600_000) ||
-      !fresh(e.reviewedAt, now, 24 * 3600_000) || Date.parse(e.reviewedAt) < Date.parse(e.publishedAt) ||
-      !e.excerpt?.trim() || !e.rationale?.trim() || !/^[a-f0-9]{64}$/.test(e.contentHash) ||
-      !["covered", "high-uncertainty"].includes(e.tag))) {
+  const newsReady = context?.news.status === "ready" && (!allowLimited || fresh(context.news.receivedAt, now, 15 * 60_000));
+  if (!newsReady) result.reasons.push("Sumber berita tidak tersedia atau tidak segar; saran pasar tidak dapat dibuat.");
+  const assessed = newsReady && !!fundamental && fundamental.status === "assessed" &&
+    fresh(fundamental.evaluatedAt, now, 15 * 60_000) && fundamental.evidence.length > 0 &&
+    fundamental.evidence.every(e => fresh(e.publishedAt, now, 24 * 3600_000) &&
+      fresh(e.reviewedAt, now, 24 * 3600_000) && Date.parse(e.reviewedAt) >= Date.parse(e.publishedAt) &&
+      !!e.excerpt?.trim() && !!e.rationale?.trim() && /^[a-f0-9]{64}$/.test(e.contentHash) &&
+      ["covered", "high-uncertainty"].includes(e.tag) && (!allowLimited || e.reviewMethod !== "ai"));
+  if (!assessed && !allowLimited) {
     result.reasons.push("Fundamental belum lengkap: penandaan redaksi untuk berita relevan ≤24 jam harus memiliki bukti, sumber dan waktu yang valid; bukan netral.");
     if (fundamental) result.reasons.push(...fundamental.reasons);
   }
@@ -130,15 +133,19 @@ export function suggestFromCapital(
     result.reasons.push("Target/jarak ATR tidak koheren terhadap harga XUL10; tidak ada angka pengganti.");
     return result;
   }
-  const restricted = analysis.trend !== "mixed" || fundamental!.evidence.some(e => e.tag === "high-uncertainty");
+  const limited = !assessed;
+  const restricted = limited || analysis.trend !== "mixed" || fundamental!.evidence.some(e => e.tag === "high-uncertainty");
   result.target = target;
   result.spacing = spacing;
   result.reasons = [
+    ...(limited ? ["Saran terbatas: dampak berita belum dinilai, bukan netral. Hanya Linear Averaging maksimal 2 layer; Martingale dan 3 layer tidak ditawarkan."] : []),
     `Harga XUL10 ${quote!.price} (${quote!.asOf}) menjadi jangkar snapshot, bukan bukti tren atau sinyal entry.`,
     `LGD D1 ${analysis.lastDate}: tren ${analysis.trend}, ATR14 ${analysis.atr14}; T=floor(0,25×ATR), S=ceil(0,5×ATR). Referensi emas, bukan seri XUL10 identik.`,
-    restricted ? "Tren D1 searah atau penanda ketidakpastian tinggi: maksimal 2 layer, Martingale dikeluarkan." : "Tren mixed bukan bukti Sideways; bandingkan kandidat 2–3 layer.",
+    limited ? "Pembatasan karena penilaian berita belum lengkap; bukan hasil pembacaan makna isi berita." :
+      restricted ? "Tren D1 searah atau penanda ketidakpastian tinggi: maksimal 2 layer, Martingale dikeluarkan." : "Tren mixed bukan bukti Sideways; bandingkan kandidat 2–3 layer.",
     "Kalender lengkap tanpa agenda USD high impact pada jendela penundaan.",
-    `Fundamental dinilai dari ${fundamental!.evidence.length} artikel dalam cakupan terbatas; bukan seluruh berita pasar.`,
+    assessed ? `Fundamental dinilai dari ${fundamental!.evidence.length} artikel dalam cakupan terbatas; bukan seluruh berita pasar.` :
+      "Artikel Newsmaker tersedia sebagai konteks. Penandaan dampak redaksi belum valid/lengkap; tidak memakai AI atau mengasumsikan pasar tenang.",
     "Utamakan jumlah layer terbesar yang lolos margin ≤20% dan stress ≤10%; pada jumlah sama pilih paparan lebih kecil.",
   ];
   for (const layers of restricted ? [2] : [3, 2]) {
@@ -147,7 +154,7 @@ export function suggestFromCapital(
     }
   }
   result.selected = result.candidates.filter(c => c.passes).sort((a, b) => b.layers - a.layers || a.totalLots - b.totalLots)[0] ?? null;
-  result.status = result.selected ? "offered" : "no-fit";
+  result.status = result.selected ? (limited ? "limited" : "offered") : "no-fit";
   if (!result.selected) result.reasons.push("Minimum 2 layer tidak lolos saringan modal; jangan memaksa averaging.");
   return result;
 }

@@ -9,6 +9,7 @@ export interface SuggestionSources {
 }
 
 export interface SuggestionSnapshot {
+  allowLimited?: boolean;
   result: CapitalSuggestion;
   sources: SuggestionSources;
   sourceKey: string;
@@ -18,12 +19,13 @@ export function suggestionSourceKey(sources: SuggestionSources) {
   return JSON.stringify(sources);
 }
 
-export function captureSuggestion(capital: number, sources: SuggestionSources, now: number): SuggestionSnapshot {
+export function captureSuggestion(capital: number, sources: SuggestionSources, now: number, allowLimited = false): SuggestionSnapshot {
   const detached = structuredClone(sources);
   return {
+    allowLimited,
     sources: detached,
     sourceKey: suggestionSourceKey(detached),
-    result: structuredClone(suggestFromCapital(capital, detached.context, detached.quote, now, detached.online)),
+    result: structuredClone(suggestFromCapital(capital, detached.context, detached.quote, now, detached.online, allowLimited)),
   };
 }
 
@@ -31,7 +33,7 @@ export function suggestionSnapshotState(snapshot: SuggestionSnapshot, capital: n
   // Re-evaluate only to detect expiration/window transitions. Never replace the frozen result.
   const { evaluatedAt: _before, ...before } = snapshot.result;
   const { evaluatedAt: _after, ...after } = suggestFromCapital(
-    snapshot.result.capital, snapshot.sources.context, snapshot.sources.quote, now, sources.online,
+    snapshot.result.capital, snapshot.sources.context, snapshot.sources.quote, now, sources.online, snapshot.allowLimited ?? false,
   );
   const parametersChanged = capital !== snapshot.result.capital;
   const dataChanged = snapshot.sourceKey !== suggestionSourceKey(sources) ||
@@ -39,7 +41,7 @@ export function suggestionSnapshotState(snapshot: SuggestionSnapshot, capital: n
   return {
     parametersChanged,
     dataChanged,
-    canApply: !parametersChanged && !dataChanged && snapshot.result.status === "offered" && !!snapshot.result.selected,
+    canApply: !parametersChanged && !dataChanged && ["offered", "limited"].includes(snapshot.result.status) && !!snapshot.result.selected,
   };
 }
 

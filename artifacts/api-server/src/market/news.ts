@@ -25,7 +25,7 @@ export function pendingEditorialAssessment(now = Date.now()) {
     scope: "Maksimal 8 artikel tersaring dari halaman terbaru Newsmaker; bukan seluruh pasar.",
     evidence: [],
     processing: false,
-    reasons: ["Berita tersedia sebagai konteks. Penandaan dampak redaksi belum tersedia dalam kontrak API; saran pasar lengkap belum dapat dihitung. Simulasi manual tetap tersedia."],
+    reasons: ["Berita tersedia sebagai konteks. Penandaan dampak redaksi belum tersedia dalam kontrak API, bukan netral. Saran terbatas Linear maksimal 2 layer dapat dihitung jika sumber wajib dan batas modal lolos; simulasi manual tetap tersedia."],
   };
 }
 

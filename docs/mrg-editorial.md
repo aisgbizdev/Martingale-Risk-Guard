@@ -8,6 +8,16 @@ pembaca AI. Rahasia/integrasi global tidak dihapus karena dapat dipakai produk l
 Artikel tetap diambil dari API Newsmaker. Status berita tersedia berbeda dari
 status penilaian dampak redaksi.
 
+Pengguna menyetujui fallback **saran terbatas**: selama harga XUL10, D1 dan
+kalender lolos pemeriksaan serta sumber berita tersedia/segar, dampak berita yang
+belum dinilai tidak lagi mengosongkan seluruh hasil. Hanya Linear maksimal dua
+layer; status fundamental tetap `incomplete`, bukan netral/assessed. Target
+floor(0,25×ATR) dan jarak ceil(0,5×ATR), margin ≤20% dan stress ≤10% tetap berlaku.
+Agenda USD high/unknown pada jendela larangan tetap menunda, dan sumber wajib
+gagal/usang tetap memblokir. Label saran terbatas terlihat sebelum rincian.
+Tiga layer hanya mungkin pada jalur penilaian lengkap dengan kondisi/modal
+yang memenuhi aturan lama; tiga layer manual bukan klaim kelayakan.
+
 Contoh kontrak berita yang diberikan belum mengekspos penandaan dampak editorial.
 Karena itu fundamental dinyatakan belum lengkap; tidak ada asumsi netral,
 pengganti dengan kata kunci judul, atau penilaian yang dibuat-buat. Saran pasar
