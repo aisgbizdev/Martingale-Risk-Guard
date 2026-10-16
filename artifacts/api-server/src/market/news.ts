@@ -1,8 +1,8 @@
 import type { Article, MarketContext, NewsItem } from "@workspace/mrg-shared/live-types";
 import { providerTimestamp } from "@workspace/mrg-shared/market-analysis";
 import { fetchProviderJson, NEWSMAKER_BASE, SingleFlightCache } from "./provider";
-import { assessFundamental } from "./fundamental";
-import { editorialRecords } from "./editorial-records";
+import { AutomaticFundamentalReader } from "./automatic-fundamental";
+import { classifyNews, newsAIConfigured } from "./news-ai";
 
 const str = (v: unknown) => typeof v === "string" ? v.trim() : "";
 
@@ -17,25 +17,27 @@ export function normalizeNews(row: any): NewsItem {
   };
 }
 
-const newsCache = new SingleFlightCache<MarketContext["news"]>();
+const newsCache = new SingleFlightCache<NewsItem[]>();
+const reader = new AutomaticFundamentalReader({ classify: classifyNews, configured: newsAIConfigured });
 
 export async function getNews(): Promise<MarketContext["news"]> {
   try {
-    return await newsCache.get(async () => {
+    const items = await newsCache.get(async () => {
       const response = await fetchProviderJson(`${NEWSMAKER_BASE}/berita`, true);
       if (response?.status !== "success" || !Array.isArray(response.data)) throw new Error("Invalid news envelope");
       const items = response.data.map(normalizeNews).filter((item: NewsItem) =>
         /gold|dollar|emas|dolar|fed|inflation|inflasi/i.test(`${item.category} ${item.title} ${item.titleEn}`),
       ).slice(0, 8);
-      const fundamental = await assessFundamental(items, editorialRecords, getArticle);
-      return { status: "ready", items, fundamental, receivedAt: new Date().toISOString(), message: null };
+      return items;
     }, 60_000);
+    const fundamental = await reader.read(items, getArticle);
+    return { status: "ready", items, fundamental, receivedAt: new Date().toISOString(), message: null };
   } catch {
     return {
       status: "unavailable", items: [], receivedAt: new Date().toISOString(),
       message: {
-        id: "Berita Newsmaker belum tersedia. Analisis sentimen otomatis tidak digunakan.",
-        en: "Newsmaker news is unavailable. Automatic sentiment analysis is not used.",
+        id: "Berita Newsmaker belum tersedia; pembacaan otomatis ditunda.",
+        en: "Newsmaker news is unavailable; automatic reading is paused.",
       },
     };
   }

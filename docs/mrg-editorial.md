@@ -3,30 +3,58 @@
 Paket pada `mrg-saran-modal-review.html` disetujui pengguna pada 16 Oktober 2026.
 Ini persetujuan heuristik simulasi, bukan kalibrasi studi atau spesifikasi broker.
 
-## Mengisi bukti tanpa dashboard baru
+## Pembacaan otomatis, bukan isian kurasi manual
 
-Tim editorial meninjau isi artikel emas/USD/makro dan menambah satu objek pada
-`artifacts/api-server/src/market/editorial-records.ts`:
+Pengguna memilih pembacaan otomatis setelah saran terhenti pada daftar editorial
+yang kosong. Jalur aktif memakai `automatic-fundamental.ts` dan `news-ai.ts`.
+`editorial-records.ts` dan validator lama tetap untuk kompatibilitas; tidak
+menjadi prasyarat layanan aktif dan tidak diisi hasil AI seolah peninjauan manusia.
 
-- `slug`, `publishedAt`: identitas dan timestamp persis dari API resmi.
-- `reviewedAt`: waktu peninjauan ISO; tidak boleh sebelum publikasi atau di masa depan.
-- `contentHash`: SHA256 dari `JSON.stringify([article.content, article.contentEn])`,
-  setelah normalisasi teks oleh `getArticle`; gunakan fungsi `articleHash`.
-- `excerpt`: kutipan persis dari isi, bukan judul saja.
-- `rationale`: alasan relevansi emas/USD/makro dan dasar klasifikasi.
-- `tag`: `high-uncertainty` untuk ketidakpastian tinggi, atau `covered` untuk
-  konteks tercakup tanpa penanda tinggi. `covered` bukan sentimen netral.
+Replit AI Integrations menyediakan OpenAI (`gpt-5.4-mini`); tidak perlu API key
+pribadi. Penggunaan dibebankan ke kredit Replit. Koneksi yang belum tersedia tidak
+meruntuhkan API atau kalkulator manual: fundamental tetap belum lengkap.
 
-Jangan menambah contoh hipotetis sebagai catatan aktif. Tidak ada catatan awal
-karena belum ada penilaian isi yang disahkan. Perubahan catatan mengikuti proses
-perubahan kode yang biasa; tidak ada input tambahan untuk pengguna kalkulator.
+Badan artikel diambil dari API resmi `/berita/show/{slug}`, dinormalisasi ke teks.
+AI hanya membaca data artikel dan waktu evaluasi, bukan modal atau catatan akun.
+Prompt memisahkan instruksi sistem dari konten tidak tepercaya; model tanpa alat
+tidak boleh mengikuti instruksi dalam artikel, memprediksi harga, atau menghitung lot.
+Hasil JSON wajib berisi identitas, relevansi, klasifikasi, kutipan dan alasan.
+
+Server membagi seluruh badan menjadi blok beridentitas tanpa membuang teks. AI
+memilih ID kutipan, bukan mengetik ulang kutipan; server mengambil teks aslinya.
+Server memeriksa kelengkapan satu hasil per artikel, klasifikasi, kutipan persis
+di badan yang dibaca, hash isi, identitas dan tanggal. Asal `reviewMethod: ai`,
+model dan versi analisis ikut disimpan dalam bukti yang ditampilkan. `covered`
+berarti artikel telah ditelaah tanpa penanda tinggi, **bukan netral, aman, atau
+verifikasi kebenaran berita**. Artikel tidak relevan tidak dianggap cakupan emas.
+`unassessed` atau gagal validasi tidak pernah diubah menjadi `covered`.
+Kutipan cocok tidak membuktikan interpretasi benar; UI menyebut hasil AI bisa keliru.
 
 Daftar tetap dibatasi maksimal delapan artikel tersaring dari halaman terbaru,
 bukan klaim seluruh pasar telah dicakup. Semua artikel terpilih ≤24 jam harus
-memiliki satu penilaian cocok. Duplikat/konflik, kutipan tidak cocok, revisi isi,
+memiliki satu penilaian otomatis yang cocok. Duplikat/konflik, kutipan tidak cocok, revisi isi,
 artikel gagal dimuat, waktu tidak valid, atau cakupan kosong memblokir saran
 lengkap. Artikel dan penilaian kedaluwarsa tidak diteruskan sebagai netral.
 Status feed `ready` terpisah dari status fundamental `assessed`.
+
+Analisis berjalan dalam batch latar belakang; UI menampilkan proses dan mengecek
+ulang konteks setiap 2 detik hanya selama proses aktif. Harga tetap diperbarui
+terpisah. Hasil tidak otomatis diterapkan pada snapshot pengguna.
+
+### Batas ukuran, biaya dan kesegaran
+- Maksimal 8 badan artikel; masing-masing 12.000 karakter, batch 40.000 karakter.
+  Artikel tidak dipotong lalu diklaim telah dibaca penuh.
+- Maksimal 8 panggilan dan 120.000 karakter input per jam **per proses**, tanpa
+  retry SDK berbayar otomatis; timeout SDK 25 detik, deadline batch 30 detik.
+- Satu batch AI sekaligus, pengambilan artikel paralel maksimal dua.
+- Cache maksimal 128 hasil, berdasarkan slug, waktu publikasi, hash dua versi isi,
+  model dan versi prompt. Hasil berlaku 30 menit, tidak melampaui usia publikasi
+  24 jam. Abstain disimpan 5 menit, kegagalan layanan diberi jeda 1 menit.
+- Membaca cache/tick baru/mengubah modal tidak memperpanjang masa berlaku bukti
+  atau memanggil model lagi untuk isi yang identik.
+- Cache dan kuota berada dalam memori; restart atau beberapa proses tidak berbagi
+  kuota. Ini bukan batas tagihan global akun. Pemantauan/budget terpusat membutuhkan
+  pengembangan tersendiri; jangan mengklaim mekanisme ini sebagai hard cap tagihan.
 
 ## Batas model
 

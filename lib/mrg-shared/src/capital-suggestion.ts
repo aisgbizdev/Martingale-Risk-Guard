@@ -13,6 +13,10 @@ export interface EditorialEvidence {
   rationale: string;
   contentHash: string;
   tag: "high-uncertainty" | "covered";
+  reviewMethod?: "ai" | "editorial";
+  model?: string;
+  analysisVersion?: string;
+  relevance?: "relevant" | "not-relevant";
 }
 
 export interface FundamentalAssessment {
@@ -21,6 +25,7 @@ export interface FundamentalAssessment {
   scope: string;
   evidence: EditorialEvidence[];
   reasons: string[];
+  processing?: boolean;
 }
 
 export interface Candidate {
@@ -102,7 +107,7 @@ export function suggestFromCapital(
       !fresh(e.reviewedAt, now, 24 * 3600_000) || Date.parse(e.reviewedAt) < Date.parse(e.publishedAt) ||
       !e.excerpt?.trim() || !e.rationale?.trim() || !/^[a-f0-9]{64}$/.test(e.contentHash) ||
       !["covered", "high-uncertainty"].includes(e.tag))) {
-    result.reasons.push("Fundamental belum lengkap: perlu penilaian isi berita relevan ≤24 jam dengan kutipan, sumber dan waktu; bukan netral.");
+    result.reasons.push("Fundamental belum lengkap: pembacaan otomatis berita relevan ≤24 jam harus memiliki bukti, sumber dan waktu yang valid; bukan netral.");
     if (fundamental) result.reasons.push(...fundamental.reasons);
   }
   if (result.reasons.length) return result;

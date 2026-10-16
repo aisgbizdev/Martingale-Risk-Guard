@@ -186,6 +186,10 @@ components:
         rationale: { type: string }
         contentHash: { type: string }
         tag: { type: string, enum: [high-uncertainty, covered] }
+        reviewMethod: { type: string, enum: [ai, editorial] }
+        model: { type: string }
+        analysisVersion: { type: string }
+        relevance: { type: string, enum: [relevant, not-relevant] }
     FundamentalAssessment:
       type: object
       required: [status, evaluatedAt, scope, evidence, reasons]
@@ -195,6 +199,7 @@ components:
         scope: { type: string }
         evidence: { type: array, items: { $ref: "#/components/schemas/EditorialEvidence" } }
         reasons: { type: array, items: { type: string } }
+        processing: { type: boolean }
     MarketContext:
       type: object
       required: [history, calendar, news]

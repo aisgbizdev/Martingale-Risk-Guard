@@ -5,6 +5,8 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { EditorialEvidenceRelevance } from './editorialEvidenceRelevance';
+import type { EditorialEvidenceReviewMethod } from './editorialEvidenceReviewMethod';
 import type { EditorialEvidenceTag } from './editorialEvidenceTag';
 
 export interface EditorialEvidence {
@@ -19,4 +21,8 @@ export interface EditorialEvidence {
   rationale: string;
   contentHash: string;
   tag: EditorialEvidenceTag;
+  reviewMethod?: EditorialEvidenceReviewMethod;
+  model?: string;
+  analysisVersion?: string;
+  relevance?: EditorialEvidenceRelevance;
 }

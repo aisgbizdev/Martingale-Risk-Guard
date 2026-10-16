@@ -38,7 +38,8 @@ export function useMarket() {
   const context = useQuery<MarketContext>({
     queryKey: ["/api/market/context"],
     queryFn: ({ signal }) => getJson("/api/market/context", signal),
-    refetchInterval: 60_000, staleTime: 55_000, retry: 1,
+    refetchInterval: query => query.state.data?.news.fundamental?.processing ? 2_000 : 60_000,
+    staleTime: 55_000, retry: 1,
   });
   const live = online && !quotes.isError && quotes.data?.status === "ready" &&
     quoteIsFresh(quotes.data.quote, now);

@@ -149,6 +149,22 @@ export const EditorialEvidenceTag = {
   covered: 'covered',
 } as const;
 
+export type EditorialEvidenceReviewMethod = typeof EditorialEvidenceReviewMethod[keyof typeof EditorialEvidenceReviewMethod];
+
+
+export const EditorialEvidenceReviewMethod = {
+  ai: 'ai',
+  editorial: 'editorial',
+} as const;
+
+export type EditorialEvidenceRelevance = typeof EditorialEvidenceRelevance[keyof typeof EditorialEvidenceRelevance];
+
+
+export const EditorialEvidenceRelevance = {
+  relevant: 'relevant',
+  'not-relevant': 'not-relevant',
+} as const;
+
 export interface EditorialEvidence {
   slug: string;
   title: string;
@@ -161,6 +177,10 @@ export interface EditorialEvidence {
   rationale: string;
   contentHash: string;
   tag: EditorialEvidenceTag;
+  reviewMethod?: EditorialEvidenceReviewMethod;
+  model?: string;
+  analysisVersion?: string;
+  relevance?: EditorialEvidenceRelevance;
 }
 
 export type FundamentalAssessmentStatus = typeof FundamentalAssessmentStatus[keyof typeof FundamentalAssessmentStatus];
@@ -177,6 +197,7 @@ export interface FundamentalAssessment {
   scope: string;
   evidence: EditorialEvidence[];
   reasons: string[];
+  processing?: boolean;
 }
 
 export type MarketContextHistoryStatus = typeof MarketContextHistoryStatus[keyof typeof MarketContextHistoryStatus];

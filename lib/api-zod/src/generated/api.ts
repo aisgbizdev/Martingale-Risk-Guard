@@ -109,9 +109,14 @@ export const GetMarketContextResponse = zod.object({
   "excerpt": zod.string(),
   "rationale": zod.string(),
   "contentHash": zod.string(),
-  "tag": zod.enum(['high-uncertainty', 'covered'])
+  "tag": zod.enum(['high-uncertainty', 'covered']),
+  "reviewMethod": zod.enum(['ai', 'editorial']).optional(),
+  "model": zod.string().optional(),
+  "analysisVersion": zod.string().optional(),
+  "relevance": zod.enum(['relevant', 'not-relevant']).optional()
 })),
-  "reasons": zod.array(zod.string())
+  "reasons": zod.array(zod.string()),
+  "processing": zod.boolean().optional()
 }).optional(),
   "receivedAt": zod.string(),
   "message": zod.union([zod.object({

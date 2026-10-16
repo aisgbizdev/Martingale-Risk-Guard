@@ -1,3 +1,5 @@
 - [Porting visual identity](porting-visual-identity.md) — treat the app's active CSS and approved baselines as authoritative, not scaffold font guesses.
 - [MRG product direction](mrg-product-direction.md) — preserve the original basic simulator flow; realtime data and KB enrich it, not replace it with complex position recording.
 - [Study evidence boundaries](study-evidence-boundaries.md) — preserve conflicting-source provenance; historical XUL10 units do not verify current broker/account risk.
+- [AI evidence validation](ai-evidence-validation.md) — select original passages instead of generating quotations; provenance is not interpretation accuracy.
+- [React type boundaries](react-type-boundaries.md) — preserve MRG's React major when shared tooling exposes incompatible JSX types.

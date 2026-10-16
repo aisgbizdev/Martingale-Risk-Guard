@@ -16,6 +16,8 @@ export * from './dailyAnalysisSource';
 export * from './dailyAnalysisTimeframe';
 export * from './dailyAnalysisTrend';
 export * from './editorialEvidence';
+export * from './editorialEvidenceRelevance';
+export * from './editorialEvidenceReviewMethod';
 export * from './editorialEvidenceTag';
 export * from './errorResponseResponse';
 export * from './errorResponseResponseDetailsItem';

@@ -14,4 +14,5 @@ export interface FundamentalAssessment {
   scope: string;
   evidence: EditorialEvidence[];
   reasons: string[];
+  processing?: boolean;
 }

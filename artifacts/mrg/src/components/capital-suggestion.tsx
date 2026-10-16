@@ -36,9 +36,13 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
     if (capture) setActive(previous => applySuggestion(previous, capture, Number(capital), sources, Date.now(), invalidated));
   };
   const selected = snapshot?.selected;
+  const readingNews = market.context.isPending || !!market.context.data?.news.fundamental?.processing;
   return <section className="live-stack" aria-label={t("Saran dari modal", "Capital-based suggestion")} data-testid="capital-suggestion">
     <p className="live-small">{t("Cukup isi modal. MRG memeriksa harga, D1, kalender dan penilaian isi berita. Asumsi Pemula—bukan pengalaman Anda yang diketahui.", "Enter capital only. MRG checks price, D1, calendar and reviewed news content. Assumes Beginner—not knowledge of your experience.")}</p>
-    <Button type="button" className="w-full h-12" onClick={evaluate} data-testid="button-saran-modal">{t("Lihat Saran MRG", "View MRG Suggestion")}</Button>
+    <Button type="button" className="w-full h-12" onClick={evaluate} disabled={readingNews} aria-busy={readingNews} data-testid="button-saran-modal">
+      {readingNews ? t("Menyiapkan analisis pasar…", "Preparing market analysis…") : t("Lihat Saran MRG", "View MRG Suggestion")}
+    </Button>
+    {readingNews && <p role="status" className="live-small">{t("MRG sedang mengambil data dan membaca isi berita otomatis. Modal tetap bisa diisi; tidak perlu penilaian manual.", "MRG is loading data and automatically reading news. You can enter capital while waiting; no manual review is required.")}</p>}
     {inputError && <p role="alert" className="live-error">{t("Isi modal positif, maksimal US$1 triliun.", "Enter positive capital, up to US$1 trillion.")}</p>}
     {active && active !== capture && <aside className="rounded-lg border border-border p-3 live-stack" data-testid="active-suggestion">
       <h2 className="font-bold">{t("Skenario yang sebelumnya dipakai", "Previously applied scenario")}</h2>
@@ -72,7 +76,10 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
           {!applied && <Button type="button" variant="outline" className="mt-2" disabled={dataChanged || !state?.canApply} onClick={apply} data-testid="button-use-suggestion">{t("Gunakan skenario ini", "Use this scenario")}</Button>}
           {applied && <p className="live-small mt-2">{t("Dipakai untuk simulasi ini saja. Input manual tidak diganti; tidak ada transaksi broker.", "Applied to this simulation only. Manual inputs are unchanged; no broker order.")}</p>}
         </div>}
-        <ul className="mrg-summary-notes">{snapshot.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>
+        <ul className="mrg-summary-notes">{snapshot.reasons.slice(0, 2).map((reason, i) => <li key={i}>{reason}</li>)}</ul>
+        {snapshot.reasons.length > 2 && <details><summary>{t("Lihat alasan lainnya", "More details")}</summary>
+          <ul className="mrg-summary-notes">{snapshot.reasons.slice(2).map((reason, i) => <li key={i}>{reason}</li>)}</ul>
+        </details>}
         {!!snapshot.candidates.length && <details><summary>{t("Perbandingan kandidat dan aritmetika", "Candidate comparison and arithmetic")}</summary>
           <div className="overflow-x-auto"><table className="text-xs w-full">
             <thead><tr><th>{t("Kandidat", "Candidate")}</th><th>{t("Margin", "Margin")}</th><th>{t("Rugi stress", "Stress loss")}</th><th>{t("Saringan", "Filter")}</th></tr></thead>
@@ -90,7 +97,8 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
           {snapshot.fundamental?.evidence.map(e => <div key={e.slug}>
             <Link href={`/analysis?article=${encodeURIComponent(e.slug)}`} className="underline">{e.title}</Link>
             <p>{e.source} · {e.category} · {e.publishedAt} · {t("Ditinjau", "Reviewed")}: {e.reviewedAt}</p>
-            <blockquote>“{e.excerpt}”</blockquote><p>{e.tag} · {e.rationale}</p>
+            {e.reviewMethod === "ai" && <p>{t("Dibaca otomatis oleh AI; interpretasi dapat keliru.", "Read automatically by AI; interpretation may be incorrect.")} {e.model} · {e.analysisVersion}</p>}
+            <blockquote>“{e.excerpt}”</blockquote><p>{e.tag === "high-uncertainty" ? t("Ketidakpastian tinggi", "High uncertainty") : t("Konteks ditinjau—bukan berarti aman", "Context reviewed—not a safety claim")} · {e.rationale}</p>
             <p className="break-all">{e.url}</p>
           </div>)}
           <p>{t("Asumsi simulasi: 1 poin = harga 1,00; US$100/poin/lot; margin US$2.000/lot. Bukan spesifikasi broker. Margin bukan biaya atau batas rugi.", "Simulation assumptions: 1 point = price 1.00; US$100/point/lot; margin US$2,000/lot. Not broker specifications. Margin is not a cost or loss limit.")}</p>
