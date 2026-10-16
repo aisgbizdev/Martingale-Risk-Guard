@@ -42,3 +42,17 @@ mtime_ms = 1792131096644
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/15252d99-91b8-4d38-b5df-985f0f00c7ee/3841f0b1-9ea3-4ad9-be5b-502f0a2d1590"
 storage_version_token = "1792131119667051"
 content_type = "text/html"
+
+[[outputs]]
+id = "X8LCLwe_LGU29mv4bjX_F"
+uri = "file://docs/mrg-saran-modal-review.html"
+type = "html"
+title = "Rancangan MRG — cukup isi modal"
+description = "Dua halaman utama: alur kalkulator, aturan usulan, dan contoh hitungan; ditambah satu lampiran sumber. Belum mengubah aplikasi atau rumus."
+logical_id = "bbb09275-0bdf-40e1-bbc7-2c9a5efcafb1"
+content_hash = "sha256:d2f81bef92daa732a79bd8dfd8386761fa5041e70b5755085d06012eda6c8180"
+size = 13373
+mtime_ms = 1792140125473
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/bbb09275-0bdf-40e1-bbc7-2c9a5efcafb1/fe459ef7-3fad-44f6-bbdf-decfd7e0722f"
+storage_version_token = "1792140188160055"
+content_type = "text/html"

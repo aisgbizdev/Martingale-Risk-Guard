@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rancangan MRG — cukup isi modal</title>
+<style>
+:root{--blue:#1061b3;--ink:#17345a;--line:#d7e1ed}
+*{box-sizing:border-box}body{margin:0;background:#edf2f7;color:var(--ink);font:15px/1.48 system-ui,sans-serif}
+main{max-width:900px;margin:24px auto}.page{background:#fff;padding:32px 38px;margin:0 0 20px;border-top:7px solid var(--blue);border-radius:8px}
+h1{font-size:29px;line-height:1.15;margin:8px 0 14px}h2{font-size:18px;margin:20px 0 8px}h3{font-size:15px;margin:15px 0 6px}p{margin:8px 0}ul,ol{padding-left:21px;margin:8px 0}li{margin:4px 0}
+.eyebrow{font-size:11px;font-weight:750;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+.lead{padding:13px 16px;background:#edf5ff;border-left:3px solid var(--blue);font-weight:650}.note{font-size:12px;color:#53677e}.warning{padding:10px 13px;background:#fff6e8;border-left:3px solid #bb7723}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}th,td{padding:8px;border:1px solid var(--line);text-align:left;vertical-align:top}th{background:#edf5ff}
+.stamp{margin-top:18px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;color:#53677e}.formula{font-family:ui-monospace,monospace;font-size:12px;background:#f3f5f8;padding:9px 12px}
+@media(max-width:600px){main{margin:0}.page{padding:22px 17px;border-radius:0}h1{font-size:25px}table{font-size:12px}th,td{padding:6px;overflow-wrap:anywhere}}
+@page{size:A4;margin:12mm}
+@media print{body{background:white;font-size:10pt;line-height:1.35}main{margin:0;max-width:none}.page{border-radius:0;margin:0;padding:5mm 2mm 0;border-top:2mm solid var(--blue);break-after:page}.page:last-child{break-after:auto}h1{font-size:21pt;margin:5px 0 9px}h2{font-size:13pt;margin:12px 0 5px}h3{font-size:11pt;margin:10px 0 4px}p,ul,ol{margin:5px 0}li{margin:2px 0}table{font-size:9pt}th,td{padding:5px}.note,.formula{font-size:8.5pt}.lead,.warning{padding:8px 10px}.stamp{font-size:8pt;margin-top:10px;padding-top:7px}tr{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<section class="page">
+<div class="eyebrow">Newsmaker · Martingale Risk Guard · rancangan untuk persetujuan</div>
+<h1>Satu kalkulator.<br>Cukup isi modal, lalu lihat saran MRG.</h1>
+<p class="lead">Modal → Lihat Saran MRG → usulan strategi, target, lot awal, batas layer, alasan, dan peringatan. Semua tetap di halaman yang sama.</p>
+<p>Pengguna tidak wajib mengisi enam kolom atau mencatat posisi terlebih dahulu. <b>Isi Manual</b> menjadi pilihan tambahan untuk memakai parameter sendiri seperti MRG dasar, bukan halaman atau dashboard baru. Di jalur saran, hanya modal berupa angka bebas; parameter lain berupa keluaran yang dapat ditinjau atau pilihan terbatas.</p>
+
+<h2>1. Yang tetap dan yang disusun MRG</h2>
+<table>
+<tr><th>Dari pengguna / default</th><th>Dari MRG</th></tr>
+<tr><td>Modal USD. Instrumen tetap XUL10. Untuk model yang memerlukan pengalaman: gunakan <b>asumsi Pemula</b> yang terlihat, bukan klaim mengetahui pengalaman pengguna.</td><td>Konteks pasar, perbandingan strategi, target poin dan batas layer; lot awal serta jarak layer dicantumkan agar hitungan dapat dipahami. Saran boleh tidak tersedia jika bukti tidak cukup.</td></tr>
+<tr><td>Manual mempertahankan default aktif: Linear Averaging, 30 poin, 3 layer, Pemula. Modal/kondisi belum diisi. Tidak diubah diam-diam.</td><td>Saran baru <b>ditawarkan</b>, tidak mengganti input atau hasil sendiri. Setiap hasil punya waktu evaluasi, sumber, asumsi, dan status kelengkapan data.</td></tr>
+</table>
+<p class="note">Brief embrio menyebut default 5 layer, sedangkan default aktif sekarang 3. Rekomendasi tahap ini: pertahankan 3 untuk manual; perubahan menjadi 5 memerlukan keputusan tersendiri.</p>
+
+<h2>2. Dasar perhitungan yang sudah disepakati</h2>
+<p><b>1 poin = perubahan harga 1,00; 1 lot bernilai US$100/poin; jaminan margin US$2.000/lot.</b> Angka dipakai sebagai asumsi simulasi pengguna, bukan verifikasi kontrak broker.</p>
+<p class="formula">P/L kotor = perubahan harga sesuai arah × 100 × lot<br>Margin terpakai = 2.000 × total lot terbuka</p>
+<p>Margin bukan biaya hangus atau batas rugi. Simulasi harus memisahkan margin, kerugian berjalan, dan dana tersisa. Spread, komisi, swap, slippage dan stop-out belum ditetapkan; jangan mengklaim menghitung margin call atau ketahanan akun nyata.</p>
+
+<h2>3. Peran data, bukan sekadar pajangan</h2>
+<ul>
+<li><b>Harga XUL10 berjalan:</b> identitas instrumen dan waktu evaluasi. Harga saja tidak membuktikan tren.</li>
+<li><b>Teknikal D1:</b> tren dan ATR memengaruhi kandidat strategi, target dan jarak/layer. LGD Daily adalah <b>referensi emas</b>, bukan harga XUL10 identik atau analisis intraday.</li>
+<li><b>Kalender:</b> agenda USD berdampak tinggi dapat menunda saran. Data kosong/usang tidak berarti tidak ada risiko.</li>
+<li><b>Fundamental/berita:</b> isi artikel yang relevan dan bertanggal menjadi alasan serta pembatas kandidat. Judul atau artikel tersedia tidak otomatis berarti sentimen diketahui.</li>
+</ul>
+<p class="warning"><b>Belum diaktifkan:</b> rancangan ini tidak mengubah aplikasi atau skor. Target/layer adaptif tidak boleh diberi PF/ROM/ER studi lama, probabilitas rugi, atau label “aman” yang belum tervalidasi.</p>
+<div class="stamp">Halaman utama 1/2 · Disusun 16 Oktober 2026 · Edukasi, bukan sinyal entry/exit atau eksekusi broker.</div>
+</section>
+
+<section class="page">
+<div class="eyebrow">Rancangan aturan · angka awal untuk ditinjau, bukan hasil optimasi</div>
+<h1>Contoh konkret dan keputusan sebelum build</h1>
+<h2>4. Paket aturan awal yang diusulkan</h2>
+<ol>
+<li><b>Pemeriksaan data:</b> harga bertimestamp ≤20 detik; D1 memenuhi pemeriksaan aktif; kalender lengkap dan dibuat ≤15 menit. Berita dinilai relevansinya dari isi, kategori, serta waktu publikasi.</li>
+<li><b>Fundamental:</b> usulan awal memakai artikel emas/USD/makro ≤24 jam dan penandaan editorial berbukti: “ketidakpastian tinggi” atau “konteks tercakup, tanpa penanda tinggi”. Simpan kutipan, URL/identitas dan waktu artikel. Ini <b>usulan informasi tambahan</b>, belum ada di feed. Konflik, tidak ada penandaan, atau tidak ada cakupan → fundamental belum dinilai; jangan menebak netral. Tidak otomatis menambah AI.</li>
+<li><b>Tunda saran lengkap</b> jika data wajib gagal/usang, fundamental belum dinilai, atau agenda USD high impact berada dalam 120 menit sebelum hingga 15 menit sesudah rilis. Manual tetap tersedia dengan batas yang jelas.</li>
+<li><b>Kandidat:</b> lot awal ilustratif 0,1; Linear = 0,1–0,2–0,3, Martingale = 0,1–0,2–0,4. Uji 2–3 layer; tren D1 searah atau penanda fundamental tinggi membatasi paling banyak 2 dan menyingkirkan Martingale dari saran otomatis. Bila keduanya lolos, utamakan paparan lebih kecil, bukan janji produktivitas lebih baik. Martingale tetap dapat dibandingkan secara manual.</li>
+<li><b>Target/jarak:</b> ilustrasi target T = pembulatan turun 0,25 × ATR; jarak S = pembulatan naik 0,5 × ATR, satuan 1,00. Nilai nol/tidak koheren ditolak. Ini <b>heuristik referensi D1 yang perlu persetujuan</b>, bukan jarak optimal XUL10. Jangan dipakai bila pemetaan basis referensi tidak diterima.</li>
+<li><b>Saringan modal:</b> usulan batas margin 20% modal dan kerugian stress 10% modal. Stress = satu jarak lagi setelah layer terakhir, gerakan satu arah hipotetis; bukan rugi maksimum. Pilih jumlah layer terbesar yang lolos kedua batas; jika minimum 2 tidak lolos, jangan memaksa saran averaging.</li>
+</ol>
+<h2>5. Hanya modal → contoh hasil</h2>
+<p><b>Seluruh contoh ini hipotetis, bukan kondisi pasar sekarang.</b> Pengguna memasukkan <b>US$20.000</b>. Sumber contoh: tick XUL10 segar; ATR D1 81,74; tren searah; kalender lengkap tanpa agenda dekat; artikel terkait ≤24 jam sudah dinilai editorial dengan cakupan yang jelas. Syarat editorial ini <b>belum tersedia pada sistem saat ini</b>.</p>
+<p>S = 41 poin, T = 20 poin. Usulan Linear, 2 layer: lot 0,1 lalu 0,2; total 0,3 lot. Margin <b>US$600</b>. Di stress satu jarak setelah layer kedua: layer pertama melawan 82 poin, kedua 41 poin.</p>
+<p class="formula">Rugi stress = (82 × 0,1 + 41 × 0,2) × 100 = US$1.640<br>Ekuitas stress = 20.000 − 1.640 = 18.360<br>Dana setelah margin = 18.360 − 600 = US$17.760</p>
+<p>Margin 3% dan rugi stress 8,2% dari modal: lolos saringan ilustratif. Linear 3 layer pada jarak yang sama memiliki rugi stress <b>US$4.100</b>, melebihi batas US$2.000. “Lolos saringan” <b>bukan aman</b>; gerakan lebih jauh/biaya dapat memperbesar rugi. Target 20 poin adalah jarak pemulihan dari rata-rata basket pada model, bukan sinyal harga entry.</p>
+<p class="warning"><b>Jika sumber gagal atau berita belum dinilai:</b> hasilnya “Saran MRG belum lengkap”, sebutkan sumber/asumsi yang kurang. Jangan memberi angka saran seolah lengkap; pengguna dapat memilih Isi Manual.</p>
+<div class="stamp">Halaman utama 2/2 · Untuk disepakati: (A) alur modal saja + manual opsional; (B) heuristik, batas modal, dan dasar editorial sebelum implementasi. Tidak ada aturan baru yang sudah berjalan.</div>
+</section>
+
+<section class="page">
+<div class="eyebrow">Lampiran · bukti sumber dan batas implementasi</div>
+<h1>Apa yang sudah tersedia?</h1>
+<table>
+<tr><th>Sumber / bukti</th><th>Sudah ada</th><th>Belum ada / batas pemakaian</th></tr>
+<tr><td>Dokumen TradingView §0–§3; koneksi prices.ts.</td><td>MRG mengambil XUL10 dari feed Newsmaker melalui <code>/live-quotes</code>, polling 5 detik. Timestamp per simbol divalidasi. Historis <code>/historical</code> dipilih untuk LGD Daily.</td><td>Widget TradingView hanya visual chart. Tidak dibaca untuk harga/indikator kalkulator; angka widget tidak boleh menggantikan sumber perhitungan. Bukan lisensi redistribusi data.</td></tr>
+<tr><td>WebSocket Royal Assetindo, bagian 3–5.</td><td>Dokumentasi endpoint WSS tanpa autentikasi, contoh pesan harga dengan keterlambatan sekitar 5 detik.</td><td>Tidak dipakai langsung oleh koneksi MRG yang sekarang. Dokumen tidak menetapkan kontrak XUL10, lot minimal, stop-out atau validasi data intraday. Tidak perlu mengganti koneksi yang bekerja hanya karena endpoint ini ada.</td></tr>
+<tr><td>Newsmaker API §3.2; calendar.ts.</td><td>Endpoint kalender/periode, paginasi lengkap; MRG mengambil periode this-week dan next-week. Kelengkapan, waktu pembuatan, dampak dan zona waktu diperiksa.</td><td>Label high impact bukan estimasi dampak nyata; actual/forecast tersedia tidak otomatis berarti arah sudah diketahui. Investing tidak terbukti sebagai API langsung MRG; tidak mengambil data dengan membaca widget atau menambah scraping.</td></tr>
+<tr><td>Newsmaker API §3.1; news.ts.</td><td>Daftar dan detail artikel resmi. Detail yang benar: <code>/berita/show/{slug}</code>. MRG menyaring judul/kategori halaman terbaru dan membatasi hingga 8 item; konten dapat diambil sebagai teks.</td><td>Daftar ringkas bukan seluruh cakupan berita. Belum ada penilaian isi, sentimen, penanda editorial risiko atau aturan masa berlaku fundamental. Jangan menyebut feed “ready” sebagai fundamental sudah dianalisis.</td></tr>
+<tr><td>market-analysis.ts; study-market.ts.</td><td>MA20/50, ATR14, baseline ATR; tren dari urutan close/MA; data D1 tertutup. Peringatan ATR dan kalender, konfirmasi Trending.</td><td>Mixed bukan bukti Sideways. Aturan saat ini tidak mengubah skor dari artikel atau ATR. Seri D1 referensi tidak menyamai H1/tick XUL10. Otomatisasi kondisi baru menggantikan langkah konfirmasi lama hanya setelah disetujui.</td></tr>
+<tr><td>Asumsi pengguna; aturan dasar MRG.</td><td>US$100/poin/lot; harga 1,00 = 1 poin; margin US$2.000/lot. Manual aktif: Linear, 30 poin, 3 layer, Pemula.</td><td>Ukuran 0,1 lot, budget 10%/20%, faktor ATR, asumsi pengalaman dan aturan seleksi di halaman 2 adalah proposal, bukan ketentuan broker/temuan tesis. Biaya, stop-out, dan akurasi proksi belum divalidasi.</td></tr>
+</table>
+<h2>Pemetaan ke keluaran</h2>
+<p>Harga → waktu/sumber evaluasi; D1/ATR → kandidat target, jarak, pembatas strategi/layer; kalender → tunda saran dekat rilis; isi berita dengan penilaian editorial → pembatas kandidat dan alasan; modal → saringan kandidat terhadap margin serta stress. Tidak perlu arah buy/sell: stress adalah gerakan hipotetis melawan basket, bukan klaim pasar sedang melawan pengguna.</p>
+<h2>Pembaruan dan penjelasan hasil</h2>
+<p>Snapshot dibekukan saat menghitung. Saran baru menampilkan “Data berubah, tersedia penyesuaian baru”; pengguna menerapkan sendiri. Ubah modal/parameter → hasil ditandai perlu dihitung ulang. Manual dan saran sama-sama menampilkan asal parameter; hasil studi hanya untuk parameter yang memang didukung model lama. Kandidat adaptif diberi label simulasi asumsi, tanpa PF/ROM/ER pinjaman atau skor aman baru.</p>
+<h2>Dasar pemeriksaan</h2>
+<p class="note">Dokumentasi unggahan: TRADINGVIEW_CHARTING_AND_PRICES (14 Oktober 2026); Dokumentasi API portalnews Newsmaker §3.1–3.3; WebSocket wsprc.royalassetindo. Implementasi diperiksa terarah pada artifacts/api-server/src/market/{provider,prices,calendar,news}.ts, lib/mrg-shared/src/{market-analysis,study-market,live-types}.ts, dan alur kalkulator yang ada. Tidak meminta kredensial baru, menambah vendor, mengubah kode aplikasi atau mengaktifkan model baru.</p>
+</section>
+</main></body></html>
