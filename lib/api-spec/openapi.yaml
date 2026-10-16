@@ -171,6 +171,30 @@ components:
           properties:
             content: { type: string }
             contentEn: { type: string }
+    EditorialEvidence:
+      type: object
+      required: [slug, title, url, publishedAt, reviewedAt, category, source, excerpt, rationale, contentHash, tag]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        url: { type: string }
+        publishedAt: { type: string }
+        reviewedAt: { type: string }
+        category: { type: string }
+        source: { type: string }
+        excerpt: { type: string }
+        rationale: { type: string }
+        contentHash: { type: string }
+        tag: { type: string, enum: [high-uncertainty, covered] }
+    FundamentalAssessment:
+      type: object
+      required: [status, evaluatedAt, scope, evidence, reasons]
+      properties:
+        status: { type: string, enum: [assessed, incomplete] }
+        evaluatedAt: { type: string }
+        scope: { type: string }
+        evidence: { type: array, items: { $ref: "#/components/schemas/EditorialEvidence" } }
+        reasons: { type: array, items: { type: string } }
     MarketContext:
       type: object
       required: [history, calendar, news]
@@ -200,6 +224,7 @@ components:
           properties:
             status: { type: string, enum: [ready, unavailable] }
             items: { type: array, items: { $ref: "#/components/schemas/NewsItem" } }
+            fundamental: { $ref: "#/components/schemas/FundamentalAssessment" }
             receivedAt: { type: string }
             message: { anyOf: [{ $ref: "#/components/schemas/Copy" }, { type: "null" }] }
     RiskInput:

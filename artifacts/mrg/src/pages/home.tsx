@@ -15,6 +15,7 @@ import { useMarket } from "@/hooks/use-market";
 import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
+import { CapitalSuggestion } from "@/components/capital-suggestion";
 
 const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"] as const;
 
@@ -22,6 +23,7 @@ export default function Home() {
   const { language, setLanguage, t } = useLanguage();
   const { draft, setDraft, snapshot: rawSnap, setSnapshot } = useStudy();
   const market = useMarket();
+  const [manual, setManual] = useState(() => new URLSearchParams(window.location.search).has("modal"));
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<RiskInput | null>(null);
@@ -81,6 +83,7 @@ export default function Home() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!manual) return;
     const parsed = riskInputSchema.safeParse({ ...draft, modal: Number(draft.modal) });
     if (!draft.modal || !(Number(draft.modal) > 0)) return setError(t("Isi modal skenario dengan angka positif.", "Enter a positive scenario capital."));
     if (!draft.marketCondition) return setError(t("Pilih kondisi pasar: Sideways atau Trending.", "Choose a market condition: Sideways or Trending."));
@@ -130,7 +133,7 @@ export default function Home() {
         <div className="mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
           <p className="text-muted-foreground text-sm leading-relaxed mt-1">
-            {t("Isi skenario → Cek Risiko → pahami hasilnya.", "Set your scenario → check risk → understand the result.")}
+            {t("Isi modal → Lihat Saran MRG, atau pilih Isi Manual.", "Enter capital → view MRG suggestion, or choose Manual Entry.")}
           </p>
           <div className="mt-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
@@ -142,10 +145,14 @@ export default function Home() {
         <Card>
           <CardHeader className="px-4 sm:px-6">
             <CardTitle className="text-lg sm:text-xl">{t("Skenario Anda", "Your scenario")}</CardTitle>
-            <CardDescription>{t("Isi skenario seperti simulator dasar MRG.", "Set your scenario as in the original MRG simulator.")}</CardDescription>
+            <CardDescription>{t("Saran dari modal atau parameter manual seperti MRG dasar.", "Capital-based suggestions or manual parameters as in the original MRG.")}</CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={submit} className="live-stack" noValidate>
+              <div className="flex gap-2">
+                <Button type="button" variant={!manual ? "default" : "outline"} onClick={() => setManual(false)} aria-pressed={!manual}>{t("Saran MRG", "MRG Suggestion")}</Button>
+                <Button type="button" variant={manual ? "default" : "outline"} onClick={() => setManual(true)} aria-pressed={manual} data-testid="button-manual">{t("Isi Manual", "Manual Entry")}</Button>
+              </div>
               <div className="live-form-grid">
                 <div className="live-field" style={{ gridColumn: "1 / -1" }}>
                   <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
@@ -159,6 +166,7 @@ export default function Home() {
                   <input id="f-modal" type="number" inputMode="decimal" min="0" step="any" value={draft.modal} onChange={(e) => set({ modal: e.target.value })} placeholder={t("Contoh: 200000", "Example: 200000")} data-testid="input-modal" aria-invalid={!!error && !(Number(draft.modal) > 0)} />
                   <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
                 </div>
+                {manual && <>
                 <div className="live-field">
                   <label htmlFor="f-target">{t("Target poin per siklus", "Target points per cycle")}</label>
                   <select id="f-target" value={draft.targetPoin} onChange={(e) => set({ targetPoin: e.target.value })} data-testid="select-target-poin">
@@ -200,19 +208,23 @@ export default function Home() {
                     <option value="Trending">{t("Trending (arah kuat)", "Trending (strong direction)")}</option>
                   </select>
                 </div>
+                </>}
               </div>
 
+              <div hidden={manual}><CapitalSuggestion capital={draft.modal} market={market} /></div>
+              {manual && <>
               <p className="live-small">{t("Default: Linear Averaging · 30 poin · 3 layer · Pemula. Modal dan kondisi pasar tetap Anda tentukan.", "Defaults: Linear Averaging · 30 points · 3 layers · Beginner. Set your own capital and market condition.")}</p>
               {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
               <Button type="submit" size="lg" className="w-full h-12" data-testid="button-cek-risiko">
                 {t("Cek Risiko", "Cek Risiko")}<ChevronRight className="w-5 h-5 ml-2" />
               </Button>
+              </>}
             </form>
           </CardContent>
         </Card>
 
         <div className="grid gap-4 min-w-0">
-        <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" className="rounded-lg border border-border bg-card p-4 sm:p-6">
+        <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" hidden={!manual} className="rounded-lg border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-bold mb-2">{t("Hasil Cek Risiko", "Risk check result")}</h2>
           {!submitted && <p className="text-sm text-muted-foreground">{t("Isi keenam kolom lalu tekan Cek Risiko. Hasil muncul di sini.", "Fill the six fields and press Cek Risiko. The result appears here.")}</p>}
           {stale && <p role="status" className="live-error" data-testid="text-result-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; tekan Cek Risiko untuk menghitung ulang.", "Inputs changed. The earlier result no longer applies; press Cek Risiko to recalculate.")}</p>}
@@ -246,15 +258,15 @@ export default function Home() {
                   <>
                     <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
                     <p className="live-small">{t("LGD Daily · emas referensi, bukan harga XUL10 yang identik.", "LGD Daily · reference gold, not an identical XUL10 price.")}</p>
-                    <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
+                    {manual && <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
                       <CheckCircle className="w-4 h-4 mr-1" />
                       {draft.d1Key ? t("Trending dari D1 dikonfirmasi", "Trending from D1 confirmed") : t("Gunakan Trending dari referensi ini", "Use Trending from this reference")}
-                    </Button>
+                    </Button>}
                   </>
                 ) : (
                   <p>{reference.status === "mixed"
-                    ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.")
-                    : t("Data pasar tidak tersedia atau tidak segar. Pilih kondisi pasar sendiri; perhitungan tetap bisa dijalankan.", "Market data is unavailable or not fresh. Choose the market condition yourself; the calculation still works.")}</p>
+                    ? (manual ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.") : t("Referensi D1 campuran bukan bukti Sideways; saran tetap memerlukan data lain yang lengkap.", "Mixed D1 is not evidence of Sideways; suggestions still require complete supporting data."))
+                    : (manual ? t("Data pasar tidak tersedia atau tidak segar. Pilih kondisi pasar sendiri; perhitungan tetap bisa dijalankan.", "Market data is unavailable or not fresh. Choose the market condition yourself; the calculation still works.") : t("Data pasar belum lengkap. Saran tidak dipaksakan; Isi Manual tetap tersedia.", "Market data is incomplete. Suggestions are not forced; Manual Entry is still available."))}</p>
                 )}
                 {notice && <p role="status" className="live-error">{notice}</p>}
                 <details className="live-details">

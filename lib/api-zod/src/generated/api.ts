@@ -94,6 +94,25 @@ export const GetMarketContextResponse = zod.object({
   "category": zod.string(),
   "source": zod.string()
 })),
+  "fundamental": zod.object({
+  "status": zod.enum(['assessed', 'incomplete']),
+  "evaluatedAt": zod.string(),
+  "scope": zod.string(),
+  "evidence": zod.array(zod.object({
+  "slug": zod.string(),
+  "title": zod.string(),
+  "url": zod.string(),
+  "publishedAt": zod.string(),
+  "reviewedAt": zod.string(),
+  "category": zod.string(),
+  "source": zod.string(),
+  "excerpt": zod.string(),
+  "rationale": zod.string(),
+  "contentHash": zod.string(),
+  "tag": zod.enum(['high-uncertainty', 'covered'])
+})),
+  "reasons": zod.array(zod.string())
+}).optional(),
   "receivedAt": zod.string(),
   "message": zod.union([zod.object({
   "id": zod.string(),

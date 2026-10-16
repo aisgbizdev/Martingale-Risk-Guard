@@ -1,6 +1,8 @@
 import type { Article, MarketContext, NewsItem } from "@workspace/mrg-shared/live-types";
 import { providerTimestamp } from "@workspace/mrg-shared/market-analysis";
 import { fetchProviderJson, NEWSMAKER_BASE, SingleFlightCache } from "./provider";
+import { assessFundamental } from "./fundamental";
+import { editorialRecords } from "./editorial-records";
 
 const str = (v: unknown) => typeof v === "string" ? v.trim() : "";
 
@@ -25,7 +27,8 @@ export async function getNews(): Promise<MarketContext["news"]> {
       const items = response.data.map(normalizeNews).filter((item: NewsItem) =>
         /gold|dollar|emas|dolar|fed|inflation|inflasi/i.test(`${item.category} ${item.title} ${item.titleEn}`),
       ).slice(0, 8);
-      return { status: "ready", items, receivedAt: new Date().toISOString(), message: null };
+      const fundamental = await assessFundamental(items, editorialRecords, getArticle);
+      return { status: "ready", items, fundamental, receivedAt: new Date().toISOString(), message: null };
     }, 60_000);
   } catch {
     return {

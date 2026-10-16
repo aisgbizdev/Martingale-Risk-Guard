@@ -141,6 +141,44 @@ export type Article = NewsItem & {
   contentEn: string;
 };
 
+export type EditorialEvidenceTag = typeof EditorialEvidenceTag[keyof typeof EditorialEvidenceTag];
+
+
+export const EditorialEvidenceTag = {
+  'high-uncertainty': 'high-uncertainty',
+  covered: 'covered',
+} as const;
+
+export interface EditorialEvidence {
+  slug: string;
+  title: string;
+  url: string;
+  publishedAt: string;
+  reviewedAt: string;
+  category: string;
+  source: string;
+  excerpt: string;
+  rationale: string;
+  contentHash: string;
+  tag: EditorialEvidenceTag;
+}
+
+export type FundamentalAssessmentStatus = typeof FundamentalAssessmentStatus[keyof typeof FundamentalAssessmentStatus];
+
+
+export const FundamentalAssessmentStatus = {
+  assessed: 'assessed',
+  incomplete: 'incomplete',
+} as const;
+
+export interface FundamentalAssessment {
+  status: FundamentalAssessmentStatus;
+  evaluatedAt: string;
+  scope: string;
+  evidence: EditorialEvidence[];
+  reasons: string[];
+}
+
 export type MarketContextHistoryStatus = typeof MarketContextHistoryStatus[keyof typeof MarketContextHistoryStatus];
 
 
@@ -186,6 +224,7 @@ export const MarketContextNewsStatus = {
 export type MarketContextNews = {
   status: MarketContextNewsStatus;
   items: NewsItem[];
+  fundamental?: FundamentalAssessment;
   receivedAt: string;
   message: Copy | null;
 };

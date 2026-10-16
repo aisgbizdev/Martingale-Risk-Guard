@@ -32,3 +32,9 @@ Pengguna menetapkan untuk simulasi USD: “1 pointnya 100 dolar” dan “margin
 **Why:** Pengguna ingin menetapkan dasar kontrak untuk kalkulator bermasukan modal, bukan mengintegrasikan broker.
 
 **How to apply:** Perlakukan sebagai asumsi simulasi pengguna, bukan verifikasi spesifikasi broker. Skala nilai poin dan margin secara proporsional terhadap lot. Margin bukan batas kerugian atau bukti kemampuan akun menahan layer; biaya dan stop-out belum ditetapkan.
+
+Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
+
+**Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.
+
+**How to apply:** Rujuk paket pada `docs/mrg-saran-modal-review.html`. Persetujuan aturan editorial tidak berarti artikel aktual sudah ditinjau; jangan membuat penandaan isi atau menyebut fundamental lengkap tanpa bukti yang cocok.

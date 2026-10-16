@@ -6,12 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Copy } from './copy';
+import type { FundamentalAssessment } from './fundamentalAssessment';
 import type { MarketContextNewsStatus } from './marketContextNewsStatus';
 import type { NewsItem } from './newsItem';
 
 export type MarketContextNews = {
   status: MarketContextNewsStatus;
   items: NewsItem[];
+  fundamental?: FundamentalAssessment;
   receivedAt: string;
   message: Copy | null;
 };

@@ -96,6 +96,7 @@ export interface MarketContext {
   news: {
     status: "ready" | "unavailable";
     items: NewsItem[];
+    fundamental?: import("./capital-suggestion").FundamentalAssessment;
     receivedAt: string;
     message: Copy | null;
   };
