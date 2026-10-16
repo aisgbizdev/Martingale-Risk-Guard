@@ -25,4 +25,4 @@ Kalkulator harus didasari teknikal, fundamental/berita, dan kalender ekonomi, de
 
 **Why:** Pengguna menegaskan bahwa menyederhanakan kalkulator tidak berarti menghilangkan dasar analisis pasar yang merupakan tujuan pengembangannya.
 
-**How to apply:** Jangan menyamakan menampilkan data pasar dengan menggunakannya untuk penilaian. Sepakati aturan pengaruh data terhadap hasil dan makna default sebelum mengubah perhitungan; pertahankan aturan dasar tanpa menyebutnya analisis realtime.
+**How to apply:** Jangan menyamakan menampilkan data pasar dengan menggunakannya untuk penilaian. Sepakati aturan pengaruh data terhadap hasil dan makna default sebelum mengubah perhitungan; pertahankan aturan dasar tanpa menyebutnya analisis realtime. Pengguna mengulangi bahwa “sederhana” berarti fungsi dan cara penggunaan seperti MRG dasar, bukan hanya bentuknya. Jangan menambah mode atau alur baru sebagai jawaban atas kebutuhan ini.
