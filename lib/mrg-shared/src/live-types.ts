@@ -37,6 +37,9 @@ export interface DailyAnalysis {
   firstDate: string;
   lastDate: string;
   lastClose: number;
+  lastOpen?: number;
+  lastHigh?: number;
+  lastLow?: number;
   ma20: number;
   ma50: number;
   atr14: number;

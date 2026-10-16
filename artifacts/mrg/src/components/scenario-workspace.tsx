@@ -5,6 +5,7 @@ import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
+import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
 
 type Scenario = ReturnType<typeof buildScenario>;
 type Controls = { side: ScenarioSide | null; strategy: "Linear Averaging" | "Martingale"; layers: number; target: number; spacing: number };
@@ -95,15 +96,17 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
         <button type="button" className={seg(view === "scenario")} aria-pressed={view === "scenario"} onClick={() => setView("scenario")} data-testid="button-view-scenario">{t("Skenario", "Scenario")}</button>
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] items-start">
-        <div className={`live-card min-w-0 ${view === "market" ? "" : "hidden"} lg:block lg:row-span-2`}>
+        <div className={`live-card min-w-0 ${view === "market" ? "" : "hidden"} lg:block`}>
           <h2>{t("Pasar: referensi OANDA XAUUSD", "Market: OANDA XAUUSD reference")}</h2>
           <p className="mrg-chart-warning mt-2" data-testid="text-chart-source">
             {t("Candle di sini dari OANDA XAUUSD (TradingView), sumber berbeda dari harga XUL10 yang dipakai kalkulator. Level skenario tidak digambar di atas chart ini.", "Candles here are OANDA XAUUSD (TradingView), a different source from the XUL10 price the calculator uses. Scenario levels are not drawn over this chart.")}
           </p>
           {(view === "market" || largeScreen) && <TradingViewChart online={market.online} />}
+          <NewsmakerReferenceLevels market={market} />
         </div>
 
-        <div className={`live-card min-w-0 ${view === "scenario" ? "" : "hidden"} lg:block`}>
+        <div className={`min-w-0 grid gap-4 ${view === "scenario" ? "" : "hidden"} lg:grid`}>
+        <div className="live-card min-w-0">
           <h2>{t("Kalkulator skenario", "Scenario calculator")}</h2>
           <p className="live-small mt-1">{t("Edukasi: Anda yang memilih arah. MRG tidak menyarankan Buy atau Sell.", "Education: you choose the direction. MRG does not recommend Buy or Sell.")}</p>
           <div className="live-stack mt-3">
@@ -173,10 +176,11 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
             <summary>{t("Batas dan sumber", "Limits and sources")}</summary>
             <div className="live-small live-stack">
               <p>{t("US$100 per poin per 1 lot, margin US$2.000/lot, lot pertama 0,1. Target diukur dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.", "US$100 per point per 1 lot, margin US$2,000/lot, first lot 0.1. Target is measured from the basket average; stress is one spacing beyond the last layer. No spread, fees, SL or broker stop-out.")}</p>
-              <p>{t("Harga: XUL10 dari data Newsmaker. Chart: OANDA XAUUSD, sumber berbeda. Level pivot/Fibonacci belum terintegrasi dan tidak memengaruhi parameter. Konten berita tersedia, tetapi metadata dampak editorial belum tersedia.", "Price: XUL10 from Newsmaker data. Chart: OANDA XAUUSD, a different source. Pivot/Fibonacci levels are not integrated and do not influence parameters. News content is available, but editorial impact metadata is not yet available.")}</p>
+              <p>{t("Harga: XUL10 dari data Newsmaker. Chart: OANDA XAUUSD, sumber berbeda. Pivot/Fibonacci tersedia di panel Pasar sebagai referensi LGD D1; belum memengaruhi parameter. Konten berita tersedia, tetapi metadata dampak editorial belum tersedia.", "Price: XUL10 from Newsmaker data. Chart: OANDA XAUUSD, a different source. Pivot/Fibonacci are available in the Market panel as LGD D1 references; they do not yet influence parameters. News content is available, but editorial impact metadata is not yet available.")}</p>
               <p>{t("Edukasi risiko, bukan sinyal atau order broker.", "Risk education, not a signal or broker order.")}</p>
             </div>
           </details>
+        </div>
         </div>
       </div>
     </section>

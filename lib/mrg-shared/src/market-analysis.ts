@@ -98,7 +98,8 @@ export function analyzeDaily(allCandles: DailyCandle[], now = Date.now()): Daily
   return {
     source: "LGD Daily", timeframe: "D1", basis: "gold-reference",
     candleCount: candles.length, firstDate: candles[0].date, lastDate: last.date,
-    lastClose: last.close, ma20, ma50, atr14: atr, atrBaseline,
+    lastClose: last.close, lastOpen: last.open, lastHigh: last.high, lastLow: last.low,
+    ma20, ma50, atr14: atr, atrBaseline,
     atrPercent: atr / last.close * 100,
     support20: Math.min(...recent.map((c) => c.low)),
     resistance20: Math.max(...recent.map((c) => c.high)),

@@ -30,6 +30,10 @@ disesuaikan pivot, Fibonacci, kalender, berita, atau skor studi.
 ## Yang belum terintegrasi
 - Tag dampak redaksi belum ditemukan dalam kontrak berita yang diberikan.
   Saran pasar lengkap tidak dipaksakan dan tidak digantikan AI.
-- Respons historical-data yang diperiksa berisi OHLC, bukan level pivot/Fibonacci
-  siap pakai. Jenis pivot, swing Fibonacci, periode dan kesamaan basis XUL10
-  harus disepakati/diverifikasi sebelum level memengaruhi parameter.
+- Pivot Klasik/Woodie/Camarilla dan Fibonacci naik/turun tersedia sebagai acuan
+  teknikal dari OHLC D1 tertutup terakhir. Rumus diperiksa pada kalkulator publik
+  https://www.newsmaker.id/id/tools/pivot-fibonacci, yang juga menghitung di sisi
+  klien dari input OHLC, bukan menerima level siap pakai melalui API.
+- Pemilihan candle terakhir sebagai high/low otomatis dinyatakan eksplisit;
+  bukan swing pilihan pengguna. LGD Daily bukan seri XUL10 identik. Pemetaan
+  level ke perubahan target/jarak/layer belum disepakati dan belum diaktifkan.

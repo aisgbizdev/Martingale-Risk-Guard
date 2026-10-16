@@ -68,3 +68,9 @@ MRG adalah edukasi, bukan penjual sinyal. Buy dan Sell wajib tersedia setara, da
 **Why:** Pengguna menegaskan “jgn hanya buy saja, karena kita tidak jualan signal, kita edukasi orang, mereka mau pilih yg mana ya silahkan”.
 
 **How to apply:** Harga berjalan, grafik skenario, layer, TP, dan perhitungan risiko harus mendukung kedua arah. Analisis pasar menjelaskan konteks dan batas skenario, bukan memilihkan arah, memberi label arah terbaik, atau menghilangkan salah satu pilihan.
+
+Jangan menganggap tidak adanya kolom level jadi dalam API sebagai bukti integrasi pivot/Fibonacci membutuhkan API baru. Periksa juga kalkulator publik Newsmaker dan cara data mentahnya diolah.
+
+**Why:** Setelah pengguna berulang kali menunjuk dokumentasi dan tampilan Newsmaker, ditemukan bahwa kalkulator resminya menghitung pivot/Fibonacci di browser dari OHLC API. Meminta hasil hitung siap pakai kepada programmer telah menjadi penghalang yang tidak perlu.
+
+**How to apply:** Gunakan sumber data dan rumus yang sudah tersedia, bedakan verifikasi kesamaan rumus dari persetujuan aturan pengaruhnya terhadap skenario MRG, dan jangan menyamakan LGD Daily dengan XUL10. Temuan ini tidak berarti kategori berita sudah mengandung penilaian dampak.

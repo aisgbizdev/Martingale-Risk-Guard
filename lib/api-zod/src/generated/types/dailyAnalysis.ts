@@ -18,6 +18,12 @@ export interface DailyAnalysis {
   firstDate: string;
   lastDate: string;
   lastClose: number;
+  /** Open of the last closed LGD Daily reference candle */
+  lastOpen?: number;
+  /** High of the last closed LGD Daily reference candle */
+  lastHigh?: number;
+  /** Low of the last closed LGD Daily reference candle */
+  lastLow?: number;
   ma20: number;
   ma50: number;
   atr14: number;

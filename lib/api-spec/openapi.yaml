@@ -128,6 +128,9 @@ components:
         firstDate: { type: string }
         lastDate: { type: string }
         lastClose: { type: number }
+        lastOpen: { type: number, description: Open of the last closed LGD Daily reference candle }
+        lastHigh: { type: number, description: High of the last closed LGD Daily reference candle }
+        lastLow: { type: number, description: Low of the last closed LGD Daily reference candle }
         ma20: { type: number }
         ma50: { type: number }
         atr14: { type: number }

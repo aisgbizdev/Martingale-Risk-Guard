@@ -1,4 +1,14 @@
-# Kebutuhan tambahan data Newsmaker untuk MRG tanpa AI
+# Catatan integrasi data Newsmaker untuk MRG tanpa AI
+
+## Koreksi kebutuhan pivot/Fibonacci
+Sumber sudah ditemukan pada halaman resmi
+https://www.newsmaker.id/id/tools/pivot-fibonacci.
+Kalkulator Newsmaker menghitung level di browser dari OHLC. Jadi tidak adanya
+kolom level dalam respons historical-data bukan penghalang integrasi.
+Tidak perlu meminta API pivot/Fibonacci baru. MRG memakai rumus numerik yang
+diverifikasi terhadap kalkulator publik tersebut, termasuk Woodie berbasis open
+dan Fibonacci dua arah. Acuan otomatis MRG adalah candle LGD D1 tertutup terakhir,
+bukan swing pilihan pengguna dan bukan harga XUL10 yang identik.
 
 ## Sumber yang sudah tersedia — tidak perlu dikirim ulang
 - Daftar dan isi artikel Newsmaker.
@@ -22,18 +32,18 @@ Ini temuan pada respons yang diperiksa, bukan klaim bahwa data tidak ada di sist
    alasan singkat, kutipan isi, waktu tinjau, masa berlaku, dan versi isi/penilaian.
    `covered` berarti ditelaah tanpa penanda ketidakpastian tinggi, bukan aman/netral.
    Arah Buy/Sell bukan tugas redaksi atau MRG; pengguna tetap memilih.
-3. **Pivot/Fibonacci:** konfirmasi sumber hasil hitung resmi. Sertakan instrumen,
-   periode/tanggal acuan, satuan harga, metode pivot, titik acuan Fibonacci,
-   level dan waktu pembaruan. Jika hanya OHLC tersedia, konfirmasi rumus/acuan
-   Newsmaker sebelum MRG menghitung sendiri atau menyatakan hasilnya sama.
+3. **Pivot/Fibonacci:** sumber dan rumus sudah diverifikasi; tidak perlu
+   dikirim ulang. Pemetaan acuan level ke parameter simulasi masih perlu
+   disepakati, berbeda dari ketersediaan data/rumus.
 4. Jelaskan masa berlaku/revisi dan cara mengakses data terkait dengan token
    Newsmaker yang sudah dikonfigurasi. Tidak perlu akses broker atau CMS baru.
 
 ## Perilaku MRG sampai data siap
 - Tidak memakai AI atau mengubah ketiadaan penilaian menjadi netral.
 - Simulasi default/manual Buy dan Sell dari harga XUL10 tetap bisa digunakan.
-- Saran pasar lengkap tetap belum tersedia; pivot/Fibonacci belum mengubah
-  parameter. LGD Daily tidak dianggap identik dengan XUL10.
+- Saran pasar lengkap tetap belum tersedia; pivot/Fibonacci dapat ditampilkan
+  sebagai referensi tetapi belum mengubah parameter. LGD Daily tidak dianggap
+  identik dengan XUL10.
 
 Dokumen ini usulan kebutuhan integrasi, bukan kontrak API yang sudah aktif.
 Pemetaan tag/level ke perubahan strategi, target, jarak dan layer perlu disepakati
