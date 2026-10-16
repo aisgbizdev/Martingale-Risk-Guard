@@ -26,3 +26,9 @@ Kalkulator harus didasari teknikal, fundamental/berita, dan kalender ekonomi, de
 **Why:** Pengguna menegaskan bahwa menyederhanakan kalkulator tidak berarti menghilangkan dasar analisis pasar yang merupakan tujuan pengembangannya.
 
 **How to apply:** Jangan menyamakan menampilkan data pasar dengan menggunakannya untuk penilaian. Rancang saran yang dapat dimulai dengan modal saja; enam input manual tidak boleh menjadi prasyarat untuk memperoleh saran. Pilihan isi manual tetap berada dalam kalkulator yang sama, bukan dua halaman atau dashboard. Pilihan ini kini berasal dari pengguna, berbeda dengan usulan dua mode terpisah sebelumnya yang ditarik. Aturan pemetaan data, batas, dan persetujuan pengguna tetap perlu disepakati sebelum implementasi. Jangan mengarang pengalaman pengguna atau kapasitas akun dari modal dan data pasar saja; asumsi harus eksplisit. Sepakati aturan pengaruh data terhadap hasil dan makna default sebelum mengubah perhitungan; pertahankan aturan dasar tanpa menyebutnya analisis realtime. Pengguna mengulangi bahwa “sederhana” berarti fungsi dan cara penggunaan seperti MRG dasar, bukan hanya bentuknya.
+
+Pengguna menetapkan untuk simulasi USD: “1 pointnya 100 dolar” dan “marginnya perlot 2000 dollar utk jaminan”. Ia mengonfirmasi bahwa US$100 per poin berlaku untuk 1 lot, dengan 1 poin = perubahan harga 1,00 (contoh 4.500 → 4.501).
+
+**Why:** Pengguna ingin menetapkan dasar kontrak untuk kalkulator bermasukan modal, bukan mengintegrasikan broker.
+
+**How to apply:** Perlakukan sebagai asumsi simulasi pengguna, bukan verifikasi spesifikasi broker. Skala nilai poin dan margin secara proporsional terhadap lot. Margin bukan batas kerugian atau bukti kemampuan akun menahan layer; biaya dan stop-out belum ditetapkan.
