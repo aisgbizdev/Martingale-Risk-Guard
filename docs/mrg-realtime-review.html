@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MRG — Rancangan koreksi untuk ditinjau</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #e8edf1; color: #152638; font: 9.5pt/1.16 Arial, sans-serif; }
+.page { width: 210mm; min-height: 297mm; padding: 11mm 12mm; margin: 10mm auto; background: white; }
+h1 { margin: 0 0 3mm; font-size: 18pt; }
+h2 { margin: 2.5mm 0 1.3mm; font-size: 11pt; color: #124c7b; }
+p { margin: 1.2mm 0; }
+.kicker, .footer { font-size: 8.4pt; color: #485e70; }
+.notice { padding: 2mm 3mm; background: #edf4fa; border-left: 3px solid #14598d; margin: 2mm 0; }
+table { border-collapse: collapse; width: 100%; margin: 1.5mm 0; font-size: 8.8pt; }
+th, td { text-align: left; vertical-align: top; border: 1px solid #c7d3dd; padding: 1.2mm 2mm; }
+th { background: #edf3f8; }
+ul, ol { padding-left: 5mm; margin: 1.5mm 0; }
+li { margin: 1mm 0; }
+.small { font-size: 8.8pt; }
+.footer { margin-top: 2.5mm; border-top: 1px solid #c7d3dd; padding-top: 1.5mm; }
+@media print {
+  body { background: white; }
+  .page { margin: 0; height: 297mm; break-after: page; }
+  .page:last-child { break-after: auto; }
+}
+@media screen and (max-width: 820px) {
+  .page { width: auto; min-height: 0; margin: 0 0 12px; padding: 18px; }
+  table { font-size: 9pt; }
+}
+</style>
+</head>
+<body>
+<section class="page">
+<div class="kicker">NEWSMAKER · 16 Oktober 2026 · Rancangan untuk persetujuan · Halaman 1/2</div>
+<h1>MRG kembali ke simulator awal</h1>
+<div class="notice"><strong>Tujuan:</strong> mengecek kelayakan dan risiko skenario Martingale versus Linear Averaging pada XUL10. Data pasar dan KB memperkaya simulator, bukan mewajibkan pencatatan portofolio. <strong>Belum ada perubahan aplikasi atau persetujuan model baru.</strong></div>
+
+<h2>1. Alur utama yang diusulkan</h2>
+<p><strong>Satu form enam input → Cek Risiko → satu ringkasan hasil.</strong> Ringkasan memuat status skenario, 3–6 kalimat alasan, peringatan penting, 2–4 catatan perilaku, serta sumber/waktu dan batas data. Skor aturan studi diberi nama jelas, bukan “peluang rugi”. Harga tidak menjadi syarat membuka form.</p>
+<p>“Mengapa hasilnya demikian?”, perbandingan strategi, rumus, chart, artikel, dan literasi dibuka bila diperlukan. Tombol kembali mempertahankan input. PC/tablet dapat memakai dua kolom; ponsel satu kolom dengan urutan sama, tanpa form tambahan. Newsmaker memberi informasi/edukasi, bukan layanan broker, order, atau sinyal entry/exit.</p>
+
+<h2>2. Matriks enam input awal</h2>
+<table>
+<thead><tr><th>Input</th><th>Perlakuan yang diusulkan</th></tr></thead>
+<tbody>
+<tr><td>Modal awal USD</td><td><strong>Pertahankan.</strong> Angka positif; modal skenario, bukan saldo/ekuitas akun. Tidak diisi dari catatan posisi.</td></tr>
+<tr><td>Target poin</td><td><strong>Pertahankan 30/40/50.</strong> Target fleksibel dan satuannya perlu keputusan D3; bukan level harga transaksi.</td></tr>
+<tr><td>Strategi</td><td><strong>Pertahankan pilihan eksplisit</strong> Martingale / Linear Averaging. Tampilkan beda pelipatgandaan versus penambahan lot tetap.</td></tr>
+<tr><td>Batas layer</td><td><strong>Pertahankan 3/4/5.</strong> Brief awal menyebut default 5, kode sekarang 3; usulkan 3 secara terlihat, bukan perubahan diam-diam (D3).</td></tr>
+<tr><td>Pengalaman</td><td><strong>Pertahankan</strong> Pemula / Berpengalaman. Definisi awal &lt;1 tahun / &gt;3 tahun menyisakan 1–3 tahun; usulkan kelompok itu memilih Pemula sementara, dengan keterangan (D3).</td></tr>
+<tr><td>Kondisi pasar</td><td><strong>Otomatis hanya dengan persetujuan</strong> memakai referensi D1 (D2), atau pilihan manual. Dasar/waktu terlihat; hasil campuran tidak otomatis dianggap Sideways.</td></tr>
+</tbody></table>
+<p class="small"><strong>Tidak wajib:</strong> entry, arah posisi, lot, ekuitas, jurnal, batas lot pribadi, maupun catatan transaksi. Kesalahan input diberi penjelasan ramah, bukan hasil pengganti.</p>
+
+<h2>3. Hasil awal dan pengayaan pasar: asal → pengaruh → batas</h2>
+<table>
+<thead><tr><th>Hasil/faktor</th><th>Sumber dan peran yang dapat diperiksa</th></tr></thead>
+<tbody>
+<tr><td>Status, skor, alasan</td><td>Enam input + aturan <strong>rules.ts</strong>. Kondisi Trending/Sideways memengaruhi skor berbeda menurut strategi. Usulan D1 baru memasok input itu setelah dikonfirmasi; <strong>belum tersambung ke Simulasi Dasar</strong>. Bukan indeks batas pribadi.</td></tr>
+<tr><td>Tren dan volatilitas</td><td>LGD Daily, candle tertutup D1: close/MA20/MA50, ATR14 dan median 20 ATR sebelumnya. Tren dapat memperkaya kondisi pasar (D2); ATR menjelaskan besar gerak harian relatif terhadap riwayat, <strong>tanpa tambahan skor</strong>. Emas referensi, bukan XUL10/H1.</td></tr>
+<tr><td>Harga berjalan</td><td>Feed terpisah <strong>/live-quotes</strong> → normalisasi XUL10 beserta waktu tick. Menunjukkan konteks harga/waktu, bukan entry, arah, ketahanan uang, atau alasan mengubah skor dengan sendirinya. TradingView hanya visual.</td></tr>
+<tr><td>Peringatan pasar</td><td>Kalender Newsmaker §3.2: agenda USD high impact dan waktu Jakarta. Usulkan peringatan pada 120 menit sebelum–15 menit sesudah rilis, mengambil jendela indeks lama, <strong>bukan bobotnya</strong> (D2). Bukan prediksi arah/dampak aktual.</td></tr>
+<tr><td>Edukasi dan statistik</td><td>Aturan tesis menyediakan bias perilaku serta PF/ROM/ER/label margin call. Itu konteks studi, bukan statistik realtime. Rumus ROM yang diskalakan ke modal dan klaim margin call dalam kode <strong>belum divalidasi ulang ke tesis</strong>; jangan jadikan prediksi akun atau headline.</td></tr>
+<tr><td>Berita dan chart</td><td>Artikel Newsmaker disaring kata kunci dan ditampilkan; <strong>tidak dianalisis untuk skor</strong>. Tidak ada AI/sentimen/bobot berita baru. Chart OANDA:XAUUSD tidak memasok harga perhitungan.</td></tr>
+</tbody></table>
+
+<h2>4. Apa yang benar-benar tersedia</h2>
+<p class="small"><strong>Dokumen sumber:</strong> brief RiskCheck awal; PDF tesis Iriawan; <em>TRADINGVIEW_CHARTING_AND_PRICES_1791979110546.md</em>; PDF WebSocket <em>wsprc.royalassetindo.co.id_1791977155847</em>; PDF API portal Newsmaker <em>1791979249211</em> (§3.2 kalender; versi lama juga tersedia). <strong>Koneksi terbukti saat pemeriksaan:</strong> adapter <em>market/prices.ts, calendar.ts, news.ts</em> mengambil quote, histori, kalender, artikel. Dokumen WebSocket bukan bukti koneksi WebSocket terpasang; tidak perlu konektor ganda.</p>
+<p class="small"><strong>KB yang dipakai:</strong> aturan studi di <em>rules.ts</em> untuk simulator; analisis teknikal D1 di <em>market-analysis.ts</em> untuk konteks live. Quote/D1/kalender dipakai indeks posisi terpisah; berita tidak. Belum ada mesin KB terpadu, analisis berita, H1, atau pemetaan D1 otomatis ke input simulator. Angka/klaim aturan adalah implementasi yang ada, bukan verifikasi ulang seluruh tesis.</p>
+<div class="footer">Acuan kode terarah: artifacts/mrg/src/pages/{home,result}.tsx dan pages/live/; artifacts/api-server/src/{rules.ts,market/}; lib/mrg-shared/src/{schema,position-risk,market-analysis,live-types}.ts.</div>
+</section>
+
+<section class="page">
+<div class="kicker">NEWSMAKER · Rancangan untuk persetujuan · Halaman 2/2</div>
+<h2>5. Contoh lengkap sebagai acuan penerimaan</h2>
+<p><strong>Input skenario:</strong> modal USD 200.000; target 30 poin; Martingale; maksimal 3 layer; Berpengalaman; kondisi Trending yang dikonfirmasi pengguna setelah melihat referensi D1. Modal ini hanya contoh/acuan aturan lama, <strong>bukan anjuran setoran</strong>.</p>
+<div class="notice small"><strong>Snapshot nyata, bukan harga terkini saat dokumen dibaca:</strong> 16 Oktober 2026, tick 11:54:09 WIB; diterima 11:54:10 WIB. <strong>XUL10 4.172,82</strong> dari Newsmaker melalui feed endpoapi, endpoint aplikasi <em>/api/market/quotes</em>. <em>/api/market/context</em>: LGD Daily D1 terakhir 15 Oktober, 129 candle tertutup; close 4.170,27 &lt; MA20 4.201,78 &lt; MA50 4.334,38 → <strong>down</strong>. ATR14 81,74 versus median 91,89: rentang harian referensi lebih kecil dari pembandingnya, bukan bukti aman.</div>
+<p class="small">Kalender Newsmaker lengkap 122 agenda, dibuat/diterima 11:53:46 WIB. Agenda USD high impact terdekat menurut respons penyedia: “Fed Chairman Warsh Speaks”, 10:30 WIB; sudah lewat ±84 menit, di luar jendela usulan. Nama/waktu adalah metadata penyedia, bukan verifikasi independen atau bukti dampak sudah selesai. Tujuh berita tersedia, <strong>tidak ikut skor</strong>.</p>
+<p><strong>Rujukan KB → hasil:</strong> aturan lama memberi modal 0 + Martingale 20 + Trending 25 + target 30 sebesar 15 + layer 3 sebesar 5 + pengalaman 5 = <strong>70/100, TIDAK LAYAK</strong>. POST ke <em>/api/calculate-risk</em> mengonfirmasi hasil ini. Ini kecocokan implementasi, <strong>bukan validasi ilmiah atau probabilitas kerugian</strong>. Pemetaan <em>down → Trending</em> masih usulan D2, bukan kemampuan simulator saat ini.</p>
+<p><strong>Contoh ringkasan awam:</strong> “Skenario ini dinilai tidak layak menurut aturan studi yang dipakai MRG. Martingale menggandakan ukuran setiap layer sehingga rangkaian rugi dapat cepat membesar; batas 3 layer tidak menghilangkan risikonya. Referensi emas harian sedang menunjukkan tren turun, bukan kepastian arah XUL10. Tidak ada peringatan agenda dalam jendela yang diperiksa, tetapi pasar tetap dapat bergerak tajam. Modal pada contoh tidak menjamin ketahanan akun.”</p>
+<p class="small"><strong>Catatan perilaku:</strong> jangan mengira rangkaian rugi pasti segera berbalik; jangan menambah risiko karena ingin segera menutup rugi. <strong>Edukasi &amp; mitigasi risiko, bukan saran transaksi.</strong></p>
+<table>
+<thead><tr><th>Uji pembanding, input lain tetap</th><th>Keluaran aturan sekarang (bukan prediksi)</th></tr></thead>
+<tbody>
+<tr><td>Ganti strategi saja → Linear Averaging</td><td>25/100; enum AMAN, label usulan “Risiko relatif rendah · aturan studi”. Lot bertambah tetap, bukan berlipat; tetap dapat rugi.</td></tr>
+<tr><td>Ganti kondisi saja → Sideways (uji manual)</td><td>Martingale 55/100, BERISIKO; Linear 15/100, enum AMAN. Ini uji sensitivitas aturan, bukan klaim snapshot pasar Sideways.</td></tr>
+</tbody></table>
+
+<h2>6. Data tidak lengkap/usang: hasil tidak boleh berpura-pura live</h2>
+<p class="small">Pertahankan batas operasional yang ada: tick simbol ≤20 detik; kalender lengkap dengan waktu pembuatan ≤15 menit; D1 minimal 50 candle tertutup, candle terakhir ≤4 hari kalender, tanpa gap &gt;7 hari. Ini bukan SLA atau kalender bursa terverifikasi. Saat satu sumber gagal, tandai bagian terkait “belum dapat dinilai” dan sebut sebabnya; jangan isi nol, meminjam waktu respons untuk tick, atau memakai harga terakhir sebagai live. D1 campuran/tidak tersedia → minta pilihan manual, bukan otomatis Sideways. Pengguna tetap dapat menjalankan <strong>aturan studi dengan kondisi manual</strong>, berlabel “bukan penilaian live lengkap”; jangan menutupi keterbatasan pasar. Snapshot hasil dibekukan saat Cek Risiko; data baru tidak diam-diam mengubah hasil, dan saat usang label live dicabut.</p>
+
+<h2>7. Batas fitur: tidak ada penghapusan</h2>
+<p class="small"><strong>Dipertahankan:</strong> enam input, perbedaan strategi, hasil/alasan/peringatan/perilaku, target studi 30/40/50, literasi, bahasa dan merek Newsmaker, skenario tersimpan serta seluruh data lokal.<br>
+<strong>Digunakan kembali sebagai pendukung opsional:</strong> adapter/normalisasi/freshness, analisis D1, kalender, berita, chart, bantuan istilah, simpan/bandingkan skenario.<br>
+<strong>Diusulkan disembunyikan dari alur utama, tetap dapat diakses:</strong> catatan posisi, jurnal, pengaturan lot/ekuitas, simulasi tambah posisi, stress test dan indeks posisi. Tidak dihapus/reset, tidak dimigrasikan; bukan prasyarat Cek Risiko.<br>
+<strong>Ditunda:</strong> target/jarak layer adaptif berskor, H1, penyetelan bobot/model, AI/sentimen, P/L/margin call akun, “buffer aman”, konektor baru. PWA, performa dan konflik antar-tab tetap pekerjaan terpisah yang sudah diusulkan.</p>
+
+<h2>8. Satu putaran keputusan sebelum Build</h2>
+<ol class="small">
+<li><strong>D1 — Label dan ambang:</strong> brief: 0–39 / 40–69 / 70–100; kode: 0–35 / 36–60 / 61–100. <strong>Rekomendasi:</strong> untuk Build terbatas pertahankan ambang kode dengan persetujuan eksplisit dan tampilkan “Risiko relatif rendah / Berisiko / Tidak layak menurut aturan studi”, bukan janji AMAN. Alternatif kembali ke ambang brief memerlukan contoh batas baru. Dasar kalibrasi belum cukup; statistik tesis termasuk penskalaan ROM/MC hanya bantuan dengan batas studi, bukan validasi skenario.</li>
+<li><strong>D2 — Pengayaan D1:</strong> rekomendasikan <em>up/down → Trending</em> karena close &gt; MA20 &gt; MA50 atau kebalikannya; <em>mixed → belum pasti</em>, pilih manual. Terima hanya setelah persetujuan awal dan konfirmasi kondisi pada form, tanpa input baru. ATR dan jendela kalender di atas hanya memberi alasan/peringatan. Ini memperkaya penilaian, bukan membuktikan rezim XUL10. Belum ada bukti untuk menambah skor ATR/kalender. Bobot indeks posisi <strong>40/20/15/15/10 tidak cocok dipindahkan</strong>: 60% mengukur batas pribadi dan tekanan harga butuh entry/arah; keduanya tidak menjawab pilihan strategi.</li>
+<li><strong>D3 — Parameter sederhana/fleksibel:</strong> rekomendasikan target 30/40/50, default layer 3, dan petunjuk pengalaman 1–3 tahun di atas. Brief menyebut target 50 lebih berisiko; kode justru memberi penalti target 30 Martingale lebih besar. <strong>Rekomendasi:</strong> jangan ubah faktor target sebelum cocok ke tabel tesis; contoh hanya membekukan aturan sekarang untuk tinjauan. Target ≠ jarak layer. Kelak target/jarak khusus dapat diuji terhadap rentang pasar <strong>tanpa level entry/exit</strong>; konversi poin XUL10, jarak studi, kontrak dan kalibrasi belum cukup. Tunda skor/status parameter baru; studi lama tidak otomatis memvalidasinya.</li>
+</ol>
+<div class="footer"><strong>Gerbang lanjut:</strong> dokumen ini selesai hanya sebagai rancangan siap ditinjau. Setelah D1–D3 disepakati dan ada tugas Build terpisah: bangun satu alur inti; periksa contoh di atas, beda strategi, perubahan kondisi dan kegagalan data; tinjau pemula di PC/tablet/ponsel. Jika hasil tidak sesuai acuan yang disepakati, berhenti dan koreksi—jangan menutupinya dengan UI tambahan. Tidak ada perubahan kode, model, dependensi, konfigurasi, penyimpanan, atau deployment dalam tahap ini.</div>
+</section>
+</body>
+</html>

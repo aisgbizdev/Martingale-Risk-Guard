@@ -1,0 +1,30 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "ZxLE_9peZuhWqPsn_PcD9"
+uri = "file://generated-artifacts/mrg-review/MRG-rancangan-koreksi.pdf"
+type = "pdf"
+title = "MRG — Rancangan koreksi (2 halaman)"
+description = "Untuk ditinjau sebelum Build: alur simulator awal, enam input, sumber realtime/KB, contoh nyata, batas fitur dan tiga keputusan."
+logical_id = "d13f6c4f-006f-4d51-8be9-48c3ae8992da"
+content_hash = "sha256:7fd1b6dc090592fb0b361ffaa99e2edc33a33637a602f6ceae492011c90374d1"
+size = 65489
+mtime_ms = 1792126604387
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/d13f6c4f-006f-4d51-8be9-48c3ae8992da/b3f45a51-bb17-4da0-bd14-108546e653bc"
+storage_version_token = "1792126638235289"
+content_type = "application/pdf"
+
+[[outputs]]
+id = "ZxhDrPxokVNjdspNvdxI3"
+uri = "file://docs/mrg-realtime-review.html"
+type = "html"
+title = "MRG — Versi baca di browser"
+description = "Dokumen yang sama dalam HTML mandiri; lebih mudah diperbesar dan dibaca di ponsel."
+logical_id = "ee852f55-3b8f-41f6-b86f-bb4507667b57"
+content_hash = "sha256:2f77c16c9427a95cf046c4ebd085bbcff43e90dafde286f87c62cdab07a033ec"
+size = 14632
+mtime_ms = 1792126595975
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/ee852f55-3b8f-41f6-b86f-bb4507667b57/18905c31-1bd7-427a-9968-439c4462fc5c"
+storage_version_token = "1792126639543892"
+content_type = "text/html"
