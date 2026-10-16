@@ -6,9 +6,9 @@ import { StatusBadge, RiskScoreMeter, StudySummary } from "@/pages/result";
 import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Globe, ChevronRight, AlertTriangle, Shield, CheckCircle } from "lucide-react";
+import { Globe, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
 import { riskInputSchema } from "@shared/schema";
-import { quoteIsFresh } from "@shared/live-types";
+import { calendarIsFresh, quoteIsFresh } from "@shared/live-types";
 import { getStudyReference, getStudyWarnings } from "@shared/study-market";
 import { useLanguage } from "@/lib/language-context";
 import { useMarket } from "@/hooks/use-market";
@@ -20,12 +20,11 @@ const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "mark
 
 export default function Home() {
   const { language, setLanguage, t } = useLanguage();
-  const { draft, setDraft, setSnapshot } = useStudy();
+  const { draft, setDraft, snapshot: rawSnap, setSnapshot } = useStudy();
   const market = useMarket();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<RiskInput | null>(null);
-  const { snapshot: rawSnap } = useStudy();
   const current = submitted && paramsKey(submitted) === paramsKey({ ...draft, modal: Number(draft.modal) }) ? submitted : null;
   const stale = !!submitted && !current;
   const calc = useQuery<RiskResult>({
@@ -44,7 +43,7 @@ export default function Home() {
     justSubmitted.current = false;
     if (window.matchMedia("(min-width: 1024px)").matches) return;
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [calc.data]);
+  }, [calc.data, submitted]);
   const snap = current && rawSnap && rawSnap.paramsKey === paramsKey(current) ? rawSnap : null;
 
   const ctx = market.context.isError ? null : market.context.data;
@@ -106,29 +105,27 @@ export default function Home() {
       maxLayer: p.maxLayer, experience: p.experience, marketCondition: p.marketCondition,
     });
     setSubmitted(p);
-    window.history.replaceState(null, "", `?${params.toString()}`);
+    window.history.replaceState(window.history.state, "", `?${params.toString()}`);
     justSubmitted.current = true;
   };
 
   const liveWarnings = getStudyWarnings(ctx, market.now, market.online);
+  const calendarFresh = market.online && calendarIsFresh(ctx?.calendar, market.now);
   const trendWord = reference.analysis?.trend === "up" ? t("naik", "up") : t("turun", "down");
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mrg-check-page max-w-6xl mx-auto px-4 py-3 sm:px-6 sm:py-4">
-        <MRGBrandBar />
         <PwaInstall toolbarId="mrg-install-toolbar" />
-        <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
-          <Link href="/analysis" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted" data-testid="link-live-summary">
-            <Shield className="w-4 h-4 shrink-0" />{t("Grafik & berita", "Chart & news")}
-          </Link>
-          <div className="flex items-center gap-2">
+        <header className="mrg-calculator-toolbar">
+          <MRGBrandBar />
+          <div className="mrg-calculator-actions">
           <span id="mrg-install-toolbar" className="live-header-install" />
           <Button variant="default" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="gap-2" aria-label={t("Ganti ke bahasa Inggris", "Switch to Indonesian")} data-testid="button-language-toggle">
             <Globe className="w-4 h-4" />{language === "id" ? "EN" : "ID"}
           </Button>
           </div>
-        </div>
+        </header>
 
         <div className="mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
@@ -145,7 +142,7 @@ export default function Home() {
         <Card>
           <CardHeader className="px-4 sm:px-6">
             <CardTitle className="text-lg sm:text-xl">{t("Skenario Anda", "Your scenario")}</CardTitle>
-            <CardDescription>{t("Tidak perlu harga, lot, ekuitas, atau catatan posisi.", "No price, lots, equity, or position records needed.")}</CardDescription>
+            <CardDescription>{t("Isi skenario seperti simulator dasar MRG.", "Set your scenario as in the original MRG simulator.")}</CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={submit} className="live-stack" noValidate>
@@ -205,6 +202,7 @@ export default function Home() {
                 </div>
               </div>
 
+              <p className="live-small">{t("Default: Linear Averaging · 30 poin · 3 layer · Pemula. Modal dan kondisi pasar tetap Anda tentukan.", "Defaults: Linear Averaging · 30 points · 3 layers · Beginner. Set your own capital and market condition.")}</p>
               {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
               <Button type="submit" size="lg" className="w-full h-12" data-testid="button-cek-risiko">
                 {t("Cek Risiko", "Cek Risiko")}<ChevronRight className="w-5 h-5 ml-2" />
@@ -214,40 +212,6 @@ export default function Home() {
         </Card>
 
         <div className="grid gap-4 min-w-0">
-              <section className="mrg-market-helper rounded-lg border border-border p-4" data-testid="market-glance">
-                <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
-                <p className="live-small" data-testid="text-quote-status">
-                  {market.usableQuote ? `XUL10 ${market.usableQuote.price.toLocaleString("id-ID", { maximumFractionDigits: 2 })} · ${t("segar", "fresh")}` : t("Harga XUL10 tidak tersedia atau tidak segar; tidak ditampilkan sebagai live.", "No fresh live XUL10 price; nothing is shown as live.")}
-                  {" · "}{ctx ? t(`Kalender ${ctx.calendar.status === "ready" ? (ctx.calendar.complete ? "lengkap" : "parsial") : "tidak tersedia"}`, `Calendar ${ctx.calendar.status === "ready" ? (ctx.calendar.complete ? "complete" : "partial") : "unavailable"}`) : t("Kalender tidak tersedia", "Calendar unavailable")}
-                </p>
-                {liveWarnings.length > 0 && <ul className="mrg-summary-notes" data-testid="list-context-warnings">{liveWarnings.map((w, i) => <li key={i}>{t(w.id, w.en)}</li>)}</ul>}
-              <div className="mt-3" data-testid="market-helper">
-                {reference.status === "ready" ? (
-                  <>
-                    <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
-                    <p className="live-small">
-                      LGD Daily · D1 · {t("candle tertutup", "closed candle")} {reference.analysis!.lastDate}
-                      {" · "}{t("diterima", "received")} {new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-GB", { timeZone: "Asia/Jakarta", dateStyle: "short", timeStyle: "medium" }).format(new Date(reference.receivedAt!))} WIB.
-                      {" "}{t("Emas referensi, bukan kepastian arah XUL10.", "Gold reference, not a certain XUL10 direction.")}
-                    </p>
-                    <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      {draft.d1Key ? t("Trending dari D1 dikonfirmasi", "Trending from D1 confirmed") : t("Gunakan Trending dari referensi ini", "Use Trending from this reference")}
-                    </Button>
-                  </>
-                ) : (
-                  <p>{reference.status === "mixed"
-                    ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.")
-                    : t("Data pasar tidak tersedia atau tidak segar. Pilih kondisi pasar sendiri; perhitungan tetap bisa dijalankan.", "Market data is unavailable or not fresh. Choose the market condition yourself; the calculation still works.")}</p>
-                )}
-                {notice && <p role="status" className="live-error">{notice}</p>}
-                <details className="live-details">
-                  <summary>{t("Lihat dasar data", "See the evidence")}</summary>
-                  <StudyEvidence reference={reference} warnings={liveWarnings} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
-                </details>
-              </div>
-              </section>
-
         <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" className="rounded-lg border border-border bg-card p-4 sm:p-6">
           <h2 className="text-lg font-bold mb-2">{t("Hasil Cek Risiko", "Risk check result")}</h2>
           {!submitted && <p className="text-sm text-muted-foreground">{t("Isi keenam kolom lalu tekan Cek Risiko. Hasil muncul di sini.", "Fill the six fields and press Cek Risiko. The result appears here.")}</p>}
@@ -267,10 +231,39 @@ export default function Home() {
               <div>
                 <StudySummary result={calc.data} params={current} snapshot={snap} language={language} t={t} compact />
               </div>
-              <Link href={`/result?${new URLSearchParams({ modal: String(current.modal), targetPoin: current.targetPoin, strategy: current.strategy, maxLayer: current.maxLayer, experience: current.experience, marketCondition: current.marketCondition }).toString()}`} className="text-sm underline" data-testid="link-detail-lengkap">{t("Detail lengkap dan bandingkan (opsional)", "Full details and compare (optional)")}</Link>
             </div>
           )}
         </section>
+              <section className="mrg-market-helper rounded-lg border border-border p-4" data-testid="market-glance">
+                <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
+                <p className="live-small" data-testid="text-quote-status">
+                  {market.usableQuote ? `XUL10 ${market.usableQuote.price.toLocaleString("id-ID", { maximumFractionDigits: 2 })} · ${t("segar", "fresh")}` : t("Harga XUL10 tidak tersedia atau tidak segar; tidak ditampilkan sebagai live.", "No fresh live XUL10 price; nothing is shown as live.")}
+                  {" · "}{calendarFresh ? t("Kalender lengkap & segar", "Calendar complete & fresh") : t("Kalender belum dapat dinilai", "Calendar cannot be assessed")}
+                </p>
+                {liveWarnings.length > 0 && <ul className="mrg-summary-notes" data-testid="list-context-warnings">{liveWarnings.map((w, i) => <li key={i}>{t(w.id, w.en)}</li>)}</ul>}
+              <div className="mt-3" data-testid="market-helper">
+                {reference.status === "ready" ? (
+                  <>
+                    <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
+                    <p className="live-small">{t("LGD Daily · emas referensi, bukan harga XUL10 yang identik.", "LGD Daily · reference gold, not an identical XUL10 price.")}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      {draft.d1Key ? t("Trending dari D1 dikonfirmasi", "Trending from D1 confirmed") : t("Gunakan Trending dari referensi ini", "Use Trending from this reference")}
+                    </Button>
+                  </>
+                ) : (
+                  <p>{reference.status === "mixed"
+                    ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.")
+                    : t("Data pasar tidak tersedia atau tidak segar. Pilih kondisi pasar sendiri; perhitungan tetap bisa dijalankan.", "Market data is unavailable or not fresh. Choose the market condition yourself; the calculation still works.")}</p>
+                )}
+                {notice && <p role="status" className="live-error">{notice}</p>}
+                <details className="live-details">
+                  <summary>{t("Lihat dasar data", "See the evidence")}</summary>
+                  <StudyEvidence reference={reference} warnings={liveWarnings} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
+                </details>
+              </div>
+              </section>
+
         </div>
         </div>
 
@@ -279,10 +272,7 @@ export default function Home() {
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}
           </p>
           <div className="flex justify-center gap-4 text-xs flex-wrap">
-            <Link href="/live" className="text-muted-foreground hover:text-foreground underline">{t("Ringkasan (opsional)", "Overview (optional)")}</Link>
             <Link href="/literasi" className="text-muted-foreground hover:text-foreground underline">{t("Literasi", "Literacy")}</Link>
-            <Link href="/positions" className="text-muted-foreground hover:text-foreground underline">{t("Posisi tersimpan (opsional)", "Saved positions (optional)")}</Link>
-            <Link href="/analysis" className="text-muted-foreground hover:text-foreground underline">{t("Analisis (opsional)", "Analysis (optional)")}</Link>
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground underline" data-testid="link-privacy">{t("Kebijakan Privasi", "Privacy Policy")}</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground underline" data-testid="link-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Link>
           </div>

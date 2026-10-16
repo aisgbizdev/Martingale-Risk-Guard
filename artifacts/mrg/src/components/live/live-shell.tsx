@@ -1,17 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "wouter";
-import { Activity, BarChart3, BookOpen, ChevronDown, Globe2, Layers3 } from "lucide-react";
+import { Link } from "wouter";
+import { Globe2 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 
-const routes = [
-  { href: "/live", id: "overview", icon: Activity, idText: "Ringkasan", enText: "Overview" },
-  { href: "/positions", id: "positions", icon: Layers3, idText: "Posisi", enText: "Positions" },
-  { href: "/analysis", id: "analysis", icon: BarChart3, idText: "Analisis", enText: "Analysis" },
-];
-
 export function LiveShell({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
   const { language, setLanguage, t, languageStorageAvailable } = useLanguage();
   const [introOpen, setIntroOpen] = useState(() => {
     try { return localStorage.getItem("mrg_welcome_seen") !== "1"; }
@@ -31,17 +24,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
             <img src="/newsmaker-logo-white.png" alt="Newsmaker" />
             <span><strong>Martingale Risk Guard</strong><small>MRG · Newsmaker&nbsp;&nbsp;|&nbsp;&nbsp;Market context · position exposure</small></span>
           </Link>
-          <nav className="live-nav" aria-label={t("Navigasi utama", "Main navigation")} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Link href="/" aria-current={location.split("?")[0] === "/" ? "page" : undefined} data-testid="link-primary-cek-nav"><BookOpen size={16} />{t("Cek Risiko", "Risk Check")}</Link>
-            <details className="relative" data-testid="menu-optional">
-              <summary className="live-icon-btn cursor-pointer list-none">{t("Opsional", "Optional")}<ChevronDown size={14} /></summary>
-              <div className="absolute right-0 z-50 mt-1 flex min-w-[11rem] flex-col gap-1 rounded-md border border-border bg-card p-2">
-                {routes.map(({ href, id, icon: Icon, idText, enText }) => (
-                  <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>
-                ))}
-              </div>
-            </details>
-          </nav>
+          <Link href="/" className="live-link" data-testid="link-back-calculator"><strong>{t("Kembali ke kalkulator", "Back to calculator")}</strong></Link>
           <div className="live-row" style={{ gap: 6 }}>
             <span id="mrg-install-toolbar" className="live-header-install" />
             <button className="live-icon-btn" onClick={() => setLanguage(language === "id" ? "en" : "id")} aria-label={t("Ganti bahasa", "Change language")}>
@@ -60,10 +43,6 @@ export function LiveShell({ children }: { children: ReactNode }) {
         </aside>
         {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
         <PwaInstall toolbarId="mrg-install-toolbar" />
-        {["/live", "/positions", "/analysis"].includes(location.split("?")[0]) && <div className="live-alert" data-testid="banner-cek-risiko">
-          <span>{t("Ini fitur opsional. Untuk membandingkan Martingale dan Linear Averaging, mulai dari Cek Risiko.", "This is an optional feature. To compare Martingale and Linear Averaging, start with Risk Check.")} </span>
-          <Link href="/" className="live-link" data-testid="link-primary-cek"><strong>{t("Buka Cek Risiko", "Open Risk Check")}</strong></Link>
-        </div>}
         <main className="live-main">{children}</main>
         <footer className="live-footer" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <span className="live-small">MRG · {t("Alat informasi, bukan broker atau layanan transaksi.", "Information tool, not a broker or trading service.")}</span>
