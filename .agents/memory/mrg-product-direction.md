@@ -50,3 +50,9 @@ Pengguna kemudian menegaskan tidak ingin menggunakan AI untuk analisis MRG. Ia m
 **Why:** Pengguna mengatakan “gw gak mau menggunakan ai” dan “esensi nya konsep mrg, design dan beberapa fiturenya mirip tradepilot”.
 
 **How to apply:** Jangan menganggap persetujuan pembacaan berita otomatis sebelumnya sebagai persetujuan AI berkelanjutan. Bahas pengganti berbasis aturan dan data terstruktur, termasuk keterbatasan interpretasi berita bebas; jangan menonaktifkan atau mengganti implementasi sebelum arah disepakati. Referensi TradePilot bukan izin menyalin produk atau menambah dashboard/sinyal di luar kalkulator MRG.
+
+Pengguna memilih penandaan redaksi Newsmaker agar berita ikut memengaruhi perhitungan, dan menegaskan “warna tetap mengikuti skin newsmaker jgn kearah TP”.
+
+**Why:** Pengguna mengonfirmasi pilihan pengganti analisis AI dan membatasi referensi TradePilot hanya pada rancangan interaksi/tampilan, bukan identitas warna.
+
+**How to apply:** Pertahankan skin Newsmaker tanpa mengasumsikan tema gelap atau aksen TradePilot. Perlukan kontrak data penandaan redaksi yang nyata, bukan mengembalikan kewajiban pengguna mengisi atau programmer mengedit penilaian artikel satu per satu. Penandaan yang hilang tidak boleh dianggap netral.
