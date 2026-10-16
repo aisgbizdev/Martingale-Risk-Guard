@@ -38,3 +38,9 @@ Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setela
 **Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.
 
 **How to apply:** Rujuk paket pada `docs/mrg-saran-modal-review.html`. Persetujuan aturan editorial tidak berarti artikel aktual sudah ditinjau; jangan membuat penandaan isi atau menyebut fundamental lengkap tanpa bukti yang cocok.
+
+Pengguna memilih melengkapi pembacaan berita otomatis terlebih dahulu, bukan menjadikan simulasi teknikal dan kalender sebagai pengganti fundamental.
+
+**Why:** Saran terhenti karena mewajibkan kurasi manual yang belum tersedia, padahal pengguna menginginkan saran dari modal saja dan sumber Newsmaker yang sudah diberikan.
+
+**How to apply:** Penilaian isi berita tidak boleh bergantung pada pengisian manual per artikel. Tetap pertahankan bukti, asal penilaian, dan kegagalan eksplisit; jangan sekadar menghapus penghalang atau menganggap berita netral. Pilihan otomatis tidak dengan sendirinya menetapkan vendor AI atau persetujuan biaya.
