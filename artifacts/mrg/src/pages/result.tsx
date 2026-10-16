@@ -45,7 +45,7 @@ interface SavedScenario {
   savedAt: number;
 }
 
-function RiskScoreMeter({ score, status, t }: { score: number; status: string; t: (id: string, en: string) => string }) {
+export function RiskScoreMeter({ score, status, t }: { score: number; status: string; t: (id: string, en: string) => string }) {
   return (
     <div className="relative w-full max-w-md mx-auto">
       <div className="h-3 sm:h-4 bg-muted rounded-full overflow-hidden flex">
@@ -69,7 +69,7 @@ function RiskScoreMeter({ score, status, t }: { score: number; status: string; t
   );
 }
 
-function StatusBadge({ status, t }: { status: string; t: (id: string, en: string) => string }) {
+export function StatusBadge({ status, t }: { status: string; t: (id: string, en: string) => string }) {
   if (status === "AMAN") {
     return (
       <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-md">
@@ -233,9 +233,9 @@ function getMetricExplanation(
 
 const LEGACY_ADVICE = /optimal|200[.,]000|tambah modal|add capital|deposit|setoran/i;
 
-function StudySummary({ result, params, snapshot, language, t }: {
+export function StudySummary({ result, params, snapshot, language, t, compact = false }: {
   result: RiskResult; params: RiskInput; snapshot: ReturnType<typeof useStudy>["snapshot"];
-  language: "id" | "en"; t: (id: string, en: string) => string;
+  language: "id" | "en"; t: (id: string, en: string) => string; compact?: boolean;
 }) {
   const mart = params.strategy === "Martingale";
   const trend = params.marketCondition === "Trending";
@@ -253,40 +253,50 @@ function StudySummary({ result, params, snapshot, language, t }: {
   ];
   const warnings = result.warnings.map(w => parseLocalizedText(w, language)).filter(w => !LEGACY_ADVICE.test(w)).slice(0, 3);
   const notes = result.psychologyNotes.map(w => parseLocalizedText(w, language)).slice(0, 4);
+  const shown = compact ? sentences.slice(0, 3) : sentences;
+  const warningsBox = warnings.length > 0 && (
+    <div className="mrg-summary-box" data-testid="summary-warnings">
+      <strong className="text-sm">{t("Peringatan penting", "Important warnings")}</strong>
+      <ul className="mrg-summary-notes">{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+    </div>
+  );
+  const notesBox = notes.length > 0 && (
+    <div className="mrg-summary-box" data-testid="summary-psychology">
+      <strong className="text-sm">{t("Catatan perilaku", "Behavior notes")}</strong>
+      <ul className="mrg-summary-notes">{notes.map((w, i) => <li key={i}>{w}</li>)}</ul>
+    </div>
+  );
+  const sourceBox = (
+    <div className="mrg-summary-box" data-testid="summary-source">
+      <strong className="text-sm">{t("Sumber, waktu, dan batas", "Source, time, and limits")}</strong>
+      {snapshot ? (
+        <>
+          <p className="live-small" style={{ margin: "4px 0" }}>
+            {snapshot.confirmedD1
+              ? t("Kondisi Trending dikonfirmasi Anda dari referensi D1 di bawah.", "You confirmed the Trending condition from the D1 reference below.")
+              : t("Kondisi pasar dipilih manual; ini bukan penilaian live lengkap.", "The market condition was chosen manually; this is not a complete live assessment.")}
+          </p>
+          <StudyEvidence reference={snapshot.reference} warnings={snapshot.warnings} quote={snapshot.quote} calendar={snapshot.calendar} frozenAt={snapshot.capturedAt} />
+        </>
+      ) : (
+        <p className="live-small">{t("Konteks pasar tidak dipertahankan (halaman dimuat ulang atau dibuka dari tautan). Keenam input tetap dari URL dan hasil aturan studi tetap dapat dibaca; konfirmasi D1 tidak disimpulkan.", "Market context was not retained (page reloaded or opened from a link). The six inputs still come from the URL and the study-rule result is readable; no D1 confirmation is inferred.")}</p>
+      )}
+      <p className="live-small" style={{ marginTop: 6 }}>{t("Edukasi dan mitigasi risiko, bukan saran transaksi atau order broker. Hasil dari aturan studi historis, bukan prediksi.", "Education and risk mitigation, not trading advice or a broker order. Output of historical study rules, not a forecast.")}</p>
+    </div>
+  );
   return (
     <div className="mrg-summary" data-testid="study-summary">
       <p className="text-xs text-muted-foreground">{t("Skor aturan studi, bukan probabilitas rugi. Ambang: 0-35 relatif rendah, 36-60 berisiko, 61-100 tidak layak menurut aturan studi.", "Study-rule score, not a loss probability. Thresholds: 0-35 relatively low, 36-60 risky, 61-100 not viable under the study rules.")}</p>
       <div className="mrg-summary-box">
-        {sentences.map((x, i) => <p key={i} style={{ marginBottom: 6 }}>{x}</p>)}
+        {shown.map((x, i) => <p key={i} style={{ marginBottom: 6 }}>{x}</p>)}
       </div>
-      {warnings.length > 0 && (
-        <div className="mrg-summary-box" data-testid="summary-warnings">
-          <strong className="text-sm">{t("Peringatan penting", "Important warnings")}</strong>
-          <ul className="mrg-summary-notes">{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-        </div>
-      )}
-      {notes.length > 0 && (
-        <div className="mrg-summary-box" data-testid="summary-psychology">
-          <strong className="text-sm">{t("Catatan perilaku", "Behavior notes")}</strong>
-          <ul className="mrg-summary-notes">{notes.map((w, i) => <li key={i}>{w}</li>)}</ul>
-        </div>
-      )}
-      <div className="mrg-summary-box" data-testid="summary-source">
-        <strong className="text-sm">{t("Sumber, waktu, dan batas", "Source, time, and limits")}</strong>
-        {snapshot ? (
-          <>
-            <p className="live-small" style={{ margin: "4px 0" }}>
-              {snapshot.confirmedD1
-                ? t("Kondisi Trending dikonfirmasi Anda dari referensi D1 di bawah.", "You confirmed the Trending condition from the D1 reference below.")
-                : t("Kondisi pasar dipilih manual; ini bukan penilaian live lengkap.", "The market condition was chosen manually; this is not a complete live assessment.")}
-            </p>
-            <StudyEvidence reference={snapshot.reference} warnings={snapshot.warnings} quote={snapshot.quote} calendar={snapshot.calendar} frozenAt={snapshot.capturedAt} />
-          </>
-        ) : (
-          <p className="live-small">{t("Konteks pasar tidak dipertahankan (halaman dimuat ulang atau dibuka dari tautan). Keenam input tetap dari URL dan hasil aturan studi tetap dapat dibaca; konfirmasi D1 tidak disimpulkan.", "Market context was not retained (page reloaded or opened from a link). The six inputs still come from the URL and the study-rule result is readable; no D1 confirmation is inferred.")}</p>
-        )}
-        <p className="live-small" style={{ marginTop: 6 }}>{t("Edukasi dan mitigasi risiko, bukan saran transaksi atau order broker. Hasil dari aturan studi historis, bukan prediksi.", "Education and risk mitigation, not trading advice or a broker order. Output of historical study rules, not a forecast.")}</p>
-      </div>
+      {warningsBox}
+      {compact ? (
+        <details className="live-details" data-testid="summary-more">
+          <summary>{t("Catatan perilaku dan sumber (opsional)", "Behavior notes and sources (optional)")}</summary>
+          {notesBox}{sourceBox}
+        </details>
+      ) : (<>{notesBox}{sourceBox}</>)}
     </div>
   );
 }

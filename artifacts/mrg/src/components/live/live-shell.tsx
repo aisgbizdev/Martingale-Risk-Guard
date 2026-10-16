@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Activity, BarChart3, BookOpen, Globe2, Layers3, Menu, X } from "lucide-react";
+import { Activity, BarChart3, BookOpen, ChevronDown, Globe2, Layers3 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 
@@ -13,7 +13,6 @@ const routes = [
 export function LiveShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { language, setLanguage, t, languageStorageAvailable } = useLanguage();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [introOpen, setIntroOpen] = useState(() => {
     try { return localStorage.getItem("mrg_welcome_seen") !== "1"; }
     catch { return true; }
@@ -28,32 +27,28 @@ export function LiveShell({ children }: { children: ReactNode }) {
     <div className="live-shell">
       <div className="live-container">
         <header className="live-header">
-          <Link href="/live" className="live-brand" aria-label="Martingale Risk Guard · Newsmaker home">
+          <Link href="/" className="live-brand" aria-label="Martingale Risk Guard · Newsmaker home">
             <img src="/newsmaker-logo-white.png" alt="Newsmaker" />
             <span><strong>Martingale Risk Guard</strong><small>MRG · Newsmaker&nbsp;&nbsp;|&nbsp;&nbsp;Market context · position exposure</small></span>
           </Link>
-          <nav className="live-nav" aria-label={t("Navigasi utama", "Main navigation")}>
-            {routes.map(({ href, id, icon: Icon, idText, enText }) => (
-              <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}>
-                <Icon size={16} />{t(idText, enText)}
-              </Link>
-            ))}
+          <nav className="live-nav" aria-label={t("Navigasi utama", "Main navigation")} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Link href="/" aria-current={location.split("?")[0] === "/" ? "page" : undefined} data-testid="link-primary-cek-nav"><BookOpen size={16} />{t("Cek Risiko", "Risk Check")}</Link>
+            <details className="relative" data-testid="menu-optional">
+              <summary className="live-icon-btn cursor-pointer list-none">{t("Opsional", "Optional")}<ChevronDown size={14} /></summary>
+              <div className="absolute right-0 z-50 mt-1 flex min-w-[11rem] flex-col gap-1 rounded-md border border-border bg-card p-2">
+                {routes.map(({ href, id, icon: Icon, idText, enText }) => (
+                  <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>
+                ))}
+              </div>
+            </details>
           </nav>
           <div className="live-row" style={{ gap: 6 }}>
             <span id="mrg-install-toolbar" className="live-header-install" />
-            <Link href="/" className="live-icon-btn live-basic-shortcut" title={t("Simulasi Dasar", "Basic simulation")}><BookOpen size={16} /><span className="hidden sm:inline">{t("Simulasi Dasar", "Basic")}</span></Link>
             <button className="live-icon-btn" onClick={() => setLanguage(language === "id" ? "en" : "id")} aria-label={t("Ganti bahasa", "Change language")}>
               <Globe2 size={16} />{language === "id" ? "EN" : "ID"}
             </button>
-            <button className="live-icon-btn md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? t("Tutup menu", "Close menu") : t("Buka menu", "Open menu")}>
-              {menuOpen ? <X size={17} /> : <Menu size={17} />}
-            </button>
           </div>
         </header>
-        {menuOpen && <nav className="live-nav live-mobile-menu" style={{ display: "flex", flexWrap: "wrap" }} aria-label={t("Navigasi", "Navigation")}>
-          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
-          <Link href="/" onClick={() => setMenuOpen(false)}><BookOpen size={16}/>{t("Simulasi Dasar", "Basic simulation")}</Link>
-        </nav>}
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
         <aside className="live-critical-note" aria-label={t("Pengenalan MRG", "MRG introduction")}>
           <span>{t("Informasi saja · posisi manual · tanpa order · indeks belum dikalibrasi", "Information only · manual positions · no orders · uncalibrated index")}</span>
@@ -65,10 +60,11 @@ export function LiveShell({ children }: { children: ReactNode }) {
         </aside>
         {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
         <PwaInstall toolbarId="mrg-install-toolbar" />
+        {["/live", "/positions", "/analysis"].includes(location.split("?")[0]) && <div className="live-alert" data-testid="banner-cek-risiko">
+          <span>{t("Ini fitur opsional. Untuk membandingkan Martingale dan Linear Averaging, mulai dari Cek Risiko.", "This is an optional feature. To compare Martingale and Linear Averaging, start with Risk Check.")} </span>
+          <Link href="/" className="live-link" data-testid="link-primary-cek"><strong>{t("Buka Cek Risiko", "Open Risk Check")}</strong></Link>
+        </div>}
         <main className="live-main">{children}</main>
-        <nav className="live-tabbar" aria-label={t("Navigasi utama", "Main navigation")}>
-          {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon /><span>{t(idText, enText)}</span></Link>)}
-        </nav>
         <footer className="live-footer" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <span className="live-small">MRG · {t("Alat informasi, bukan broker atau layanan transaksi.", "Information tool, not a broker or trading service.")}</span>
           <span style={{ display: "flex", gap: 16 }}><Link className="live-link live-small" href="/literasi">{t("Literasi", "Literacy")}</Link><Link className="live-link live-small" href="/privacy">{t("Privasi", "Privacy")}</Link><Link className="live-link live-small" href="/terms">{t("Ketentuan", "Terms")}</Link></span>

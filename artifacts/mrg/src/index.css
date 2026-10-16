@@ -864,3 +864,15 @@ footer.live-footer .live-link:hover { color:#fff; }
 .mrg-summary p { margin:0; line-height:1.65; font-size:14px; }
 .mrg-summary-notes { margin:0; padding-left:18px; display:grid; gap:4px; font-size:13px; }
 .mrg-summary-box { padding:12px 14px; border:1px solid hsl(var(--border)); border-radius:10px; background:hsl(var(--card)); }
+
+/* Keep the simulator compact without shrinking mobile controls. */
+.mrg-check-page .live-form-grid { align-items:start; }
+.mrg-check-page .live-field select,
+.mrg-check-page .live-field input { min-height:44px; height:44px; }
+.mrg-check-page .mrg-market-helper { margin:0; }
+@media (min-width:640px) {
+  .mrg-check-page .live-form-grid { gap:12px 14px; }
+}
+@media (max-width:639px) {
+  .mrg-check-page .mrg-brand-bar-note { display:none; }
+}

@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import type { RiskInput, RiskResult } from "@shared/schema";
+import { StatusBadge, RiskScoreMeter, StudySummary } from "@/pages/result";
 import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,17 +13,39 @@ import { getStudyReference, getStudyWarnings } from "@shared/study-market";
 import { useLanguage } from "@/lib/language-context";
 import { useMarket } from "@/hooks/use-market";
 import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
+import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
 
 const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"] as const;
 
 export default function Home() {
-  const [, setLocation] = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const { draft, setDraft, setSnapshot } = useStudy();
   const market = useMarket();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<RiskInput | null>(null);
+  const { snapshot: rawSnap } = useStudy();
+  const current = submitted && paramsKey(submitted) === paramsKey({ ...draft, modal: Number(draft.modal) }) ? submitted : null;
+  const stale = !!submitted && !current;
+  const calc = useQuery<RiskResult>({
+    enabled: !!submitted,
+    queryKey: ["/api/calculate-risk", submitted],
+    queryFn: async ({ signal }) => {
+      const r = await fetch("/api/calculate-risk", { signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(submitted) });
+      if (!r.ok) throw new Error("Gagal menghitung risiko");
+      return r.json();
+    },
+  });
+  const resultRef = useRef<HTMLElement | null>(null);
+  const justSubmitted = useRef(false);
+  useEffect(() => {
+    if (!justSubmitted.current || !calc.data) return;
+    justSubmitted.current = false;
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [calc.data]);
+  const snap = current && rawSnap && rawSnap.paramsKey === paramsKey(current) ? rawSnap : null;
 
   const ctx = market.context.isError ? null : market.context.data;
   const reference = getStudyReference(ctx, market.now, market.online);
@@ -80,35 +105,43 @@ export default function Home() {
       modal: String(p.modal), targetPoin: p.targetPoin, strategy: p.strategy,
       maxLayer: p.maxLayer, experience: p.experience, marketCondition: p.marketCondition,
     });
-    setLocation(`/result?${params.toString()}`);
+    setSubmitted(p);
+    window.history.replaceState(null, "", `?${params.toString()}`);
+    justSubmitted.current = true;
   };
 
+  const liveWarnings = getStudyWarnings(ctx, market.now, market.online);
   const trendWord = reference.analysis?.trend === "up" ? t("naik", "up") : t("turun", "down");
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-3 sm:px-6 sm:py-6">
+      <div className="mrg-check-page max-w-6xl mx-auto px-4 py-3 sm:px-6 sm:py-4">
         <MRGBrandBar />
-        <div className="flex justify-between items-center mb-4 gap-2">
-          <Link href="/live" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted" data-testid="link-live-summary">
-            <Shield className="w-4 h-4" />{t("Ringkasan pasar live (opsional)", "Live market summary (optional)")}
+        <PwaInstall toolbarId="mrg-install-toolbar" />
+        <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
+          <Link href="/analysis" className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold hover:bg-muted" data-testid="link-live-summary">
+            <Shield className="w-4 h-4 shrink-0" />{t("Grafik & berita", "Chart & news")}
           </Link>
-          <Button variant="default" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="gap-2" data-testid="button-language-toggle">
-            <Globe className="w-4 h-4" />{language === "id" ? "English" : "Indonesia"}
+          <div className="flex items-center gap-2">
+          <span id="mrg-install-toolbar" className="live-header-install" />
+          <Button variant="default" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="gap-2" aria-label={t("Ganti ke bahasa Inggris", "Switch to Indonesian")} data-testid="button-language-toggle">
+            <Globe className="w-4 h-4" />{language === "id" ? "EN" : "ID"}
           </Button>
-        </div>
-
-        <div className="text-center mb-4">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
-          <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed mt-2">
-            {t("Simulator edukasi untuk pemula: isi enam hal, tekan Cek Risiko, dapatkan satu ringkasan. Bukan order broker, bukan sinyal entry/exit.", "Educational simulator for beginners: fill six fields, press Cek Risiko, get one summary. Not a broker order, not an entry/exit signal.")}
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-md">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">{t("Edukasi & mitigasi risiko", "For education & risk mitigation only")}</span>
           </div>
         </div>
 
+        <div className="mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed mt-1">
+            {t("Isi skenario → Cek Risiko → pahami hasilnya.", "Set your scenario → check risk → understand the result.")}
+          </p>
+          <div className="mt-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span className="text-xs">{t("Edukasi risiko · bukan sinyal atau transaksi broker", "Risk education · not trading signals or broker orders")}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2 items-start">
         <Card>
           <CardHeader className="px-4 sm:px-6">
             <CardTitle className="text-lg sm:text-xl">{t("Skenario Anda", "Your scenario")}</CardTitle>
@@ -127,7 +160,7 @@ export default function Home() {
                     ))}
                   </div>
                   <input id="f-modal" type="number" inputMode="decimal" min="0" step="any" value={draft.modal} onChange={(e) => set({ modal: e.target.value })} placeholder={t("Contoh: 200000", "Example: 200000")} data-testid="input-modal" aria-invalid={!!error && !(Number(draft.modal) > 0)} />
-                  <span className="live-small">{t("Modal skenario untuk simulasi, bukan saldo akun dan bukan anjuran setoran. USD 200.000 hanyalah contoh dari aturan studi.", "Scenario capital for simulation, not an account balance or a recommended deposit. USD 200,000 is only an example from the study rules.")}</span>
+                  <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
                 </div>
                 <div className="live-field">
                   <label htmlFor="f-target">{t("Target poin per siklus", "Target points per cycle")}</label>
@@ -172,11 +205,26 @@ export default function Home() {
                 </div>
               </div>
 
-              <section className="mrg-market-helper" aria-live="polite" data-testid="market-helper">
-                <strong>{t("Saran dari data pasar (opsional)", "Suggestion from market data (optional)")}</strong>
+              {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
+              <Button type="submit" size="lg" className="w-full h-12" data-testid="button-cek-risiko">
+                {t("Cek Risiko", "Cek Risiko")}<ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 min-w-0">
+              <section className="mrg-market-helper rounded-lg border border-border p-4" data-testid="market-glance">
+                <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
+                <p className="live-small" data-testid="text-quote-status">
+                  {market.usableQuote ? `XUL10 ${market.usableQuote.price.toLocaleString("id-ID", { maximumFractionDigits: 2 })} · ${t("segar", "fresh")}` : t("Harga XUL10 tidak tersedia atau tidak segar; tidak ditampilkan sebagai live.", "No fresh live XUL10 price; nothing is shown as live.")}
+                  {" · "}{ctx ? t(`Kalender ${ctx.calendar.status === "ready" ? (ctx.calendar.complete ? "lengkap" : "parsial") : "tidak tersedia"}`, `Calendar ${ctx.calendar.status === "ready" ? (ctx.calendar.complete ? "complete" : "partial") : "unavailable"}`) : t("Kalender tidak tersedia", "Calendar unavailable")}
+                </p>
+                {liveWarnings.length > 0 && <ul className="mrg-summary-notes" data-testid="list-context-warnings">{liveWarnings.map((w, i) => <li key={i}>{t(w.id, w.en)}</li>)}</ul>}
+              <div className="mt-3" data-testid="market-helper">
                 {reference.status === "ready" ? (
                   <>
-                    <p>{t(`Referensi emas harian sedang ${trendWord} (close, MA20, MA50 searah). Ini dapat mengisi kondisi pasar sebagai Trending, hanya jika Anda setuju.`, `The daily gold reference is trending ${trendWord} (close, MA20, MA50 aligned). It can fill the market condition as Trending, only if you agree.`)}</p>
+                    <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
                     <p className="live-small">
                       LGD Daily · D1 · {t("candle tertutup", "closed candle")} {reference.analysis!.lastDate}
                       {" · "}{t("diterima", "received")} {new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-GB", { timeZone: "Asia/Jakarta", dateStyle: "short", timeStyle: "medium" }).format(new Date(reference.receivedAt!))} WIB.
@@ -195,26 +243,46 @@ export default function Home() {
                 {notice && <p role="status" className="live-error">{notice}</p>}
                 <details className="live-details">
                   <summary>{t("Lihat dasar data", "See the evidence")}</summary>
-                  <StudyEvidence reference={reference} warnings={getStudyWarnings(ctx, market.now, market.online)} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
+                  <StudyEvidence reference={reference} warnings={liveWarnings} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
                 </details>
+              </div>
               </section>
 
-              {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
-              <Button type="submit" size="lg" className="w-full h-12" data-testid="button-cek-risiko">
-                {t("Cek Risiko", "Cek Risiko")}<ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" className="rounded-lg border border-border bg-card p-4 sm:p-6">
+          <h2 className="text-lg font-bold mb-2">{t("Hasil Cek Risiko", "Risk check result")}</h2>
+          {!submitted && <p className="text-sm text-muted-foreground">{t("Isi keenam kolom lalu tekan Cek Risiko. Hasil muncul di sini.", "Fill the six fields and press Cek Risiko. The result appears here.")}</p>}
+          {stale && <p role="status" className="live-error" data-testid="text-result-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; tekan Cek Risiko untuk menghitung ulang.", "Inputs changed. The earlier result no longer applies; press Cek Risiko to recalculate.")}</p>}
+          {current && calc.isLoading && !calc.isError && <p className="text-sm text-muted-foreground">{t("Menghitung...", "Calculating...")}</p>}
+          {current && calc.isError && (
+            <div><p className="live-error">{t("Gagal menghitung risiko. Tidak ada hasil pengganti.", "Failed to calculate. No substitute result.")}</p>
+              <Button variant="outline" size="sm" onClick={() => calc.refetch()}>{t("Coba lagi", "Retry")}</Button></div>
+          )}
+          {current && calc.data && !calc.isError && (
+            <div className="live-stack">
+              <p className="text-xs font-semibold text-muted-foreground">{t("Hasil aturan studi untuk skenario Anda, bukan ukuran risiko akun realtime.", "Study-rule output for your scenario, not a live account-risk measure.")}</p>
+              <div className="text-center"><StatusBadge status={calc.data.status} t={t} />
+                <div className="text-4xl font-mono font-bold mt-3" data-testid="text-risk-score">{calc.data.score}<span className="text-xl text-muted-foreground">/100</span></div>
+                <div className="mt-2"><RiskScoreMeter score={calc.data.score} status={calc.data.status} t={t} /></div>
+              </div>
+              <div>
+                <StudySummary result={calc.data} params={current} snapshot={snap} language={language} t={t} compact />
+              </div>
+              <Link href={`/result?${new URLSearchParams({ modal: String(current.modal), targetPoin: current.targetPoin, strategy: current.strategy, maxLayer: current.maxLayer, experience: current.experience, marketCondition: current.marketCondition }).toString()}`} className="text-sm underline" data-testid="link-detail-lengkap">{t("Detail lengkap dan bandingkan (opsional)", "Full details and compare (optional)")}</Link>
+            </div>
+          )}
+        </section>
+        </div>
+        </div>
 
         <div className="mt-6 text-center px-4">
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4">
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}
           </p>
           <div className="flex justify-center gap-4 text-xs flex-wrap">
+            <Link href="/live" className="text-muted-foreground hover:text-foreground underline">{t("Ringkasan (opsional)", "Overview (optional)")}</Link>
             <Link href="/literasi" className="text-muted-foreground hover:text-foreground underline">{t("Literasi", "Literacy")}</Link>
-            <Link href="/positions" className="text-muted-foreground hover:text-foreground underline">{t("Posisi", "Positions")}</Link>
-            <Link href="/analysis" className="text-muted-foreground hover:text-foreground underline">{t("Analisis", "Analysis")}</Link>
+            <Link href="/positions" className="text-muted-foreground hover:text-foreground underline">{t("Posisi tersimpan (opsional)", "Saved positions (optional)")}</Link>
+            <Link href="/analysis" className="text-muted-foreground hover:text-foreground underline">{t("Analisis (opsional)", "Analysis (optional)")}</Link>
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground underline" data-testid="link-privacy">{t("Kebijakan Privasi", "Privacy Policy")}</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground underline" data-testid="link-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Link>
           </div>

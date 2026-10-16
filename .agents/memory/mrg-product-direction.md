@@ -14,3 +14,9 @@ Pengguna menyetujui seluruh rekomendasi D1–D3 dalam rancangan koreksi pada 16 
 **Why:** Pengguna memilih “Setujui seluruh rekomendasi dan lanjutkan Build” setelah batas label, pengayaan D1, peringatan ATR/kalender, dan parameter sederhana dijelaskan.
 
 **How to apply:** Gunakan keputusan di `docs/mrg-realtime-review.html` sebagai batas pengembangan lanjutan. Perubahan model/parameter fleksibel berskor tetap perlu pembahasan dan persetujuan terpisah.
+
+Pengguna menyetujui satu halaman utama yang menyatukan enam isian simulator awal, konteks pasar, dan hasil Cek Risiko tanpa pindah halaman. Navigasi jurnal posisi tidak lagi ditonjolkan; catatan lama tetap dipertahankan.
+
+**Why:** Pengguna kembali bingung dengan fungsi pada halaman Posisi dan merasa tidak sama dengan MRG lama, lalu menyetujui rancangan satu halaman.
+
+**How to apply:** Pertahankan alur inti pada satu halaman adaptif: isian dan hasil berdampingan di layar besar, berurutan di HP. Chart, berita, dan rincian bersifat opsional; jangan memaksa seluruh isi muat dalam satu viewport ponsel.
