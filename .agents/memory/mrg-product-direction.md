@@ -80,3 +80,9 @@ Pengguna menyetujui saran terbatas Linear maksimal dua layer saat dampak berita 
 **Why:** Pengguna memilih agar hasil tetap tersedia secara terbatas, bukan menunggu penandaan dampak redaksi untuk seluruh perhitungan. Fundamental yang belum dinilai tetap bukan netral.
 
 **How to apply:** Pertahankan pemeriksaan harga/D1/kalender/sumber berita dan batas modal. Tiga layer otomatis memerlukan penilaian lengkap dan kondisi/modal yang memenuhi aturan lama; simulasi manual tiga layer tetap tersedia tanpa mengklaim kelayakan. Jangan mengendurkan batas dua layer hanya karena modal besar.
+
+Pengguna memilih “Tetap referensi; perhitungan tetap ATR”, “Klasik; Fibonacci pembanding”, dan “D1 selesai terakhir, otomatis” untuk pivot/Fibonacci.
+
+**Why:** Pengguna memilih batas ini setelah ditawari alternatif pemetaan jarak relatif dengan batas ATR. Tidak mengintegrasikan level ke target/jarak/layer adalah keputusan pengguna, bukan pekerjaan yang terlupakan.
+
+**How to apply:** Jangan mengaktifkan pemetaan pivot/Fibonacci ke perhitungan atau mengusulkannya sebagai kewajiban tertunda tanpa persetujuan baru. Pertahankan batas sumber LGD Daily versus XUL10 dan jangan mengasumsikan high/low otomatis sebagai swing pilihan pengguna.

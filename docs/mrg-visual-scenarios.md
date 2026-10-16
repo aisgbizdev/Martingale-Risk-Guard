@@ -42,13 +42,25 @@ Default visual: Linear, 3 layer, target 30, jarak 30 poin, lot awal 0,1.
 Kontrol manual menerima kedua strategi dan 1–5 layer. Angka ini tidak otomatis
 disesuaikan pivot, Fibonacci, kalender, berita, atau skor studi.
 
-## Yang belum terintegrasi
-- Tag dampak redaksi belum ditemukan dalam kontrak berita yang diberikan.
-  Saran pasar lengkap tidak dipaksakan dan tidak digantikan AI.
+## Keputusan pivot/Fibonacci yang disepakati
+- Pengguna memilih tetap referensi, bukan mengubah perhitungan ATR.
+  Target saran tetap floor(0,25 × ATR14), jarak tetap ceil(0,5 × ATR14).
+  Tidak ada penggabungan jarak relatif, skor gabungan atau penggantian angka otomatis.
+- Pivot Klasik menjadi acuan utama; Fibonacci naik/turun sebagai pembanding.
+  Woodie/Camarilla tetap tersedia sebagai referensi tambahan, bukan pemilih arah.
 - Pivot Klasik/Woodie/Camarilla dan Fibonacci naik/turun tersedia sebagai acuan
   teknikal dari OHLC D1 tertutup terakhir. Rumus diperiksa pada kalkulator publik
   https://www.newsmaker.id/id/tools/pivot-fibonacci, yang juga menghitung di sisi
   klien dari input OHLC, bukan menerima level siap pakai melalui API.
 - Pemilihan candle terakhir sebagai high/low otomatis dinyatakan eksplisit;
-  bukan swing pilihan pengguna. LGD Daily bukan seri XUL10 identik. Pemetaan
-  level ke perubahan target/jarak/layer belum disepakati dan belum diaktifkan.
+  periode D1 tertutup terakhir, bukan swing pilihan pengguna. LGD Daily bukan
+  seri XUL10 identik. Harga level tidak dipakai sebagai entry/TP XUL10 dan
+  tidak ditempelkan pada chart OANDA XAUUSD.
+- Pilihan Buy/Sell pengguna, snapshot tetap, fallback manual, margin ≤20%,
+  stress ≤10%, serta pembatas berita/kalender tetap berlaku tanpa perubahan.
+  Dampak berita belum dinilai: Linear maksimal dua layer.
+- Mengubah pengaruh pivot/Fibonacci terhadap perhitungan memerlukan persetujuan baru.
+
+## Yang belum terintegrasi
+- Tag dampak redaksi belum ditemukan dalam kontrak berita yang diberikan.
+  Saran pasar lengkap tidak dipaksakan dan tidak digantikan AI.

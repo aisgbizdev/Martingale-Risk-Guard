@@ -17,6 +17,7 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
   return <section className="mt-4 border-t border-border pt-3" data-testid="newsmaker-reference-levels">
     <h3 className="font-semibold">{t("Pivot & Fibonacci · Newsmaker", "Pivot & Fibonacci · Newsmaker")}</h3>
     <p className="live-small mt-1">{t("Dihitung dari OHLC API, dengan rumus kalkulator Newsmaker. Referensi LGD Daily, bukan level XUL10 identik atau sinyal.", "Computed from API OHLC using Newsmaker calculator formulas. LGD Daily reference, not identical XUL10 levels or signals.")}</p>
+    <p className="live-small mt-2" data-testid="reference-levels-policy">{t("Acuan utama: Pivot Klasik. Fibonacci sebagai pembanding; Woodie/Camarilla referensi tambahan. Target, jarak dan batas layer tidak disesuaikan oleh level ini; perhitungan saran tetap memakai ATR dan batas risiko.", "Primary reference: Classic Pivot. Fibonacci is a comparison; Woodie/Camarilla are additional references. These levels do not adjust target, spacing or layer limits; suggestions still use ATR and risk limits.")}</p>
     {!levels || !a ? <p role="status" className="live-small mt-2">{t("OHLC D1 tertutup belum tersedia/segar. Level tidak dibuat-buat.", "Fresh closed D1 OHLC is unavailable. No substitute levels.")}</p> : <>
       <p className="live-small mt-2">LGD Daily · {a.lastDate} · O {price(a.lastOpen!)} · H {price(a.lastHigh!)} · L {price(a.lastLow!)} · C {price(a.lastClose)}</p>
       <div className="flex gap-2 flex-wrap my-3" role="group" aria-label={t("Jenis acuan teknikal", "Technical reference type")}>
@@ -24,14 +25,14 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
       </div>
       {view === "pivot" ? <div className="overflow-x-auto"><table className="w-full text-xs" data-testid="table-reference-pivots">
         <caption className="sr-only">{t("Level pivot referensi LGD Daily", "LGD Daily reference pivot levels")}</caption>
-        <thead><tr><th className="text-left">Level</th><th>{t("Klasik", "Classic")}</th><th>Woodie</th><th>Camarilla</th></tr></thead>
+        <thead><tr><th className="text-left">Level</th><th>{t("Klasik · utama", "Classic · primary")}</th><th>Woodie</th><th>Camarilla</th></tr></thead>
         <tbody>{(["r4", "r3", "r2", "r1", "p", "s1", "s2", "s3", "s4"] as const).filter(key => showAll || ["r1", "p", "s1"].includes(key)).map(key => <tr key={key} className="border-t border-border"><th className="text-left py-2">{key === "p" ? "Pivot" : key.toUpperCase()}</th>{(["classic", "woodie", "camarilla"] as const).map(method => <td key={method} className="text-right py-2 font-mono">{price(levels![method][key])}</td>)}</tr>)}</tbody>
       </table></div> : <div className="grid grid-cols-2 gap-3">{(["retracement", "projection"] as const).map(kind => <table key={kind} className="w-full text-xs" data-testid={`table-reference-${kind}`}>
         <caption className="text-left font-semibold pb-2">{kind === "retracement" ? "Retracement" : t("Proyeksi", "Projection")}</caption>
         <tbody>{levels![view][kind].map(l => <tr key={l.ratio} className="border-t border-border"><th className="text-left py-2">{(l.ratio * 100).toFixed(1)}%</th><td className="text-right py-2 font-mono">{price(l.price)}</td></tr>)}</tbody>
       </table>)}</div>}
       {view === "pivot" && <button type="button" onClick={() => setShowAll(v => !v)} aria-expanded={showAll} className="text-xs underline min-h-[44px]">{showAll ? t("Ringkas level", "Fewer levels") : t("Semua level R4–S4", "All levels R4–S4")}</button>}
-      <p className="live-small mt-2">{t("Acuan high/low otomatis memakai candle D1 tertutup terakhir, bukan swing pilihan pengguna. Level belum mengubah target/jarak skenario.", "Automatic high/low anchors use the last closed D1 candle, not a user-selected swing. Levels do not yet change scenario target/spacing.")}</p>
+      <p className="live-small mt-2">{t("Acuan high/low otomatis memakai candle D1 tertutup terakhir, bukan swing pilihan pengguna. Level hanya referensi, bukan harga entry/TP XUL10.", "Automatic high/low anchors use the last closed D1 candle, not a user-selected swing. Levels are reference only, not XUL10 entry/TP prices.")}</p>
       <a className="live-small underline inline-block mt-2" href="https://www.newsmaker.id/id/tools/pivot-fibonacci" target="_blank" rel="noopener noreferrer">{t("Kalkulator sumber Newsmaker", "Newsmaker source calculator")}</a>
     </>}
   </section>;
