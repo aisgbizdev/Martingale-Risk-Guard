@@ -56,3 +56,17 @@ mtime_ms = 1792140125473
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/bbb09275-0bdf-40e1-bbc7-2c9a5efcafb1/fe459ef7-3fad-44f6-bbdf-decfd7e0722f"
 storage_version_token = "1792140188160055"
 content_type = "text/html"
+
+[[outputs]]
+id = "04uPaiCZAHWSfRwH20Np9"
+uri = "file://docs/mrg-newsmaker-data-request.md"
+type = "text"
+title = "Konfirmasi data Newsmaker untuk MRG tanpa AI"
+description = "Kebutuhan khusus penandaan redaksi dan level pivot/Fibonacci; sumber berita, harga, dan kalender yang sudah tersedia tidak perlu dikirim ulang."
+logical_id = "a926483c-1809-4c80-882e-adb590a30ab3"
+content_hash = "sha256:6646b18f389dfaa579257fb56956ce766d9b0c0ad0334a9f9e9c1a4650f68b88"
+size = 2509
+mtime_ms = 1792152875512
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/a926483c-1809-4c80-882e-adb590a30ab3/0f152d76-01d8-4051-a00c-154bca28635e"
+storage_version_token = "1792152902041278"
+content_type = "text/markdown"
