@@ -83,3 +83,8 @@ Semua kasus Firefox mencatat nol error runtime dan hanya dua jenis GET API
 fixture yang diizinkan. Perintah gabungan keluar **1** karena WebKit tidak tersedia,
 bukan karena assertion kalkulator Firefox gagal. Ini catatan eksekusi bertanggal,
 bukan jaminan lulus untuk perubahan kode atau lingkungan sesudahnya.
+
+Pengguna kemudian menetapkan lingkup tahap ini: **“Tunda Safari, cukup Firefox
+dulu.”** Dengan keputusan tersebut, verifikasi Firefox selesai; WebKit/Safari
+ditunda dan tetap belum terverifikasi. Keputusan ini tidak mengubah hasil gagal
+perintah gabungan menjadi lulus dan tidak menjadi klaim kompatibilitas Safari.
