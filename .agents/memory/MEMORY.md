@@ -3,3 +3,4 @@
 - [Study evidence boundaries](study-evidence-boundaries.md) — preserve conflicting-source provenance; historical XUL10 units do not verify current broker/account risk.
 - [AI evidence validation](ai-evidence-validation.md) — select original passages instead of generating quotations; provenance is not interpretation accuracy.
 - [React type boundaries](react-type-boundaries.md) — preserve MRG's React major when shared tooling exposes incompatible JSX types.
+- [UI regression fixtures](ui-regression-fixtures.md) — preflight entry/summary expectations before browser runs; do not report partially executed checks as a clean matrix.
