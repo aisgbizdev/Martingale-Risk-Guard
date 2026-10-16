@@ -203,7 +203,7 @@ try {
   await command("Emulation.setDeviceMetricsOverride", { width: 402, height: 874, deviceScaleFactor: 1, mobile: true });
   await command("Emulation.setTimezoneOverride", { timezoneId: "Asia/Jakarta" });
   if (!process.env.MRG_UI_STORAGE_ONLY) {
-  await navigate("/", "Lihat eksposur");
+  await navigate("/live", "Lihat eksposur");
   check("Concise notice keeps manual positions and uncalibrated index visible", (await text()).includes("posisi manual") && (await text()).includes("indeks belum dikalibrasi"));
   await click("Mengerti, lanjutkan");
   check("Introduction choice persists locally", await evaluate('localStorage.getItem("mrg_welcome_seen") === "1"'));
@@ -415,7 +415,7 @@ try {
   check("Records survive a page reload", (await stored()).positions.length === 2);
   await command("Fetch.enable", { patterns: [{ urlPattern: "*/api/market/quotes*" }, { urlPattern: "*/api/market/context*" }] });
   staleQuote = true;
-  await navigate("/", "Lihat eksposur");
+  await navigate("/live", "Lihat eksposur");
   await waitFor(has("Tidak tersedia / terlambat"));
   check("Stale-price failure scenario reaches the browser", await evaluate("fetch('/api/market/quotes').then(r=>r.json()).then(v=>v.quote.asOf === '2000-01-01T00:00:00.000Z')"));
   check("Stale prices visibly pause the live index", (await text()).includes("Belum tersedia"));
@@ -514,7 +514,7 @@ try {
     return true;
   })()`));
   await command("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
-  await navigate("/", "Lihat eksposur");
+  await navigate("/live", "Lihat eksposur");
   check("Desktop overview does not overflow", await noOverflow());
   check("Overview primary price and agenda cards share a row without a blank column", await evaluate("Math.abs(document.querySelector('.overview-quote').getBoundingClientRect().top - document.querySelector('.overview-agenda').getBoundingClientRect().top) < 2"));
   for (const [width,height] of [[768,1024],[1024,768],[844,390]]) {
@@ -522,8 +522,8 @@ try {
     check(`Responsive ${width}x${height} overview keeps content and navigation in bounds`, await noOverflow() && await evaluate("[...document.querySelectorAll('.live-header a,.live-tabbar a')].filter(el=>el.getClientRects().length).some(el=>el.getAttribute('href')==='/positions' && el.getBoundingClientRect().left>=0 && el.getBoundingClientRect().right<=innerWidth)"));
   }
   await command("Emulation.setDeviceMetricsOverride", { width:1280,height:900,deviceScaleFactor:1,mobile:false });
-  await navigate("/basic", "Simulasi Dasar");
-  check("Original calculator is still accessible", (await text()).includes("Target Poin"));
+  await navigate("/", "Martingale vs Linear Averaging");
+  check("Six-input calculator is the main page", await evaluate("document.querySelectorAll('form input, form select').length === 6 && document.querySelector('[data-testid=\"select-market-condition\"]').value === ''"));
   await layoutMatrix("basic");
   const baseline = { modal: 200000, targetPoin: "30", strategy: "Linear Averaging", maxLayer: "3", experience: "Pemula", marketCondition: "Sideways" };
   const goodCalculation = await fetch(origin + "/api/calculate-risk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(baseline) });

@@ -30,8 +30,8 @@ export const scenarios = [
   { name: "position-entry", path: "/positions", portfolio: "both", action: "entry" },
   { name: "position-settings", path: "/positions", portfolio: "both", action: "settings" },
   { name: "position-simulator", path: "/positions", portfolio: "both", action: "simulation" },
-  ...["empty", "both", "many"].map(portfolio => ({ name: `overview-${portfolio}`, path: "/", portfolio })),
-  { name: "overview-details", path: "/", portfolio: "both", action: "details" },
+  ...["empty", "both", "many"].map(portfolio => ({ name: `overview-${portfolio}`, path: "/live", portfolio })),
+  { name: "overview-details", path: "/live", portfolio: "both", action: "details" },
   { name: "news-long", path: "/analysis?tab=news" },
   { name: "article-long", path: "/analysis?article=berita-0" },
   { name: "calendar", path: "/analysis?tab=calendar" },
@@ -42,7 +42,7 @@ export const scenarios = [
   { name: "literasi", path: "/literasi" },
   { name: "privacy", path: "/privacy" },
   { name: "terms", path: "/terms" },
-  { name: "stale-warning", path: "/", portfolio: "both", stale: true },
+  { name: "stale-warning", path: "/live", portfolio: "both", stale: true },
 ];
 export const captures = scenario => ["entry", "settings", "simulation"].includes(scenario.action) ? ["top", "quarter", "middle", "three-quarter", "bottom"] : ["page"];
 export const imageNames = () => scenarios.flatMap(s => viewports.flatMap(([w, h]) => captures(s).map(part => `${s.name}-${w}x${h}-${part}.png`)));

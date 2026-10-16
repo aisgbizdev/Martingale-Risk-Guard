@@ -5,7 +5,7 @@ import { useLanguage } from "@/lib/language-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 
 const routes = [
-  { href: "/", id: "overview", icon: Activity, idText: "Ringkasan", enText: "Overview" },
+  { href: "/live", id: "overview", icon: Activity, idText: "Ringkasan", enText: "Overview" },
   { href: "/positions", id: "positions", icon: Layers3, idText: "Posisi", enText: "Positions" },
   { href: "/analysis", id: "analysis", icon: BarChart3, idText: "Analisis", enText: "Analysis" },
 ];
@@ -28,7 +28,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
     <div className="live-shell">
       <div className="live-container">
         <header className="live-header">
-          <Link href="/" className="live-brand" aria-label="Martingale Risk Guard · Newsmaker home">
+          <Link href="/live" className="live-brand" aria-label="Martingale Risk Guard · Newsmaker home">
             <img src="/newsmaker-logo-white.png" alt="Newsmaker" />
             <span><strong>Martingale Risk Guard</strong><small>MRG · Newsmaker&nbsp;&nbsp;|&nbsp;&nbsp;Market context · position exposure</small></span>
           </Link>
@@ -41,7 +41,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="live-row" style={{ gap: 6 }}>
             <span id="mrg-install-toolbar" className="live-header-install" />
-            <Link href="/basic" className="live-icon-btn live-basic-shortcut" title={t("Simulasi Dasar", "Basic simulation")}><BookOpen size={16} /><span className="hidden sm:inline">{t("Simulasi Dasar", "Basic")}</span></Link>
+            <Link href="/" className="live-icon-btn live-basic-shortcut" title={t("Simulasi Dasar", "Basic simulation")}><BookOpen size={16} /><span className="hidden sm:inline">{t("Simulasi Dasar", "Basic")}</span></Link>
             <button className="live-icon-btn" onClick={() => setLanguage(language === "id" ? "en" : "id")} aria-label={t("Ganti bahasa", "Change language")}>
               <Globe2 size={16} />{language === "id" ? "EN" : "ID"}
             </button>
@@ -52,7 +52,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
         </header>
         {menuOpen && <nav className="live-nav live-mobile-menu" style={{ display: "flex", flexWrap: "wrap" }} aria-label={t("Navigasi", "Navigation")}>
           {routes.map(({ href, id, icon: Icon, idText, enText }) => <Link key={id} href={href} onClick={() => setMenuOpen(false)} aria-current={location.split("?")[0] === href ? "page" : undefined}><Icon size={16} />{t(idText, enText)}</Link>)}
-          <Link href="/basic" onClick={() => setMenuOpen(false)}><BookOpen size={16}/>{t("Simulasi Dasar", "Basic simulation")}</Link>
+          <Link href="/" onClick={() => setMenuOpen(false)}><BookOpen size={16}/>{t("Simulasi Dasar", "Basic simulation")}</Link>
         </nav>}
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
         <aside className="live-critical-note" aria-label={t("Pengenalan MRG", "MRG introduction")}>

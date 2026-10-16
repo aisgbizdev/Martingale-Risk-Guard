@@ -14,6 +14,7 @@ MRG is an educational risk and market-context application, with manually recorde
 ## Workspace
 
 - `artifacts/mrg/`: existing frontend, at `/`.
+- Approved simple simulator is the main page `/`, with `/basic` retained as an alias. Optional live/position index overview remains at `/live`; `/positions` and `/analysis` retain their workflows.
 - `artifacts/api-server/`: existing API, at `/api`, plus `/sw.js` to retain the worker's revalidation header.
 - `lib/mrg-shared/`: unchanged legacy risk schemas and calculations, with Zod 3. It has no database connection side effects.
 - `lib/api-spec/`: documented API contract; generated clients remain available. MRG retains its existing custom fetch/query layer to preserve freshness, cancellation, retry, and error semantics.

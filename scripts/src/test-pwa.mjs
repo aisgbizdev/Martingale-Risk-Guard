@@ -89,7 +89,7 @@ try {
   await command("Page.enable"); await command("Runtime.enable"); await command("Network.enable");
   await command("Network.setCacheDisabled", { cacheDisabled: true });
   await command("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-  await command("Page.navigate", { url: origin });
+  await command("Page.navigate", { url: origin + "/live" });
   await waitFor("document.body?.innerText.includes('Lihat eksposur')");
   await waitFor("navigator.serviceWorker.controller !== null");
   const cachePaths = await evaluate(`(async () => {

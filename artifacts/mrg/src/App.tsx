@@ -13,12 +13,14 @@ import NotFound from "@/pages/not-found";
 import LiveOverview from "@/pages/live/overview";
 import PositionsPage from "@/pages/live/positions";
 import AnalysisPage from "@/pages/live/analysis";
+import { StudyProvider } from "@/lib/study-context";
 import { PortfolioProvider } from "@/lib/portfolio-context";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LiveOverview} />
+      <Route path="/" component={Home} />
+      <Route path="/live" component={LiveOverview} />
       <Route path="/positions" component={PositionsPage} />
       <Route path="/analysis" component={AnalysisPage} />
       <Route path="/basic" component={Home} />
@@ -39,7 +41,7 @@ function App() {
           <Toaster />
           <PortfolioProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            <StudyProvider><Router /></StudyProvider>
             </WouterRouter>
           </PortfolioProvider>
         </TooltipProvider>

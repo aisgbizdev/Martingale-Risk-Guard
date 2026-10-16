@@ -19,7 +19,8 @@ const app = Router();
 
   app.get("/market/news/:slug", async (req, res) => {
     if (!/^[a-z0-9-]{1,220}$/.test(req.params.slug)) {
-      return res.status(400).json({ error: "Invalid article identifier" });
+      res.status(400).json({ error: "Invalid article identifier" });
+      return;
     }
     try {
       res.json(await getArticle(req.params.slug));

@@ -32,6 +32,9 @@ import {
 import type { RiskResult, RiskInput } from "@shared/schema";
 import { riskInputSchema, riskStatusOptions } from "@shared/schema";
 import { useLanguage } from "@/lib/language-context";
+import { studyStatusLabel } from "@shared/study-market";
+import { useStudy, paramsKey } from "@/lib/study-context";
+import { StudyEvidence } from "@/components/study-evidence";
 
 // Interface untuk skenario tersimpan
 interface SavedScenario {
@@ -85,7 +88,7 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
         <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 dark:text-amber-400" />
         <div className="text-left">
           <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 block">
-            {t("RISIKO RELATIF SEDANG", "RELATIVELY MODERATE RISK")}
+            {t("BERISIKO", "RISKY")}
           </span>
         </div>
       </div>
@@ -96,7 +99,7 @@ function StatusBadge({ status, t }: { status: string; t: (id: string, en: string
       <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-rose-500 dark:text-rose-400" />
       <div className="text-left">
         <span className="text-xl sm:text-2xl md:text-3xl font-bold text-rose-600 dark:text-rose-300 block">
-          {t("RISIKO RELATIF TINGGI", "RELATIVELY HIGH RISK")}
+          {t("TIDAK LAYAK MENURUT ATURAN STUDI", "NOT VIABLE UNDER THE STUDY RULES")}
         </span>
       </div>
     </div>
@@ -228,6 +231,66 @@ function getMetricExplanation(
   };
 }
 
+const LEGACY_ADVICE = /optimal|200[.,]000|tambah modal|add capital|deposit|setoran/i;
+
+function StudySummary({ result, params, snapshot, language, t }: {
+  result: RiskResult; params: RiskInput; snapshot: ReturnType<typeof useStudy>["snapshot"];
+  language: "id" | "en"; t: (id: string, en: string) => string;
+}) {
+  const mart = params.strategy === "Martingale";
+  const trend = params.marketCondition === "Trending";
+  const label = studyStatusLabel(result.status);
+  const sentences = [
+    t(`Skenario ini dinilai "${label.id}" oleh aturan studi MRG, dengan skor ${result.score} dari 100.`, `This scenario is rated "${label.en}" by the MRG study rules, with a score of ${result.score} out of 100.`),
+    mart
+      ? t("Martingale menggandakan ukuran setiap layer (1-2-4-8), sehingga rangkaian rugi dapat membesar dengan cepat.", "Martingale doubles each layer (1-2-4-8), so a losing sequence can grow quickly.")
+      : t("Linear Averaging menambah ukuran dengan langkah tetap (1-2-3-4), jadi pertumbuhannya lebih landai daripada penggandaan, tetapi tetap bisa rugi.", "Linear Averaging adds size in fixed steps (1-2-3-4), so it grows more gently than doubling, but losses are still possible."),
+    trend
+      ? t("Kondisi pasar yang Anda pilih adalah Trending; arah kuat yang melawan posisi menekan strategi averaging karena layer terus bertambah.", "You chose a Trending market; a strong move against the position pressures averaging because layers keep being added.")
+      : t("Kondisi pasar yang Anda pilih adalah Sideways; strategi averaging biasanya lebih tahan di pasar mendatar, tetapi pasar bisa berubah arah kapan saja.", "You chose a Sideways market; averaging usually holds up better in a flat market, but markets can break direction at any time."),
+    t(`Batas ${params.maxLayer} layer membatasi jumlah penambahan, namun tidak menghilangkan risiko.`, `The ${params.maxLayer}-layer limit caps the number of additions, but does not remove the risk.`),
+    t(`Modal USD ${params.modal.toLocaleString("id-ID")} adalah modal skenario untuk simulasi, bukan jaminan ketahanan akun dan bukan anjuran setoran.`, `The USD ${params.modal.toLocaleString("en-US")} capital is a simulation scenario, not a guarantee of account resilience nor a recommended deposit.`),
+  ];
+  const warnings = result.warnings.map(w => parseLocalizedText(w, language)).filter(w => !LEGACY_ADVICE.test(w)).slice(0, 3);
+  const notes = result.psychologyNotes.map(w => parseLocalizedText(w, language)).slice(0, 4);
+  return (
+    <div className="mrg-summary" data-testid="study-summary">
+      <p className="text-xs text-muted-foreground">{t("Skor aturan studi, bukan probabilitas rugi. Ambang: 0-35 relatif rendah, 36-60 berisiko, 61-100 tidak layak menurut aturan studi.", "Study-rule score, not a loss probability. Thresholds: 0-35 relatively low, 36-60 risky, 61-100 not viable under the study rules.")}</p>
+      <div className="mrg-summary-box">
+        {sentences.map((x, i) => <p key={i} style={{ marginBottom: 6 }}>{x}</p>)}
+      </div>
+      {warnings.length > 0 && (
+        <div className="mrg-summary-box" data-testid="summary-warnings">
+          <strong className="text-sm">{t("Peringatan penting", "Important warnings")}</strong>
+          <ul className="mrg-summary-notes">{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        </div>
+      )}
+      {notes.length > 0 && (
+        <div className="mrg-summary-box" data-testid="summary-psychology">
+          <strong className="text-sm">{t("Catatan perilaku", "Behavior notes")}</strong>
+          <ul className="mrg-summary-notes">{notes.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        </div>
+      )}
+      <div className="mrg-summary-box" data-testid="summary-source">
+        <strong className="text-sm">{t("Sumber, waktu, dan batas", "Source, time, and limits")}</strong>
+        {snapshot ? (
+          <>
+            <p className="live-small" style={{ margin: "4px 0" }}>
+              {snapshot.confirmedD1
+                ? t("Kondisi Trending dikonfirmasi Anda dari referensi D1 di bawah.", "You confirmed the Trending condition from the D1 reference below.")
+                : t("Kondisi pasar dipilih manual; ini bukan penilaian live lengkap.", "The market condition was chosen manually; this is not a complete live assessment.")}
+            </p>
+            <StudyEvidence reference={snapshot.reference} warnings={snapshot.warnings} quote={snapshot.quote} calendar={snapshot.calendar} frozenAt={snapshot.capturedAt} />
+          </>
+        ) : (
+          <p className="live-small">{t("Konteks pasar tidak dipertahankan (halaman dimuat ulang atau dibuka dari tautan). Keenam input tetap dari URL dan hasil aturan studi tetap dapat dibaca; konfirmasi D1 tidak disimpulkan.", "Market context was not retained (page reloaded or opened from a link). The six inputs still come from the URL and the study-rule result is readable; no D1 confirmation is inferred.")}</p>
+        )}
+        <p className="live-small" style={{ marginTop: 6 }}>{t("Edukasi dan mitigasi risiko, bukan saran transaksi atau order broker. Hasil dari aturan studi historis, bukan prediksi.", "Education and risk mitigation, not trading advice or a broker order. Output of historical study rules, not a forecast.")}</p>
+      </div>
+    </div>
+  );
+}
+
 function parseLocalizedText(text: string, language: "id" | "en"): string {
   if (text.includes(" | ")) {
     const parts = text.split(" | ");
@@ -277,16 +340,32 @@ export default function Result() {
     } catch { setScenarioStorageError(true); }
   };
   
+  const { snapshot: rawSnapshot, draft, setDraft } = useStudy();
   const params: RiskInput = {
-    modal: parseFloat(searchParams.get("modal") || "0"),
+    modal: Number(searchParams.get("modal") || "0"),
     targetPoin: (searchParams.get("targetPoin") as "30" | "40" | "50") || "30",
     strategy: (searchParams.get("strategy") as "Martingale" | "Linear Averaging") || "Linear Averaging",
-    maxLayer: (searchParams.get("maxLayer") as "3" | "4" | "5") || "5",
+    maxLayer: (searchParams.get("maxLayer") as "3" | "4" | "5") || "3",
     experience: (searchParams.get("experience") as "Pemula" | "Berpengalaman") || "Pemula",
-    marketCondition: (searchParams.get("marketCondition") as "Sideways" | "Trending") || "Sideways",
+    marketCondition: (searchParams.get("marketCondition") || "") as "Sideways" | "Trending",
   };
+  const inputsValid = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"]
+    .every(key => searchParams.has(key)) && riskInputSchema.safeParse(params).success;
+  const backHref = `/?${new URLSearchParams({ modal: String(params.modal), targetPoin: params.targetPoin, strategy: params.strategy, maxLayer: params.maxLayer, experience: params.experience, marketCondition: params.marketCondition }).toString()}`;
+  const snapshot = rawSnapshot && inputsValid && rawSnapshot.paramsKey === paramsKey(params) ? rawSnapshot : null;
+  const inputKey = paramsKey(params);
+  useEffect(() => {
+    if (!inputsValid) return;
+    const same = Number(draft.modal) === params.modal && draft.targetPoin === params.targetPoin &&
+      draft.strategy === params.strategy && draft.maxLayer === params.maxLayer &&
+      draft.experience === params.experience && draft.marketCondition === params.marketCondition;
+    if (!same) setDraft({ ...params, modal: String(params.modal), d1Key: null });
+    // Keep the submitted input on Back, even if the previous form URL is older.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputKey, inputsValid]);
 
-  const { data: result, isLoading, error } = useQuery<RiskResult>({
+  const { data: result, isLoading, error, refetch } = useQuery<RiskResult>({
+    enabled: inputsValid,
     queryKey: ["/api/calculate-risk", params],
     queryFn: async () => {
       const response = await fetch("/api/calculate-risk", {
@@ -310,9 +389,9 @@ export default function Result() {
   
   // Helper untuk translate status
   const getStatusLabel = (status: string) => {
-    if (status === "AMAN") return t("Relatif rendah · keluaran studi", "Relatively low · study output");
-    if (status === "BERISIKO") return t("Relatif sedang · keluaran studi", "Relatively moderate · study output");
-    return t("Relatif tinggi · keluaran studi", "Relatively high · study output");
+    if (status === "AMAN") return t("Risiko relatif rendah · aturan studi", "Relatively low risk · study rules");
+    if (status === "BERISIKO") return t("Berisiko · aturan studi", "Risky · study rules");
+    return t("Tidak layak menurut aturan studi", "Not viable under study rules");
   };
 
   // Helper functions untuk scenario management
@@ -371,9 +450,10 @@ export default function Result() {
               {t("Terjadi Kesalahan", "Error Occurred")}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              {t("Gagal menghitung risiko.", "Failed to calculate risk.")}
+              {inputsValid ? t("Gagal menghitung risiko. Tidak ada hasil pengganti yang ditampilkan.", "Failed to calculate risk. No substitute result is shown.") : t("Tautan ini belum memuat keenam input yang valid.", "This link does not contain six valid inputs.")}
             </p>
-            <Link href="/basic" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground" data-testid="button-kembali-error">
+            {inputsValid && <Button variant="outline" className="mr-2" onClick={() => refetch()} data-testid="button-retry-result">{t("Coba lagi", "Retry")}</Button>}
+            <Link href={backHref} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground" data-testid="button-kembali-error">
               <ArrowLeft className="w-4 h-4" />{t("Kembali", "Back")}
             </Link>
           </CardContent>
@@ -410,7 +490,7 @@ export default function Result() {
             </div>
           </div>
           <div className="mx-auto mb-4 max-w-2xl rounded-md border border-primary/25 bg-primary/5 px-4 py-3 text-left text-xs leading-relaxed text-muted-foreground">
-            {t("Simulasi Dasar menampilkan keluaran studi historis dan aturan lama. Angka bukan perkiraan profit pribadi, margin call, margin safety, atau analisis pasar live; bukan rekomendasi untuk menambah modal atau mengubah strategi.", "Basic Simulation shows historical study outputs from the legacy rules. Figures are not personal profit, margin-call, margin-safety, or live-market forecasts; they are not recommendations to add capital or change strategies.")}
+            {t("Hasil memakai aturan studi historis. Referensi pasar hanya membantu memilih kondisi dan memberi peringatan, bukan mengkalibrasi ulang skor. Angka bukan perkiraan profit pribadi, margin call, atau margin safety; bukan rekomendasi menambah modal atau mengubah strategi.", "Results use historical study rules. Market references only help choose a condition and provide warnings, not recalibrate the score. Figures are not personal profit, margin-call, or margin-safety estimates; not recommendations to add capital or change strategies.")}
           </div>
           
           <StatusBadge status={result.status} t={t} />
@@ -429,10 +509,11 @@ export default function Result() {
               {result.score}<span className="text-xl sm:text-2xl text-muted-foreground">/100</span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-              {t("Skor Risiko", "Risk Score")}
+              {t("Skor aturan studi (bukan probabilitas)", "Study-rule score (not a probability)")}
             </p>
             <RiskScoreMeter score={result.score} status={result.status} t={t} />
             
+            <div className="mt-6"><StudySummary result={result} params={params} snapshot={snapshot} language={language} t={t} /></div>
             <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-muted/50 rounded-md">
               <p className="text-xs sm:text-sm text-muted-foreground">
                 <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 inline mr-1.5 -mt-0.5" />
@@ -448,7 +529,7 @@ export default function Result() {
             </div>}
             {/* Tombol Simpan & Bandingkan Skenario */}
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-              <Link href="/basic" className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" data-testid="button-buat-skenario-top">
+              <Link href={backHref} className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" data-testid="button-buat-skenario-top">
                 <Plus className="w-4 h-4" />{t("Buat Skenario", "Create Scenario")}
               </Link>
               
@@ -471,7 +552,7 @@ export default function Result() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setLocation("/basic")}
+                  onClick={() => setLocation(backHref)}
                   className="gap-2"
                   data-testid="button-add-next-scenario"
                 >
@@ -531,6 +612,8 @@ export default function Result() {
           </div>
         </div>
 
+        <details className="live-details mb-4 rounded-md border border-border bg-card px-4" data-testid="details-result">
+          <summary className="cursor-pointer py-3 text-sm font-semibold">{t("Detail opsional: alasan, metrik, dan parameter", "Optional details: reasons, metrics, and parameters")}</summary>
         {result.metrics && (
           <>
             {/* PARAMETER ANALISIS - Tampilkan semua skenario yang tersimpan */}
@@ -594,7 +677,7 @@ export default function Result() {
             ) : (
               <Card 
                 className="mb-4 border-primary/30 bg-primary/5 cursor-pointer hover-elevate transition-all"
-                onClick={() => setLocation("/basic")}
+                onClick={() => setLocation(backHref)}
                 data-testid="card-parameters-edit"
               >
                 <CardHeader className="pb-2 px-4 sm:px-6">
@@ -865,8 +948,10 @@ export default function Result() {
           </CardContent>
         </Card>
 
+        </details>
+
         <div className="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/basic" className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground" data-testid="button-buat-skenario">
+          <Link href={backHref} className="inline-flex h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground" data-testid="button-buat-skenario">
             <Plus className="w-5 h-5" />{t("Buat Skenario Baru", "Create New Scenario")}
           </Link>
           <Link href="/literasi" className="inline-flex h-11 items-center gap-2 rounded-md border border-border px-4 text-sm" data-testid="button-literasi-result">

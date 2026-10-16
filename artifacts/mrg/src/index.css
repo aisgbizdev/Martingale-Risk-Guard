@@ -853,3 +853,14 @@ footer.live-footer .live-link:hover { color:#fff; }
     inset: -1px;
   }
 }
+
+/* Study simulator: market helper and result summary */
+.mrg-market-helper { display:grid; gap:8px; padding:12px 14px; border-left:3px solid hsl(var(--primary)); border-radius:0 10px 10px 0; background:hsl(var(--muted)/.65); font-size:13px; line-height:1.55; }
+.mrg-market-helper p { margin:0; }
+.mrg-evidence { display:grid; gap:6px; font-size:12px; line-height:1.55; }
+.mrg-evidence p, .mrg-evidence ul { margin:0; }
+.mrg-evidence ul { padding-left:18px; }
+.mrg-summary { display:grid; gap:12px; text-align:left; max-width:44rem; margin:0 auto; }
+.mrg-summary p { margin:0; line-height:1.65; font-size:14px; }
+.mrg-summary-notes { margin:0; padding-left:18px; display:grid; gap:4px; font-size:13px; }
+.mrg-summary-box { padding:12px 14px; border:1px solid hsl(var(--border)); border-radius:10px; background:hsl(var(--card)); }
