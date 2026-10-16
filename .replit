@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "mrg-core"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "mrg-release"
+
 [[workflows.workflow]]
 name = "mrg-core"
 author = "agent"
@@ -27,6 +31,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pnpm test && pnpm run test:visual:unit"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "mrg-release"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm test:release"
 
 [workflows.workflow.metadata]
 isValidation = true

@@ -10,15 +10,18 @@ import { browserProfile } from "./scenario-ui/browser-config.mjs";
 const profile = browserProfile(process.argv.slice(2));
 const buildRoot = resolve("generated-artifacts/scenario-ui-app");
 const output = resolve("generated-artifacts/scenario-ui", profile.outputSuffix);
+const startedAt = new Date().toISOString();
+const evidenceDirectory = `generated-artifacts/scenario-ui/${profile.outputSuffix ? `${profile.outputSuffix}/` : ""}runs/${startedAt.replaceAll(":", "-")}`;
+const screenshots = resolve(evidenceDirectory);
 await access(resolve(buildRoot, "index.html")); // Never silently test an unbuilt app.
-await mkdir(output, { recursive: true });
+await mkdir(screenshots, { recursive: true });
 const app = express();
 app.use(express.static(buildRoot));
 app.get("/{*path}", (_req, res) => res.sendFile(resolve(buildRoot, "index.html")));
 const server = app.listen(0, "127.0.0.1");
 await new Promise(r => server.once("listening", r));
 const origin = `http://127.0.0.1:${server.address().port}`;
-const report = { ...profile, platform: process.platform, architecture: process.arch,
+const report = { ...profile, platform: process.platform, architecture: process.arch, startedAt, evidenceDirectory,
   fixtureTime: NOW, syntheticData: true, physicalDevices: false, status: "not-started", results: [] };
 const id = (page, name) => page.getByTestId(name);
 const result = page => id(page, "scenario-result");
@@ -126,6 +129,12 @@ if (only?.some(name => !cases.some(c => c[0] === name))) throw new Error("Unknow
 const selectedCases = only ? cases.filter(c => only.includes(c[0])) : cases;
 assert.ok(selectedCases.length, "At least one UI case must be selected");
 report.selectedCases = selectedCases.map(c => c[0]);
+report.scope = only ? "focused" : "full";
+report.expected = viewports.length * selectedCases.length;
+report.complete = false;
+// Replace the latest pointer immediately, so an interrupted run cannot leave an old pass.
+const reportPath = `${output}/${only ? "report-focused" : "report"}.json`;
+await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n");
 let browser;
 try {
   try {
@@ -177,13 +186,14 @@ try {
       entry.passed = true;
       if (name === "buy-limited" || name === "sell-limited") {
         await result(page).scrollIntoViewIfNeeded();
-        await page.screenshot({ path: `${output}/${viewport.width}-${name}.jpg`, type: "jpeg", quality: 70, fullPage: true });
+        entry.screenshot = `${evidenceDirectory}/${viewport.width}-${name}.jpg`;
+        await page.screenshot({ path: resolve(entry.screenshot), type: "jpeg", quality: 70, fullPage: true });
       }
       console.log(`PASS ${viewport.width}px ${name}`);
     } catch (error) {
       entry.passed = false;
       entry.error = error.stack ?? String(error);
-      await page.screenshot({ path: `${output}/${viewport.width}-${name}-failed.jpg`, type: "jpeg", quality: 70, fullPage: true }).catch(() => {});
+      await page.screenshot({ path: `${screenshots}/${viewport.width}-${name}-failed.jpg`, type: "jpeg", quality: 70, fullPage: true }).catch(() => {});
       console.error(`FAIL ${viewport.width}px ${name}: ${error.message}`);
     } finally {
       entry.apiCalls = apiCalls;
@@ -199,7 +209,11 @@ try {
   report.failed = report.results.filter(r => !r.passed).length;
   report.expectedCases = viewports.length * selectedCases.length;
   if (report.status !== "unavailable") report.status = report.failed || report.results.length !== report.expectedCases ? "failed" : "passed";
-  await writeFile(`${output}/${only ? "report-focused" : "report"}.json`, JSON.stringify(report, null, 2) + "\n");
+  report.finishedAt = new Date().toISOString();
+  report.complete = report.results.length === report.expected;
+  const json = JSON.stringify(report, null, 2) + "\n";
+  await writeFile(`${screenshots}/report.json`, json);
+  await writeFile(reportPath, json);
 }
 assert.equal(report.results.length, viewports.length * selectedCases.length, "All selected viewport cases must run");
 assert.equal(report.failed, 0, `${report.failed} UI regressions failed; see ${output}/${only ? "report-focused" : "report"}.json`);

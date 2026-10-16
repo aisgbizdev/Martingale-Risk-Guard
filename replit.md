@@ -29,6 +29,7 @@ MRG is an educational risk and market-context application, with manually recorde
 Use the managed workflows `artifacts/mrg: web` and `artifacts/api-server: API Server`; they supply ports and base paths. Do not run a root-level `pnpm dev`.
 
 - `pnpm test`: risk, portfolio, timestamps, and provider normalization tests.
+- `pnpm test:release`: recorded `mrg-release` validation; runnable Chromium preflight, core tests and a fresh full 24-case isolated calculator UI matrix. Rejects focused filters; ignored reports/screenshots are described in `docs/mrg-scenario-ui-regressions.md`. Does not publish or automatically block publishing.
 - `pnpm run test:ui`: full interaction and live integration checks against the running preview, using isolated synthetic browser records.
 - `pnpm run test:visual`: builds an isolated production fixture and compares against existing approved baselines.
 - `pnpm run test:visual:unit`: comparison/approval safeguards.

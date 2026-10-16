@@ -8,6 +8,7 @@
     "test:scenario-ui": "node --import tsx scripts/src/build-pwa-fixture.ts artifacts/mrg generated-artifacts/scenario-ui-app scenario-ui && node scripts/src/test-scenario-ui.mjs",
     "test:scenario-ui:cross-browser": "node --import tsx scripts/src/build-pwa-fixture.ts artifacts/mrg generated-artifacts/scenario-ui-app scenario-ui && node scripts/src/test-scenario-browsers.mjs",
     "test:scenario-ui:browser-config": "node --test scripts/src/scenario-ui/browser-config.test.mjs",
+    "test:release": "node scripts/src/test-release.mjs",
     "test:production": "node --import tsx scripts/src/build-pwa-fixture.ts artifacts/mrg generated-artifacts/production-check verify",
     "test:visual": "pnpm run test:production && node --import tsx scripts/src/test-live-visual.mjs",
     "test:visual:candidate": "pnpm run test:production && node --import tsx scripts/src/test-live-visual.mjs --candidate",
