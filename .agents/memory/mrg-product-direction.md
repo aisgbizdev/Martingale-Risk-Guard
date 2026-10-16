@@ -44,3 +44,9 @@ Pengguna memilih melengkapi pembacaan berita otomatis terlebih dahulu, bukan men
 **Why:** Saran terhenti karena mewajibkan kurasi manual yang belum tersedia, padahal pengguna menginginkan saran dari modal saja dan sumber Newsmaker yang sudah diberikan.
 
 **How to apply:** Penilaian isi berita tidak boleh bergantung pada pengisian manual per artikel. Tetap pertahankan bukti, asal penilaian, dan kegagalan eksplisit; jangan sekadar menghapus penghalang atau menganggap berita netral. Pilihan otomatis tidak dengan sendirinya menetapkan vendor AI atau persetujuan biaya.
+
+Pengguna kemudian menegaskan tidak ingin menggunakan AI untuk analisis MRG. Ia mengusulkan tampilan dan beberapa fitur seperti TradePilot, tetapi esensi tetap konsep MRG, serta meminta diskusi dahulu.
+
+**Why:** Pengguna mengatakan “gw gak mau menggunakan ai” dan “esensi nya konsep mrg, design dan beberapa fiturenya mirip tradepilot”.
+
+**How to apply:** Jangan menganggap persetujuan pembacaan berita otomatis sebelumnya sebagai persetujuan AI berkelanjutan. Bahas pengganti berbasis aturan dan data terstruktur, termasuk keterbatasan interpretasi berita bebas; jangan menonaktifkan atau mengganti implementasi sebelum arah disepakati. Referensi TradePilot bukan izin menyalin produk atau menambah dashboard/sinyal di luar kalkulator MRG.
