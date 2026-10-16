@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import type { RiskInput, RiskResult } from "@shared/schema";
+import type { RiskInput } from "@shared/schema";
 import { StatusBadge, RiskScoreMeter, StudySummary } from "@/pages/result";
 import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
 import { CapitalSuggestion } from "@/components/capital-suggestion";
+import { studyRequestOptions } from "@/lib/study-request";
 
 const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"] as const;
 
@@ -27,25 +28,18 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<RiskInput | null>(null);
+  const [requestRevision, setRequestRevision] = useState(0);
   const current = submitted && paramsKey(submitted) === paramsKey({ ...draft, modal: Number(draft.modal) }) ? submitted : null;
   const stale = !!submitted && !current;
-  const calc = useQuery<RiskResult>({
-    enabled: !!submitted,
-    queryKey: ["/api/calculate-risk", submitted],
-    queryFn: async ({ signal }) => {
-      const r = await fetch("/api/calculate-risk", { signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(submitted) });
-      if (!r.ok) throw new Error("Gagal menghitung risiko");
-      return r.json();
-    },
-  });
+  const calc = useQuery(studyRequestOptions(submitted, requestRevision));
   const resultRef = useRef<HTMLElement | null>(null);
   const justSubmitted = useRef(false);
   useEffect(() => {
-    if (!justSubmitted.current || !calc.data) return;
+    if (!justSubmitted.current || !current || !calc.data) return;
     justSubmitted.current = false;
     if (window.matchMedia("(min-width: 1024px)").matches) return;
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [calc.data, submitted]);
+  }, [calc.data, current]);
   const snap = current && rawSnap && rawSnap.paramsKey === paramsKey(current) ? rawSnap : null;
 
   const ctx = market.context.isError ? null : market.context.data;
@@ -96,18 +90,19 @@ export default function Home() {
       return setError(t("Konfirmasi D1 sudah tidak berlaku. Konfirmasi ulang atau pilih manual.", "The D1 confirmation no longer applies. Reconfirm or choose manually."));
     }
     const p = parsed.data;
-    setSnapshot({
+    setSnapshot(structuredClone({
       paramsKey: paramsKey(p), capturedAt, reference: submittedReference,
       warnings: getStudyWarnings(ctx, capturedAt, market.online),
       calendar: ctx ? { status: ctx.calendar.status, complete: ctx.calendar.complete, generatedAt: ctx.calendar.generatedAt, receivedAt: ctx.calendar.receivedAt } : null,
       quote: market.usableQuote && quoteIsFresh(market.usableQuote, capturedAt) ? market.usableQuote : null,
       contextError: market.context.isError, confirmedD1,
-    });
+    }));
     const params = new URLSearchParams({
       modal: String(p.modal), targetPoin: p.targetPoin, strategy: p.strategy,
       maxLayer: p.maxLayer, experience: p.experience, marketCondition: p.marketCondition,
     });
     setSubmitted(p);
+    setRequestRevision(revision => revision + 1);
     window.history.replaceState(window.history.state, "", `?${params.toString()}`);
     justSubmitted.current = true;
   };

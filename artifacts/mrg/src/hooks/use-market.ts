@@ -12,8 +12,13 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
 export function useMarket() {
   const [now, setNow] = useState(Date.now);
   const [online, setOnline] = useState(navigator.onLine);
+  const [connectionRevision, setConnectionRevision] = useState(0);
   useEffect(() => {
-    const changed = () => setOnline(navigator.onLine);
+    const changed = () => {
+      setOnline(navigator.onLine);
+      setConnectionRevision(revision => revision + 1);
+      setNow(Date.now());
+    };
     window.addEventListener("online", changed);
     window.addEventListener("offline", changed);
     return () => {
@@ -38,7 +43,7 @@ export function useMarket() {
   const live = online && !quotes.isError && quotes.data?.status === "ready" &&
     quoteIsFresh(quotes.data.quote, now);
   return {
-    now, online, quotes, context,
+    now, online, connectionRevision, quotes, context,
     usableQuote: live ? quotes.data!.quote : null,
     live,
     refresh: () => Promise.all([quotes.refetch(), context.refetch()]),

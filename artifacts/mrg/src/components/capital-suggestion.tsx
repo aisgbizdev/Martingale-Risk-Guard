@@ -1,40 +1,53 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { suggestFromCapital, type CapitalSuggestion as Suggestion } from "@shared/capital-suggestion";
+import { applySuggestion, captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import type { MarketHook } from "@/hooks/use-market";
-import { quoteIsFresh } from "@shared/live-types";
 import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 
 export function CapitalSuggestion({ capital, market }: { capital: string; market: MarketHook }) {
   const { t, language } = useLanguage();
-  const [snapshot, setSnapshot] = useState<Suggestion | null>(null);
-  const [applied, setApplied] = useState(false);
+  const [capture, setCapture] = useState<SuggestionSnapshot | null>(null);
+  const [active, setActive] = useState<SuggestionSnapshot | null>(null);
+  const [invalidated, setInvalidated] = useState(false);
   const [inputError, setInputError] = useState(false);
-  const [sourceKey, setSourceKey] = useState("");
-  const liveKey = JSON.stringify([
-    market.usableQuote, market.context.isError, market.context.data, market.online,
-  ]);
-  const dataChanged = !!snapshot && (sourceKey !== liveKey || !market.online ||
-    (snapshot.quote !== null && !quoteIsFresh(snapshot.quote, market.now)));
-  const stale = snapshot && Number(capital) !== snapshot.capital;
+  const sources = {
+    quote: market.usableQuote, context: market.context.isError ? null : market.context.data,
+    online: market.online, connectionRevision: market.connectionRevision,
+  };
+  const snapshot = capture?.result;
+  const state = capture ? suggestionSnapshotState(capture, Number(capital), sources, market.now) : null;
+  const dataChanged = invalidated || !!state?.dataChanged;
+  const stale = !!state?.parametersChanged;
+  const applied = active === capture && !!active;
+  useEffect(() => {
+    if (state?.dataChanged) setInvalidated(true);
+  }, [state?.dataChanged]);
   const money = (n: number) => n.toLocaleString(language === "id" ? "id-ID" : "en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
   const evaluate = () => {
     const value = Number(capital);
     if (!capital.trim() || !Number.isFinite(value) || value <= 0 || value > 1e12) { setInputError(true); return; }
     setInputError(false);
-    setApplied(false);
-    setSourceKey(liveKey);
-    // Detached from query caches: polling must never rewrite a displayed offer.
-    setSnapshot(structuredClone(suggestFromCapital(
-      value, market.context.isError ? null : market.context.data, market.usableQuote, Date.now(), market.online,
-    )));
+    setInvalidated(false);
+    setCapture(captureSuggestion(value, sources, Date.now()));
+  };
+  const apply = () => {
+    // Check wall-clock freshness again: a click can occur before the next timer render.
+    if (capture) setActive(previous => applySuggestion(previous, capture, Number(capital), sources, Date.now(), invalidated));
   };
   const selected = snapshot?.selected;
   return <section className="live-stack" aria-label={t("Saran dari modal", "Capital-based suggestion")} data-testid="capital-suggestion">
     <p className="live-small">{t("Cukup isi modal. MRG memeriksa harga, D1, kalender dan penilaian isi berita. Asumsi Pemula—bukan pengalaman Anda yang diketahui.", "Enter capital only. MRG checks price, D1, calendar and reviewed news content. Assumes Beginner—not knowledge of your experience.")}</p>
     <Button type="button" className="w-full h-12" onClick={evaluate} data-testid="button-saran-modal">{t("Lihat Saran MRG", "View MRG Suggestion")}</Button>
     {inputError && <p role="alert" className="live-error">{t("Isi modal positif, maksimal US$1 triliun.", "Enter positive capital, up to US$1 trillion.")}</p>}
+    {active && active !== capture && <aside className="rounded-lg border border-border p-3 live-stack" data-testid="active-suggestion">
+      <h2 className="font-bold">{t("Skenario yang sebelumnya dipakai", "Previously applied scenario")}</h2>
+      <p>{active.result.evaluatedAt} · {money(active.result.capital)} · {active.result.selected?.strategy} · {active.result.selected?.layers} {t("layer", "layers")} · {t("Target", "Target")} {active.result.target} · {t("Jarak", "Spacing")} {active.result.spacing}</p>
+      <p>{t("Lot per layer", "Lots per layer")}: {active.result.selected?.lots.join(" → ")} · {t("Margin", "Margin")}: {money(active.result.selected!.margin)} · {t("Rugi stress", "Stress loss")}: {money(active.result.selected!.stressLoss)}</p>
+      <p role="status" className="live-small">{Number(capital) !== active.result.capital
+        ? t("Tidak berlaku untuk modal ini. Saran baru belum diterapkan.", "Does not apply to this capital. The new suggestion has not been applied.")
+        : t("Snapshot lama tetap disimpan, bukan penilaian pasar terkini. Saran baru belum diterapkan.", "The old snapshot is retained, not a current market assessment. The new suggestion has not been applied.")}</p>
+    </aside>}
     {snapshot && <div className="rounded-lg border border-border p-3 live-stack" aria-live="polite" data-testid="suggestion-result">
       <h2 className="font-bold">{stale ? t("Modal berubah—hitung ulang saran", "Capital changed—recalculate") :
         snapshot.status === "offered" ? (applied ? t("Skenario MRG yang dipakai", "Applied MRG scenario") : t("Usulan skenario MRG", "Proposed MRG scenario")) :
@@ -56,7 +69,7 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
             <dt>{t("Dana setelah margin", "Funds after margin")}</dt><dd>{money(selected.fundsAfterMargin)}</dd>
           </dl>
           <p className="live-small mt-2">{t("Stress: satu jarak lagi setelah layer terakhir, gerakan hipotetis melawan basket. Bukan rugi maksimum atau prediksi arah.", "Stress: one more spacing beyond the last layer, hypothetically against the basket. Not maximum loss or a direction forecast.")}</p>
-          {!applied && <Button type="button" variant="outline" className="mt-2" disabled={dataChanged} onClick={() => setApplied(true)} data-testid="button-use-suggestion">{t("Gunakan skenario ini", "Use this scenario")}</Button>}
+          {!applied && <Button type="button" variant="outline" className="mt-2" disabled={dataChanged || !state?.canApply} onClick={apply} data-testid="button-use-suggestion">{t("Gunakan skenario ini", "Use this scenario")}</Button>}
           {applied && <p className="live-small mt-2">{t("Dipakai untuk simulasi ini saja. Input manual tidak diganti; tidak ada transaksi broker.", "Applied to this simulation only. Manual inputs are unchanged; no broker order.")}</p>}
         </div>}
         <ul className="mrg-summary-notes">{snapshot.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>

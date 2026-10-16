@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Copy, LiveQuote } from "@shared/live-types";
 import type { StudyReference } from "@shared/study-market";
-import type { RiskInput } from "@shared/schema";
+export { paramsKey } from "@shared/study-identity";
 
 export interface StudyDraft {
   modal: string;
@@ -27,10 +27,6 @@ export interface StudySnapshot {
   contextError: boolean;
   calendar: { status: "ready" | "unavailable" | "missing"; complete: boolean; generatedAt: string | null; receivedAt: string | null } | null;
   confirmedD1: boolean;
-}
-
-export function paramsKey(p: { modal: number | string; targetPoin: string; strategy: string; maxLayer: string; experience: string; marketCondition: string }) {
-  return [Number(p.modal), p.targetPoin, p.strategy, p.maxLayer, p.experience, p.marketCondition].join("|");
 }
 
 interface Ctx {

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "test": "node --import tsx --test lib/mrg-shared/src/*.test.ts artifacts/api-server/src/market/*.test.ts",
+    "test": "node --import tsx --test lib/mrg-shared/src/*.test.ts artifacts/api-server/src/market/*.test.ts artifacts/mrg/src/lib/*.test.ts",
     "test:ui": "node scripts/src/test-live-ui.mjs",
     "test:production": "node --import tsx scripts/src/build-pwa-fixture.ts artifacts/mrg generated-artifacts/production-check verify",
     "test:visual": "pnpm run test:production && node --import tsx scripts/src/test-live-visual.mjs",
