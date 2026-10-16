@@ -1,8 +1,6 @@
 import type { Article, MarketContext, NewsItem } from "@workspace/mrg-shared/live-types";
 import { providerTimestamp } from "@workspace/mrg-shared/market-analysis";
 import { fetchProviderJson, NEWSMAKER_BASE, SingleFlightCache } from "./provider";
-import { AutomaticFundamentalReader } from "./automatic-fundamental";
-import { classifyNews, newsAIConfigured } from "./news-ai";
 
 const str = (v: unknown) => typeof v === "string" ? v.trim() : "";
 
@@ -18,7 +16,18 @@ export function normalizeNews(row: any): NewsItem {
 }
 
 const newsCache = new SingleFlightCache<NewsItem[]>();
-const reader = new AutomaticFundamentalReader({ classify: classifyNews, configured: newsAIConfigured });
+
+/** Article availability is not an editorial impact assessment. Never invoke AI. */
+export function pendingEditorialAssessment(now = Date.now()) {
+  return {
+    status: "incomplete" as const,
+    evaluatedAt: new Date(now).toISOString(),
+    scope: "Maksimal 8 artikel tersaring dari halaman terbaru Newsmaker; bukan seluruh pasar.",
+    evidence: [],
+    processing: false,
+    reasons: ["Berita tersedia sebagai konteks. Penandaan dampak redaksi belum tersedia dalam kontrak API; saran pasar lengkap belum dapat dihitung. Simulasi manual tetap tersedia."],
+  };
+}
 
 export async function getNews(): Promise<MarketContext["news"]> {
   try {
@@ -30,14 +39,14 @@ export async function getNews(): Promise<MarketContext["news"]> {
       ).slice(0, 8);
       return items;
     }, 60_000);
-    const fundamental = await reader.read(items, getArticle);
+    const fundamental = pendingEditorialAssessment();
     return { status: "ready", items, fundamental, receivedAt: new Date().toISOString(), message: null };
   } catch {
     return {
       status: "unavailable", items: [], receivedAt: new Date().toISOString(),
       message: {
-        id: "Berita Newsmaker belum tersedia; pembacaan otomatis ditunda.",
-        en: "Newsmaker news is unavailable; automatic reading is paused.",
+        id: "Berita Newsmaker belum tersedia; tidak ada penilaian pengganti.",
+        en: "Newsmaker news is unavailable; no substitute assessment.",
       },
     };
   }

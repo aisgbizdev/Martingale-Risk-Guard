@@ -16,6 +16,7 @@ import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
 import { CapitalSuggestion } from "@/components/capital-suggestion";
+import { ScenarioWorkspace } from "@/components/scenario-workspace";
 import { studyRequestOptions } from "@/lib/study-request";
 
 const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"] as const;
@@ -128,7 +129,7 @@ export default function Home() {
         <div className="mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
           <p className="text-muted-foreground text-sm leading-relaxed mt-1">
-            {t("Isi modal → Lihat Saran MRG, atau pilih Isi Manual.", "Enter capital → view MRG suggestion, or choose Manual Entry.")}
+            {t("Isi modal → pilih Buy atau Sell → pelajari skenarionya.", "Enter capital → choose Buy or Sell → explore the scenario.")}
           </p>
           <div className="mt-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
@@ -136,6 +137,21 @@ export default function Home() {
           </div>
         </div>
 
+        <section className="live-card mb-4" aria-label={t("Modal simulasi", "Simulation capital")}>
+          <div className="live-field max-w-xl">
+            <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
+            <div className="flex gap-2 flex-wrap">
+              {[100000, 200000, 300000].map(v => <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>USD {v.toLocaleString("id-ID")}</Button>)}
+            </div>
+            <input id="f-modal" type="number" inputMode="decimal" min="0" max="1000000000000" step="any" value={draft.modal} onChange={e => set({ modal: e.target.value })} placeholder={t("Masukkan modal Anda", "Enter your capital")} data-testid="input-modal" />
+            <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
+          </div>
+        </section>
+        <ScenarioWorkspace capital={draft.modal} market={market} />
+
+        <details className="live-card" open={manual || undefined}>
+        <summary className="font-semibold cursor-pointer">{t("Simulasi Dasar & kelengkapan saran pasar", "Original simulator & market suggestion coverage")}</summary>
+        <p className="live-small my-3">{t("Simulasi Dasar memakai aturan studi lama. Saran pasar lengkap menunggu metadata penilaian redaksi; tidak memakai AI.", "The original simulator uses historical study rules. Full market suggestions await editorial assessment metadata; no AI is used.")}</p>
         <div className="grid gap-4 lg:grid-cols-2 items-start">
         <Card>
           <CardHeader className="px-4 sm:px-6">
@@ -149,18 +165,6 @@ export default function Home() {
                 <Button type="button" variant={manual ? "default" : "outline"} onClick={() => setManual(true)} aria-pressed={manual} data-testid="button-manual">{t("Isi Manual", "Manual Entry")}</Button>
               </div>
               <div className="live-form-grid">
-                <div className="live-field" style={{ gridColumn: "1 / -1" }}>
-                  <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[100000, 200000, 300000].map((v) => (
-                      <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>
-                        USD {v.toLocaleString("id-ID")}
-                      </Button>
-                    ))}
-                  </div>
-                  <input id="f-modal" type="number" inputMode="decimal" min="0" step="any" value={draft.modal} onChange={(e) => set({ modal: e.target.value })} placeholder={t("Contoh: 200000", "Example: 200000")} data-testid="input-modal" aria-invalid={!!error && !(Number(draft.modal) > 0)} />
-                  <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
-                </div>
                 {manual && <>
                 <div className="live-field">
                   <label htmlFor="f-target">{t("Target poin per siklus", "Target points per cycle")}</label>
@@ -274,6 +278,7 @@ export default function Home() {
         </div>
         </div>
 
+        </details>
         <div className="mt-6 text-center px-4">
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4">
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}

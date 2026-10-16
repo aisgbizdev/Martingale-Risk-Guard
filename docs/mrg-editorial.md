@@ -1,4 +1,28 @@
-# Penilaian berita untuk saran modal
+# Penilaian berita untuk saran modal — tanpa AI
+
+## Jalur aktif
+
+Pengguna menetapkan MRG sebagai edukasi, bukan penjual sinyal, dan tidak ingin
+analisis AI. Jalur produksi `news.ts` tidak lagi mengimpor atau menjalankan
+pembaca AI. Rahasia/integrasi global tidak dihapus karena dapat dipakai produk lain.
+Artikel tetap diambil dari API Newsmaker. Status berita tersedia berbeda dari
+status penilaian dampak redaksi.
+
+Contoh kontrak berita yang diberikan belum mengekspos penandaan dampak editorial.
+Karena itu fundamental dinyatakan belum lengkap; tidak ada asumsi netral,
+pengganti dengan kata kunci judul, atau penilaian yang dibuat-buat. Saran pasar
+lengkap tetap dibatasi. Integrasi penandaan redaksi menunggu kontrak yang nyata.
+
+Kalkulator visual dapat membuat simulasi manual/default dari harga XUL10 segar
+untuk Buy maupun Sell. Ini bukan saran pasar otomatis. Jarak default 30 poin
+adalah asumsi simulasi eksplisit, bukan hasil pivot/Fibonacci atau temuan studi.
+Simulasi Dasar dan aturan historisnya tetap tersedia terpisah sebagai rincian.
+Grafik pasar OANDA XAUUSD hanya referensi; diagram skenario memakai XUL10.
+
+## Arsip pendekatan AI — tidak aktif
+
+Bagian berikut mendokumentasikan pendekatan terdahulu, bukan layanan produksi
+atau kontrak biaya yang dipakai kalkulator sekarang.
 
 Paket pada `mrg-saran-modal-review.html` disetujui pengguna pada 16 Oktober 2026.
 Ini persetujuan heuristik simulasi, bukan kalibrasi studi atau spesifikasi broker.

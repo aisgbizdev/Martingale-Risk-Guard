@@ -38,11 +38,11 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
   const selected = snapshot?.selected;
   const readingNews = market.context.isPending || !!market.context.data?.news.fundamental?.processing;
   return <section className="live-stack" aria-label={t("Saran dari modal", "Capital-based suggestion")} data-testid="capital-suggestion">
-    <p className="live-small">{t("Cukup isi modal. MRG memeriksa harga, D1, kalender dan penilaian isi berita. Asumsi Pemula—bukan pengalaman Anda yang diketahui.", "Enter capital only. MRG checks price, D1, calendar and reviewed news content. Assumes Beginner—not knowledge of your experience.")}</p>
+    <p className="live-small">{t("Pemeriksaan kelengkapan harga, D1, kalender dan penilaian redaksi. Tanpa AI. Asumsi Pemula—bukan pengalaman Anda yang diketahui.", "Checks price, D1, calendar and editorial coverage. No AI. Assumes Beginner—not knowledge of your experience.")}</p>
     <Button type="button" className="w-full h-12" onClick={evaluate} disabled={readingNews} aria-busy={readingNews} data-testid="button-saran-modal">
       {readingNews ? t("Menyiapkan analisis pasar…", "Preparing market analysis…") : t("Lihat Saran MRG", "View MRG Suggestion")}
     </Button>
-    {readingNews && <p role="status" className="live-small">{t("MRG sedang mengambil data dan membaca isi berita otomatis. Modal tetap bisa diisi; tidak perlu penilaian manual.", "MRG is loading data and automatically reading news. You can enter capital while waiting; no manual review is required.")}</p>}
+    {readingNews && <p role="status" className="live-small">{t("Mengambil data pasar Newsmaker. Tidak ada pembacaan AI.", "Loading Newsmaker market data. No AI reading.")}</p>}
     {inputError && <p role="alert" className="live-error">{t("Isi modal positif, maksimal US$1 triliun.", "Enter positive capital, up to US$1 trillion.")}</p>}
     {active && active !== capture && <aside className="rounded-lg border border-border p-3 live-stack" data-testid="active-suggestion">
       <h2 className="font-bold">{t("Skenario yang sebelumnya dipakai", "Previously applied scenario")}</h2>
