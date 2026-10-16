@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MRG — Peta bukti studi dan batas parameter fleksibel</title>
+<style>
+:root{color-scheme:light}
+body{margin:0;background:#edf1f5;color:#172b3e;font:16px/1.6 system-ui,sans-serif}
+main{max-width:1100px;margin:30px auto;background:white;padding:32px 40px}
+h1{font-size:30px;line-height:1.2}h2{font-size:23px;margin-top:38px}h3{font-size:18px;margin-top:24px}
+.meta,.small{font-size:14px;color:#455a6c}.notice{padding:16px 20px;border-left:4px solid #176594;background:#edf6fc}
+.warning{background:#fff5dc;border-color:#ad7215}.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0}
+th,td{border:1px solid #ccd7e0;text-align:left;vertical-align:top;padding:9px 11px}
+th{background:#edf3f7}caption{text-align:left;font-weight:700;padding:6px 0}
+code{font-size:.9em;overflow-wrap:anywhere}a{color:#075c94}
+li{margin:6px 0}.sources li{margin-bottom:12px}footer{border-top:1px solid #ccd7e0;margin-top:32px;padding-top:16px}
+@media(max-width:650px){main{margin:0;padding:20px}h1{font-size:26px}}
+@media print{@page{size:A4;margin:16mm}body{background:white;font-size:10pt}main{padding:0;margin:0;max-width:none}h2,h3{break-after:avoid}tr{break-inside:avoid}table{font-size:8pt}.table-wrap{overflow:visible}.notice{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body><main>
+<p class="meta">NEWSMAKER · Martingale Risk Guard · Pemeriksaan bukti 16 Oktober 2026</p>
+<h1>Angka studi bukan ukuran risiko akun</h1>
+<p>Peta bukti PF/ROM/ER, modal, margin call, satuan XUL10, dan target fleksibel.</p>
+<div class="notice"><strong>Hasil pemeriksaan, bukan perubahan model.</strong> Enam triplet PF/ROM/ER dalam kode cocok dengan <strong>Tabel 4.5, bagian 2024</strong>, bukan gabungan hasil 2024–2025. Lampiran tesis memuat angka dan rumus yang tidak seluruhnya konsisten dengan tabel utama. Karena itu belum ada dasar untuk mengubah bobot target, menganggap ROM sebagai return akun, atau memberi skor/status studi pada parameter fleksibel.</div>
+<p><strong>Tidak dilakukan:</strong> perubahan aturan, ambang, API, antarmuka, penyimpanan, atau deployment. Laporan ini tidak menghasilkan probabilitas kerugian/MC, proyeksi ROM akun, anjuran modal, maupun level entry/exit. Persetujuan rancangan D1–D3 bukan persetujuan kalibrasi baru.</p>
+<nav aria-label="Isi laporan"><a href="#evidence">Peta bukti</a> · <a href="#metrics">Angka tesis</a> · <a href="#capital">Modal dan MC</a> · <a href="#target">Konflik target</a> · <a href="#units">Poin dan kontrak</a> · <a href="#decision">Rekomendasi</a> · <a href="#sources">Sumber dan cara periksa</a></nav>
+
+<h2 id="evidence">1. Peta bukti dan kekuatan kesimpulan</h2>
+<p>Nomor <strong>halaman cetak</strong> adalah angka di kaki tesis; nomor <strong>PDF</strong> adalah urutan halaman penampil, mulai 1. Untuk bagian yang dirujuk di sini: PDF = cetak + 14. Rujukan kode memakai lokasi pada saat pemeriksaan, bukan jaminan nomor baris selamanya.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>ID</th><th>Pertanyaan / lokasi sumber</th><th>Yang benar-benar didukung</th><th>Batas / konsekuensi</th></tr></thead>
+<tbody>
+<tr><td>E1</td><td>Brief awal, “LOGIKA PENILAIAN”; rancangan §8 D1/D3 [S1,S2]</td><td>Brief meminta heuristik target 50 lebih berisiko; ambang 0–39 / 40–69 / 70–100. Rancangan menyatakan perbedaan dengan kode dan menunda kalibrasi target.</td><td>Instruksi produk bukan hasil pengukuran probabilitas. Ambang kode dipertahankan dalam Build terbatas yang sudah disetujui.</td></tr>
+<tr><td>E2</td><td>Tesis §2.1.6, pers. 2.3–2.5, cetak 32 / PDF 46; §3.5 cetak 49 / PDF 63 [S3]</td><td>PF = total profit / total loss; ROM = net profit / total margin; ER = net profit / total point.</td><td>Definisi penyebut operasional di lampiran berbeda/ambigu. Bukan formula return terhadap modal pengguna.</td></tr>
+<tr><td>E3</td><td>Tabel 4.5, cetak 59 / PDF 73; <code>rules.ts</code> 16–26 [S3,S7]</td><td>Seluruh enam triplet konstanta cocok dengan baris <strong>2024</strong>.</td><td>Tidak ada pilihan periode dalam input. Tidak membuktikan hasil untuk kondisi Sideways, layer 3/4, atau akun pribadi.</td></tr>
+<tr><td>E4</td><td>Lampiran 24, cetak 110 / PDF 124; Lampiran 25, cetak 111 / PDF 125 [S3]</td><td>Ada tabel hitung tambahan dan contoh penyebut ROM/ER.</td><td>Bertentangan dengan sejumlah angka Tabel 4.5; belum dapat dianggap satu dataset yang telah direkonsiliasi.</td></tr>
+<tr><td>E5</td><td>§4.3–4.4 cetak 57–58 / PDF 71–72; Lampiran 23 cetak 109 / PDF 123 [S3]</td><td>USD 200.000 dipakai sebagai modal skenario historis; lampiran mencontohkan floating loss pada pola lot/jarak tertentu.</td><td>Bukan hasil kalibrasi universal modal “optimal”, apalagi jaminan akun bebas MC.</td></tr>
+<tr><td>E6</td><td>Tabel 4.4 catatan, cetak 58 / PDF 72; Lampiran 3 cetak 87 / PDF 101 [S3]</td><td>Linear 40 dan Martingale 30 mengalami MC dan transaksi dihentikan pada pengujian 2025.</td><td>Kejadian historis bukan probabilitas; “MC” tidak otomatis sama dengan saldo nol. Label ordinal MC dalam kode bukan kolom tabel ini.</td></tr>
+<tr><td>E7</td><td>§4.4–4.5 cetak 58–60 / PDF 72–74; Tabel 4.7 cetak 64 / PDF 78; Tabel 4.8 cetak 65 / PDF 79 [S3]</td><td>Target memengaruhi recovery, efisiensi, dan kegagalan secara berbeda menurut strategi, periode, dan pelaksana.</td><td>Tidak mendukung satu urutan risiko target yang berlaku untuk semua keadaan.</td></tr>
+<tr><td>E8</td><td>Tabel 2.2 cetak 25 / PDF 39; contoh pers. 2.1 cetak 26 / PDF 40; Lampiran 22–23 cetak 107–109 / PDF 121–123 [S3]</td><td>Spesifikasi historis: 100 troy ounce/lot, fixed rate Rp10.000/USD, minimum gerak USD 0,01/toz; “poin” studi memakai selisih harga penuh.</td><td>Definisi studi dapat ditelusuri; kesesuaian spesifikasi broker saat ini belum dibuktikan feed.</td></tr>
+<tr><td>E9</td><td>Dokumen harga §1e/§2/§3; WebSocket §3–5; PDF portal §3.2; adapter harga [S4–S6,S9]</td><td>Quote XUL10, histori LGD Daily, chart TradingView dan kalender memiliki peran/sumber berbeda. Feed menyediakan harga dan waktu.</td><td>Tidak ada bukti metadata kontrak/tick value atau aturan margin akun dalam respons quote yang diperiksa. Tidak perlu token/konektor baru.</td></tr>
+<tr><td>E10</td><td><code>schema.ts</code> 3–18, 21–33 [S8]</td><td>Hanya target 30/40/50 dan batas layer 3/4/5 diterima; tidak ada input jarak, lot awal, ekuitas, biaya, atau aturan broker.</td><td>Enum diterima ≠ tervalidasi ilmiah. Angka fleksibel tidak boleh dibulatkan, dijepit, atau diam-diam dipetakan ke studi terdekat.</td></tr>
+</tbody></table></div>
+
+<h2 id="metrics">2. PF/ROM/ER: asal angka dan perbedaan internal tesis</h2>
+<p>Tabel berikut menyalin <strong>Tabel 4.5</strong> (cetak 59 / PDF 73). “Exp” berarti Martingale eksponensial. Titik digunakan sebagai tanda desimal agar mudah dibandingkan dengan kode. ROM bertanda persen; PF dan ER bukan probabilitas.</p>
+<div class="table-wrap"><table>
+<caption>Transkripsi Tabel 4.5 — bukan perkiraan hasil pengguna</caption>
+<thead><tr><th>Periode</th><th>Strategi</th><th>Target</th><th>PF</th><th>ROM (%)</th><th>ER</th><th>Hubungan dengan konstanta kode</th></tr></thead>
+<tbody>
+<tr><td>2024</td><td>Linear</td><td>30</td><td>14.73</td><td>334.19</td><td>1.04</td><td>Cocok</td></tr>
+<tr><td>2024</td><td>Linear</td><td>40</td><td>3.48</td><td>579.65</td><td>1.13</td><td>Cocok</td></tr>
+<tr><td>2024</td><td>Linear</td><td>50</td><td>4.69</td><td>392.13</td><td>0.64</td><td>Cocok</td></tr>
+<tr><td>2024</td><td>Exp</td><td>30</td><td>3.75</td><td>312.86</td><td>0.56</td><td>Cocok</td></tr>
+<tr><td>2024</td><td>Exp</td><td>40</td><td>6.23</td><td>315.20</td><td>0.70</td><td>Cocok</td></tr>
+<tr><td>2024</td><td>Exp</td><td>50</td><td>7.82</td><td>447.23</td><td>0.78</td><td>Cocok</td></tr>
+<tr><td>2025</td><td>Linear</td><td>30</td><td>22.08</td><td>275.14</td><td>0.83</td><td>Tidak dipakai</td></tr>
+<tr><td>2025</td><td>Linear</td><td>40</td><td>1.04</td><td>0.00</td><td>0.00</td><td>Tidak dipakai; kegagalan dicatat</td></tr>
+<tr><td>2025</td><td>Linear</td><td>50</td><td>5.52</td><td>206.39</td><td>0.37</td><td>Tidak dipakai</td></tr>
+<tr><td>2025</td><td>Exp</td><td>30</td><td>5.27</td><td>0.00</td><td>0.00</td><td>Tidak dipakai; kegagalan dicatat</td></tr>
+<tr><td>2025</td><td>Exp</td><td>40</td><td>9.25</td><td>355.47</td><td>0.80</td><td>Tidak dipakai</td></tr>
+<tr><td>2025</td><td>Exp</td><td>50</td><td>6.35</td><td>411.77</td><td>0.71</td><td>Tidak dipakai</td></tr>
+</tbody></table></div>
+<p>Periode Tabel 4.5: <strong>2 Januari–18 Desember 2024</strong> dan <strong>2 Januari–30 Juni 2025</strong>. §4.3 menyebut keduanya trending; baris 2024 tidak boleh otomatis disebut hasil pengujian Sideways. Komentar kode “Backtesting Tesis 2024–2025” terlalu luas bila dipakai sebagai asal enam konstanta tersebut. Input <code>marketCondition</code> dan <code>maxLayer</code> mengubah skor, bukan memilih ulang PF/ER historis.</p>
+<div class="table-wrap"><table>
+<caption>Perbandingan lengkap dengan Lampiran 24 (cetak 110 / PDF 124)</caption>
+<thead><tr><th>Baris</th><th>Tabel 4.5: PF / ROM% / ER</th><th>Lampiran 24: PF / ROM% / ER</th><th>Penilaian bukti</th></tr></thead>
+<tbody>
+<tr><td>2024 Linear 30</td><td>14.73 / 334.19 / 1.04</td><td>16.41 / 300 / 0.85</td><td>Perbedaan material, bukan pembulatan</td></tr>
+<tr><td>2024 Linear 40</td><td>3.48 / 579.65 / 1.13</td><td>5.04 / 400 / 0.58</td><td>Perbedaan material</td></tr>
+<tr><td>2024 Linear 50</td><td>4.69 / 392.13 / 0.64</td><td>4.69 / 392 / 0.64</td><td>Cocok pada presisi lampiran</td></tr>
+<tr><td>2024 Exp 30</td><td>3.75 / 312.86 / 0.56</td><td>3.75 / 313 / 0.56</td><td>Cocok pada presisi lampiran</td></tr>
+<tr><td>2024 Exp 40</td><td>6.23 / 315.20 / 0.70</td><td>6.23 / 315 / 0.70</td><td>Cocok pada presisi lampiran</td></tr>
+<tr><td>2024 Exp 50</td><td>7.82 / 447.23 / 0.78</td><td>7.82 / 447 / 0.76</td><td>ER berbeda</td></tr>
+<tr><td>2025 Linear 30</td><td>22.08 / 275.14 / 0.83</td><td>22.08 / 275 / 0.81</td><td>ER berbeda</td></tr>
+<tr><td>2025 Linear 40</td><td>1.04 / 0.00 / 0.00</td><td>1.04 / 0 / 0.00</td><td>Cocok</td></tr>
+<tr><td>2025 Linear 50</td><td>5.52 / 206.39 / 0.37</td><td>5.52 / 206 / 0.36</td><td>ER berbeda</td></tr>
+<tr><td>2025 Exp 30</td><td>5.27 / 0.00 / 0.00</td><td>8.92 / 464 / 0.90</td><td>Konflik besar, termasuk perlakuan kegagalan</td></tr>
+<tr><td>2025 Exp 40</td><td>9.25 / 355.47 / 0.80</td><td>9.25 / 355 / 0.80</td><td>Cocok pada presisi lampiran</td></tr>
+<tr><td>2025 Exp 50</td><td>6.35 / 411.77 / 0.71</td><td>6.35 / 412 / 0.71</td><td>Cocok pada presisi lampiran</td></tr>
+</tbody></table></div>
+<h3>Mengapa angka belum dapat dikalibrasi ulang</h3>
+<ul>
+<li><strong>Penyebut ROM:</strong> persamaan 2.4 menyebut Total Margin. Contoh Lampiran 24 memberi label “Total Point (USD)” tetapi menghitung USD 663.000 / (221 settled lot × USD 1.000) × 100% = 300%. Ini bukan pembagian terhadap modal awal USD 200.000, dan belum menjelaskan apakah margin dijumlahkan per transaksi atau memakai definisi lain.</li>
+<li><strong>ER:</strong> persamaan 2.5 menyebut Total Point; contoh Lampiran 24 memakai net profit / (gross profit + gross loss). Lampiran 25 memakai contoh dengan nilai loss bertanda negatif, sehingga makna penyebut dan tanda perlu direkonsiliasi. ER ini tidak boleh diganti diam-diam dengan indikator teknikal lain yang kebetulan bernama “Efficiency Ratio”.</li>
+<li><strong>Penamaan kolom:</strong> pada Linear 30 tahun 2024, Tabel 4.4 mencantumkan gross profit USD 663.000 dan net profit USD 738.560; Lampiran 24 mencantumkan gross profit USD 738.560 dan net profit USD 663.000. PF 14.73 dan 16.41 berasal dari pembilang berbeda terhadap loss USD 45.000. Laporan ini menandai konflik, tidak memilih salah satunya sebagai koreksi otomatis.</li>
+<li><strong>Perlakuan kegagalan:</strong> Exp 30 tahun 2025 diberi ROM/ER nol pada Tabel 4.5 tetapi tidak pada Lampiran 24; Tabel 4.4 mencatat transaksi berhenti karena MC. Belum jelas penyelarasan hasil sebelum/sesudah likuidasi. PF &gt; 1 sendirian bukan bukti ketahanan atau keselamatan.</li>
+<li><strong>Biaya dan periode:</strong> §3.7 (cetak 52 / PDF 66) menyebut biaya diabaikan, sedangkan Lampiran 2–3 (cetak 86–87 / PDF 100–101) menampilkan komisi, VAT, dan storage fee. §3.5 menyebut demo 30 Oktober–30 November 2025; Lampiran 25 mencetak “1 OKT–1 NOV 2025”. Ini perlu penetapan definisi sebelum menggabungkan data backtest dan demo.</li>
+</ul>
+<div class="notice warning"><strong>Kesimpulan:</strong> “Cocok dengan Tabel 4.5 tahun 2024” adalah kesimpulan yang dapat diperiksa. “Sudah direplikasi dari transaksi mentah”, “berlaku untuk semua tahun”, atau “memprediksi akun pengguna” bukan kesimpulan pemeriksaan ini.</div>
+
+<h2 id="capital">3. Acuan modal, ROM keluaran kode, dan label margin call</h2>
+<h3>USD 200.000 adalah asumsi historis, bukan batas aman pribadi</h3>
+<p>§3.5, §4.4 dan Tabel 4.6 (cetak 48, 58, 60 / PDF 62, 72, 74) menggunakan modal awal USD 200.000. Lampiran 23 (cetak 109 / PDF 123) mencontohkan floating loss: Linear sekitar USD 175.000 (jarak 50) dan USD 168.000 (jarak 30); eksponensial USD 130.000 (jarak 50) dan USD 171.000 (jarak 30). Ini contoh aritmetika paparan terhadap penurunan harga tertentu, bukan distribusi risiko.</p>
+<p>Lampiran tersebut memuat urutan lot Linear 1–6 atau 1–7, dan eksponensial 1–2–4–8–16 serta contoh sampai 32. Jumlah baris tidak selalu sama dengan batas 5 layer aplikasi; tidak boleh langsung dijadikan jaminan untuk pilihan 3/4/5. Kesimpulan tesis cetak 71 / PDF 85 sendiri menyebut keterbatasan ketahanan modal dan sensitivitas tinggi pada susunan keempat/kelima. Kasus MC tetap terjadi pada pengujian bermodal acuan itu.</p>
+<h3>ROM yang dikirim API bukan transkripsi murni</h3>
+<p><code>rules.ts</code> 65–106 mengambil <code>baseMetrics</code> dari strategi/target, lalu memakai <code>adjustedROM = baseMetrics.rom × (200000 / input.modal)</code>. Rumus penskalaan ini tidak ditemukan sebagai kalibrasi akun dalam lokasi tesis yang diperiksa. Menurunkan input modal memperbesar ROM keluaran secara mekanis, tanpa menyimulasikan perubahan lot, biaya, ekuitas, drawdown, atau penghentian karena MC. Maka jangan menyebutnya return yang diharapkan, apalagi mengalikan hasil itu menjadi proyeksi profit akun.</p>
+<p>PF dan ER dibiarkan tetap untuk semua modal, kondisi, layer, serta pengalaman. Ini sifat lookup kode, bukan bukti bahwa PF/ER strategi nyata kebal terhadap modal atau ukuran posisi. Nama kontrak API <code>expectedPF</code>, <code>expectedROM</code>, dan <code>expectedER</code> bersifat warisan; kata “expected” tidak membuktikan estimasi statistik.</p>
+<h3>Dua jenis “MC” yang harus dibedakan</h3>
+<ol>
+<li><strong>Kejadian/level historis tesis:</strong> Tabel 4.4 dan Lampiran 3 mencatat Linear 40 berhenti pada <strong>14 Mei 2025</strong>, Exp 30 pada <strong>12 Mei 2025</strong> karena MC. Tabel/Gambar 4.2 berisi level harga historis dan ketahanan dana, bukan kategori probabilitas pengguna. Tidak ada level tersebut yang dijadikan rekomendasi transaksi dalam laporan ini.</li>
+<li><strong>Label ordinal aplikasi:</strong> konstanta <code>mcRisk</code> untuk Exp 30/40/50 adalah Sangat Tinggi/Tinggi/Sedang, dan Linear 30/40/50 Rendah/Sedang/Sedang. Belum ditemukan tabel padanan enam kategori tersebut dalam sumber yang diperiksa. Bahkan hasil akhir <strong>selalu menimpa label dasar berdasarkan rasio modal saja</strong>:</li>
+</ol>
+<div class="table-wrap"><table>
+<thead><tr><th>Rasio input modal / 200.000</th><th>Label keluaran MC kode</th><th>Interpretasi yang tidak boleh dibuat</th></tr></thead>
+<tbody>
+<tr><td>&lt; 0.25</td><td>Sangat Tinggi</td><td rowspan="5">Bukan probabilitas MC atau evaluasi akun broker. Strategi, target, lot, ekuitas, leverage, margin terpakai, maintenance dan stop-out tidak dihitung oleh pemetaan ini.</td></tr>
+<tr><td>≥ 0.25 dan &lt; 0.5</td><td>Tinggi</td></tr>
+<tr><td>≥ 0.5 dan &lt; 1</td><td>Sedang</td></tr>
+<tr><td>≥ 1 dan &lt; 2</td><td>Rendah</td></tr>
+<tr><td>≥ 2</td><td>Sangat Rendah</td></tr>
+</tbody></table></div>
+<p>Akibatnya pada modal acuan, Exp 30 memperoleh label MC “Rendah” meskipun konstanta dasarnya “Sangat Tinggi” dan tesis mencatat kegagalan Exp 30 pada periode 2025. Ini bukan kesalahan transkripsi enam triplet; ini lapisan heuristik modal yang belum tervalidasi. Rekomendasi penyajian: “label heuristik modal dari aturan lama; bukan hasil pengukuran MC akun”, atau jangan tampilkan angka/label turunan tersebut sampai keputusan terpisah dibuat.</p>
+
+<h2 id="target">4. Konflik target 50 dalam brief vs penalti target 30 di kode</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Sumber</th><th>Urutan / temuan</th><th>Makna</th></tr></thead>
+<tbody>
+<tr><td>Brief</td><td>“Target 50 ⇒ risiko lebih tinggi dibanding 30/40.”</td><td>Heuristik awal yang mengasumsikan target lebih jauh lebih berisiko.</td></tr>
+<tr><td><code>rules.ts</code>, cabang target 30/40/50</td><td>Martingale +15 / +10 / +5; Linear +0 / +10 / +5.</td><td>Martingale justru berkurang skornya ketika target dinaikkan; Linear tidak monoton. Keduanya tidak memenuhi urutan brief.</td></tr>
+<tr><td>Tesis §4.4 dan Tabel 4.5</td><td>Exp 30 dan Linear 40 gagal pada pengujian 2025; narasi mengingatkan target terlalu rapat; Martingale 40–50 disebut produktif.</td><td>Ada alasan historis untuk memperingatkan Exp 30, tetapi tidak memberi besaran penalti 15/10/5 atau validasi bahwa 50 selalu lebih aman.</td></tr>
+<tr><td>Tabel 4.7</td><td>Exp 30 recovery 0–3 hari; Exp 50 5–10 hari, kadang &gt;14, dengan floating tinggi.</td><td>Mendukung dimensi risiko menunggu lebih lama pada target besar, bukan probabilitas MC dan bukan pembuktian urutan skor tunggal.</td></tr>
+<tr><td>Tabel 4.8, demo 12 peserta</td><td>Pemula Exp 30 dan 50 sangat merugi; peserta berpengalaman pada keduanya menunjukkan hasil berbeda.</td><td>Sampel kecil/deskriptif; target bukan satu-satunya faktor. Bukan dasar klaim frekuensi kegagalan populasi.</td></tr>
+</tbody></table></div>
+<p><strong>Penjelasan konflik:</strong> brief mengutamakan besarnya gerak yang dibutuhkan untuk target; kode menonjolkan kegagalan historis parameter rapat pada Martingale. Tesis menunjukkan lebih dari satu dimensi risiko. Belum ada dasar untuk menyatakan salah satu urutan sebagai hukum universal, apalagi menentukan bobot numeriknya. Korelasi hasil skenario yang sekaligus mengubah jarak/ukuran posisi tidak mengisolasi efek target keuntungan.</p>
+<h3>Uji sensitivitas aturan yang ada — bukan pengukuran risiko</h3>
+<p>Semua input selain target dibekukan: modal USD 200.000, maksimum 3 layer, Berpengalaman. Komponen modal 0 + layer 5 + pengalaman 5. Martingale menambah strategi 20 dan kondisi 25 (Trending) / 10 (Sideways); Linear menambah kondisi 15 / 5.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Strategi / kondisi input</th><th>Target 30</th><th>Target 40</th><th>Target 50</th></tr></thead>
+<tbody>
+<tr><td>Martingale / Trending</td><td>70 · TIDAK LAYAK</td><td>65 · TIDAK LAYAK</td><td>60 · BERISIKO</td></tr>
+<tr><td>Martingale / Sideways</td><td>55 · BERISIKO</td><td>50 · BERISIKO</td><td>45 · BERISIKO</td></tr>
+<tr><td>Linear / Trending</td><td>25 · AMAN*</td><td>35 · AMAN*</td><td>30 · AMAN*</td></tr>
+<tr><td>Linear / Sideways</td><td>15 · AMAN*</td><td>25 · AMAN*</td><td>20 · AMAN*</td></tr>
+</tbody></table></div>
+<p class="small">*AMAN adalah enum API lama, disajikan sebagai risiko relatif rendah menurut aturan studi; bukan jaminan aman. Skor dijepit 0–100. Kode: ≤35 / 36–60 / ≥61, berbeda dari brief 0–39 / 40–69 / ≥70. Tidak ada ambang yang diubah dalam pemeriksaan ini. Skor 70/100 bukan peluang rugi 70%. Baris Sideways adalah uji input sintetis, bukan klaim kondisi pasar saat ini atau rezim data tesis.</p>
+
+<h2 id="units">5. Poin, kontrak XUL10, target, dan jarak layer</h2>
+<h3>Yang dapat dipastikan dari dokumen yang sudah diberikan</h3>
+<ul>
+<li><strong>Satuan studi:</strong> harga dinyatakan USD per troy ounce. Tabel 2.2 menyebut contract size <strong>100 toz per lot</strong>, kurs tetap <strong>Rp10.000 per USD</strong>, dan minimum gerak <strong>USD 0,01/toz</strong>. Angka “10” pada XUL10 merujuk jenis fixed rate dalam uraian cetak 25, bukan ukuran 10 ounce.</li>
+<li><strong>“Poin” bukan tick desimal:</strong> Lampiran 22 menghitung HIGH−LOW dalam selisih harga penuh, misalnya 2654.20−2621.90 = 32.30; Lampiran 23 memakai penurunan antarlayer 30 atau 50 dalam harga penuh. Konvensi studi mendukung <strong>1 poin = perubahan USD 1/toz</strong>, bukan USD 0,01. Jadi target studi 30 bukan otomatis 30 tick (USD 0,30). Ini penelusuran satuan historis, bukan parameter broker masa kini.</li>
+<li><strong>Implikasi dimensi, bukan proyeksi P/L:</strong> dengan kontrak historis 100 toz, gerak USD 1/toz berpadanan nilai kotor USD 100 per lot sebelum biaya; minimum gerak USD 0,01/toz berpadanan USD 1 per lot. Konversi rupiah dalam contoh tesis memakai fixed rate kontrak, bukan kurs USD/IDR pasar. Angka ini tidak digunakan menghitung hasil akun pengguna.</li>
+<li><strong>Margin/biaya historis:</strong> Tabel 2.2 mencantumkan initial margin harian Rp10 juta/lot, menginap Rp20 juta/lot, maintenance 70% dan auto liquidation 30% initial margin; komisi, VAT dan rollover tercantum terpisah. Ini kutipan spesifikasi dalam tesis, bukan verifikasi kondisi akun/broker saat ini, dan bukan ambang risiko aplikasi.</li>
+</ul>
+<h3>Target keuntungan tidak sama dengan jarak penambahan posisi</h3>
+<p><strong>Target</strong> adalah parameter tujuan keuntungan per siklus menurut definisi strategi. <strong>Jarak layer/grid</strong> adalah selisih harga untuk menambah susunan ketika gerak berlawanan. Keduanya memiliki peran berbeda walau suatu ilustrasi memakai angka sama. Tabel 2.3 (cetak 28 / PDF 42) menyebut grid dan target pada baris terpisah; Lampiran 23 mengubah jarak antarharga, bukan menetapkan semua aturan target per siklus.</p>
+<p>Lampiran 8 (cetak 92 / PDF 106), berlabel Martingale 50 PTS, memperlihatkan selisih antarposisi baru berlot 2–4–8–16 masing-masing sekitar 50 harga penuh, tetapi setelah penumpukan, penutupan gabungan tidak selalu menunggu harga awal ditambah 50. Lampiran 6 (cetak 90 / PDF 104) juga menggambarkan penambahan dan likuidasi sebagai kejadian berbeda. Keduanya mendukung perbedaan peran, <strong>bukan</strong> pembuktian bahwa setiap target bebas harus dipakai sebagai grid atau rumus penutupan universal. Tidak ada harga kejadian tersebut yang dijadikan sinyal.</p>
+<p><code>RiskInput</code> hanya memiliki <code>targetPoin</code>; tidak memiliki <code>layerSpacing</code>, lot awal, pengali bebas, atau rumus target basket. Klaim kode “target 30 ⇒ frekuensi averaging tinggi” dan “target 50 ⇒ ruang koreksi lebih lebar” secara implisit mengaitkan target dan grid, padahal simulator tidak menghitung grid. Hubungan kausal itu belum terisolasi. Batas 3/4/5 di form juga tidak membuktikan setiap kombinasi sudah di-backtest tersendiri.</p>
+<p><strong>Batas validasi runtime:</strong> route <code>artifacts/api-server/src/routes/routes.ts</code> memanggil <code>riskInputSchema.safeParse</code> sebelum kalkulasi, sehingga target khusus ditolak. Namun <code>calculateRisk</code> sendiri bukan validator: jika kelak dipanggil dengan input yang melewati schema, lookup tak dikenal memiliki fallback PF 1/ROM 0/ER 0 dan cabang target terakhir berperilaku seperti 50. Jangan memakai fallback tersebut untuk mengaktifkan target fleksibel; jalur baru harus memisahkan “belum tervalidasi” dari hasil studi, setelah persetujuan tersendiri.</p>
+<h3>Pemeriksaan dokumentasi dan koneksi yang tersedia</h3>
+<p>Dokumen <code>TRADINGVIEW_CHARTING_AND_PRICES_1791979110546.md</code> §2 memetakan XUL10 ke label XAU/USD pada wrapper asal; §1e memakai OANDA:XAUUSD untuk chart; §3 mengambil referensi harian “LGD Daily”. Pemetaan label tersebut bukan bukti ketiga instrumen identik secara kontraktual. Adapter MRG tetap memilih simbol mentah XUL10 dan memisahkan histori LGD Daily.</p>
+<p><strong>Snapshot pemeriksaan koneksi:</strong> GET publik <code>https://endpoapi-production-3202.up.railway.app/api/live-quotes</code> pada 16 Oktober 2026 06:04:46 UTC / 13:04:46 WIB menghasilkan <code>status=success</code>, <code>state=connected</code>, baris <code>symbol=XUL10</code>, field <code>price/buy/sell/spread</code>, serta <code>serverDateTime=2026-10-16 13:04:46</code>. Ini bukti respons pada saat pemeriksaan saja, bukan klaim quote masih live ketika laporan dibaca.</p>
+<p>Baris quote tersebut <strong>tidak memuat</strong> contract size, tick size/value, point multiplier, kurs penyelesaian, initial/maintenance margin, atau stop-out broker. Dokumen WebSocket §3–5 menjelaskan koneksi tanpa autentikasi dan format pesan (contohnya indeks), bukan spesifikasi kontrak XUL10. Koneksi WebSocket langsung tidak diuji/dipasang karena adapter HTTP yang ada sudah dapat diperiksa dan tugas ini tidak membutuhkan konektor ganda. PDF API portal versi <code>1791979249211</code> §3.2 adalah sumber kalender, bukan metadata kontrak; token portal yang sudah ada tidak perlu diminta atau dipakai untuk endpoint publik ini.</p>
+<div class="notice warning"><strong>Batas kepastian:</strong> satuan dan kontrak <em>historis tesis</em> sudah terlacak. Kesamaan spesifikasi pada feed/broker sekarang belum terbukti dari bahan dan respons yang tersedia. Jangan menyimpulkan konversi transaksi akun, target adaptif berskor, atau jarak layer dari jumlah digit harga maupun ATR LGD Daily. Keterbatasan ini dicatat sebagai hasil pemeriksaan, bukan alasan meminta ulang dokumen/token.</div>
+
+<h2 id="decision">6. Rekomendasi dan syarat persetujuan terpisah</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Rekomendasi</th><th>Penyajian / aturan yang diusulkan</th><th>Dasar dan gerbang</th></tr></thead>
+<tbody>
+<tr><td>R1 · Pisahkan fakta studi dari turunan heuristik</td><td>PF/ROM/ER transkripsi diberi periode, tabel, dan catatan konflik lampiran. ROM terskala dan label MC modal jangan disebut metrik akun; usulkan tidak menampilkan turunan yang belum tervalidasi, atau beri penjelasan sumber heuristik yang eksplisit.</td><td>E2–E6. Perubahan tampilan/kontrak API membutuhkan pekerjaan dan persetujuan terpisah; laporan ini tidak menghapus keluaran lama.</td></tr>
+<tr><td>R2 · Jangan memilih urutan target otomatis</td><td>Pertahankan perilaku lama sebagai warisan terbatas; dokumentasikan konflik brief/kode dan dimensi recovery vs ketahanan. Jangan balik penalti 30/50, menyalin kategori MC menjadi skor, atau mengubah ambang.</td><td>E1,E4,E7. Rekonsiliasi data dan uji sensitivitas terkontrol harus mendahului usulan bobot baru.</td></tr>
+<tr><td>R3 · Target fleksibel tanpa skor/status studi</td><td>Jika kelak ada input target/jarak khusus, tandai “parameter khusus — belum tervalidasi studi”; skor/status studi dan PF/ROM/ER/MC studi untuk parameter itu <strong>tidak tersedia</strong>. Jangan gunakan 0, AMAN, hasil lama, atau studi terdekat sebagai pengganti.</td><td>E8–E10. Di luar 30/40/50 API sekarang menolak input; jangan perluas enum atau mengakali konversi tanpa keputusan baru. Bahkan kombinasi enum lama bukan validasi akun.</td></tr>
+<tr><td>R4 · Perbandingan rentang hanya deskriptif</td><td>Target/jarak boleh dibahas terpisah terhadap rentang harga setelah satuan dan sumber dijelaskan; ATR D1 tetap konteks referensi, tanpa skor, level entry/exit, rekomendasi grid, atau klaim buffer aman.</td><td>Rancangan D2/D3 dan E8–E9. Data harga tidak melengkapi metadata margin/kontrak yang tidak ada.</td></tr>
+<tr><td>R5 · Gerbang perubahan model</td><td>Tetapkan tabel/versi data otoritatif, penyebut metrik dan biaya; definisikan lot awal, pengali, arti layer, target siklus/basket vs grid, penanganan MC; cocokkan contoh hitung; bandingkan sensitivitas dengan faktor lain dibekukan, periode berbeda dan kondisi ekstrem. Ajukan rancangan bobot/ambang serta konsekuensinya untuk persetujuan sebelum implementasi.</td><td>Konflik angka tidak diselesaikan oleh satu backtest ulang tanpa spesifikasi. Persetujuan D1–D3 sebelumnya tidak meliputi aturan baru atau skor parameter fleksibel.</td></tr>
+</tbody></table></div>
+<p><strong>Contoh label yang aman secara makna:</strong> “Referensi historis Tabel 4.5 (2024); beberapa angka berbeda dari Lampiran 24. Bukan estimasi hasil akun.” Untuk parameter khusus: “Belum tervalidasi terhadap studi — tidak ada skor/status studi.” Untuk modal: “Nilai acuan simulasi historis, bukan rekomendasi setoran.”</p>
+<p>Guardrail tambahan pada narasi kode yang perlu ditinjau dalam pekerjaan terpisah: atribusi “hingga 95% kerugian” dan klaim “setiap transaksi independen” tidak dibuktikan oleh pencocokan tabel ini; wawancara 12 peserta dan backtest deskriptif bukan pembuktian persentase sebab kerugian atau independensi statistik pasar. Pernyataan “margin call total” juga tidak boleh memperluas catatan transaksi dihentikan menjadi klaim saldo nol.</p>
+
+<h2 id="sources">7. Sumber dan cara pemeriksaan ulang</h2>
+<ol class="sources">
+<li id="s1"><strong>S1 · Rancangan/persetujuan:</strong> <code>docs/mrg-realtime-review.html</code>, terutama §4, §7, §8 D1–D3 dan catatan persetujuan 16 Oktober 2026. SHA-256: <code>3ac9c48766511acb42435ed0dff2e962b943ba05bab58b4042322304c9fc7c9d</code>.</li>
+<li id="s2"><strong>S2 · Brief:</strong> <code>attached_assets/Pasted-Nama-aplikasi-RiskCheck-XUL10-Saya-ingin-kamu-membangun_1766579315027.txt</code>. SHA-256: <code>1512d5d61769db69c07c4b17cde74f2f39e83bc6c8884c3839ebf4ea64e343ff</code>.</li>
+<li id="s3"><strong>S3 · Tesis:</strong> <code>attached_assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf</code>, 130 halaman. SHA-256: <code>8bbf13f0242957fae24a437e1968077a9bf0686aad25f210c4e95afa9e51620d</code>. Kutipan nomor tabel/halaman dalam laporan merujuk berkas ini, bukan versi lain.</li>
+<li id="s4"><strong>S4 · Dokumentasi harga/chart:</strong> <code>attached_assets/TRADINGVIEW_CHARTING_AND_PRICES_1791979110546.md</code> §1e, §2, §3. SHA-256: <code>ab8908179f3f1c5aa5272f31927655afaf836d82e17b34a3ba76ccd008f35a8d</code>. Ini dokumentasi aplikasi asal; perilaku MRG diperiksa lagi pada adapter.</li>
+<li id="s5"><strong>S5 · Dokumentasi WebSocket:</strong> <code>attached_assets/WebSocket_Documentation_wsprc.royalassetindo.co.id_1791977155847.pdf</code>, PDF 1–2, §3–5. SHA-256: <code>b696a718d0280e69d8090e60ca0f0ba7774544711ac343e2ae25f68b0302c20b</code>.</li>
+<li id="s6"><strong>S6 · Portal Newsmaker:</strong> <code>attached_assets/Dokumentasi_API_portalnews_newsmaker_1791979249211.pdf</code>, §3.2 kalender. SHA-256: <code>fcd63fe1e4f085753ab664b70e685e36cfb234bac599f58cdfd30b3c331f0efd</code>. Dipakai versi ini; versi <code>1791977155848</code> tidak dijadikan metadata kontrak atau pengganti spesifikasi broker.</li>
+<li id="s7"><strong>S7 · Aturan:</strong> <code>artifacts/api-server/src/rules.ts</code>, konstanta 9–27, turunan modal/MC 65–106, cabang target, layer, dan status. SHA-256: <code>0cd3a7729d61513ffc3b8639fc8bfe1fa641ddc4bc809532775ea2b0920ffab8</code>.</li>
+<li id="s8"><strong>S8 · Kontrak input/output:</strong> <code>lib/mrg-shared/src/schema.ts</code>. SHA-256: <code>d7e0f4dfe579712db63ffd4a92010d689d29d629b6c17da5101423e394f95e86</code>.</li>
+<li id="s9"><strong>S9 · Adapter dan tampilan yang diperiksa:</strong> <code>artifacts/api-server/src/market/prices.ts</code>, <code>market/provider.ts</code>; <code>artifacts/mrg/src/pages/result.tsx</code> (penjelasan metrik, kartu statistik dan daftar skenario tersimpan). Tampilan sudah memiliki disclaimer, tetapi disclaimer tidak memvalidasi rumus dan nilai lama di skenario tersimpan tetap harus dipertimbangkan jika penyajian diubah nanti.</li>
+</ol>
+<h3>Metode dan batas verifikasi</h3>
+<ul>
+<li>Ekstraksi teks dilakukan per halaman, lalu halaman tabel/gambar diperiksa secara visual, khususnya PDF 39, 72–73, 100–102, 104, 106, 121–125. Lampiran 23–25 berupa gambar; ekstraksi teks saja tidak cukup untuk memeriksa angka.</li>
+<li>Transkripsi enam konstanta dibandingkan dengan Tabel 4.5; seluruh 12 baris dibandingkan dengan Lampiran 24. Dua belas kombinasi sensitivitas skor/status dihitung ulang dengan fungsi yang ada, bukan aturan baru. Enam variasi target di luar enum ditolak schema; POST <code>/api/calculate-risk</code> dengan target “35” juga dikonfirmasi menghasilkan <strong>HTTP 400</strong>, tanpa skor/metrik. Struktur HTML, navigasi internal, dan delapan sidik SHA-256 sumber diperiksa.</li>
+<li>Reproduksi tampilan PDF (memerlukan PyMuPDF): <code>python .agents/scripts/inspect_thesis.py "attached_assets/THESIS_Bp_Iriawan_(New_Final_Revisi)_1766579548500.pdf" --pages 39 72 73 123 124 125</code>. Hasil sementara ada di <code>generated-artifacts/evidence/</code>, diabaikan Git/deployment. Gunakan PDF sumber untuk audit jangka panjang, bukan bergantung pada gambar sementara.</li>
+<li>Snapshot quote hanya menguji koneksi dan field respons publik, tanpa autentikasi. Tidak ada akses nilai secrets lingkungan, koneksi akun broker, order, atau pengambilan data akun. Tidak ada klaim telah menghitung ulang seluruh transaksi mentah, mengonfirmasi kontrak broker sekarang, atau memperoleh peluang kerugian dari sampel ini.</li>
+<li>Perubahan model tetap memerlukan persetujuan terpisah. Kekurangan bukti dicatat sebagai “belum terverifikasi”, bukan ditutup dengan asumsi nol atau label aman.</li>
+</ul>
+<footer><strong>Ringkasan keputusan:</strong> sumber historis terlacak; pertentangan tabel dan heuristik modal/target terlihat; skor lama tidak dikalibrasi ulang; parameter fleksibel tanpa bukti tidak mendapat skor/status studi. Edukasi dan mitigasi risiko, bukan saran transaksi.</footer>
+</main></body></html>

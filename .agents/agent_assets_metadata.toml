@@ -28,3 +28,17 @@ mtime_ms = 1792126595975
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/ee852f55-3b8f-41f6-b86f-bb4507667b57/18905c31-1bd7-427a-9968-439c4462fc5c"
 storage_version_token = "1792126639543892"
 content_type = "text/html"
+
+[[outputs]]
+id = "KMnUHbCvgf9Iqhse3R4KR"
+uri = "file://docs/mrg-study-evidence.html"
+type = "html"
+title = "MRG · Peta bukti studi dan batas target fleksibel"
+description = "Rujukan halaman/tabel tesis, konflik angka PF/ROM/ER, acuan modal dan label MC, satuan XUL10, sensitivitas target, serta rekomendasi tanpa perubahan model."
+logical_id = "15252d99-91b8-4d38-b5df-985f0f00c7ee"
+content_hash = "sha256:207f04f89681cf1ff8d87016aed9935546b66d7c6ee3ca7dc003955f94fb9042"
+size = 33991
+mtime_ms = 1792131096644
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:865aa0da-6eef-4209-af4e-78a83f4e486c/15252d99-91b8-4d38-b5df-985f0f00c7ee/3841f0b1-9ea3-4ad9-be5b-502f0a2d1590"
+storage_version_token = "1792131119667051"
+content_type = "text/html"
