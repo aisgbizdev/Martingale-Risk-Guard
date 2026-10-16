@@ -15,8 +15,8 @@ Pengguna menyetujui seluruh rekomendasi D1–D3 dalam rancangan koreksi pada 16 
 
 **How to apply:** Gunakan keputusan di `docs/mrg-realtime-review.html` sebagai batas pengembangan lanjutan. Perubahan model/parameter fleksibel berskor tetap perlu pembahasan dan persetujuan terpisah.
 
-Pengguna menyetujui satu halaman utama yang menyatukan enam isian simulator awal, konteks pasar, dan hasil Cek Risiko tanpa pindah halaman. Navigasi jurnal posisi tidak lagi ditonjolkan; catatan lama tetap dipertahankan.
+Pengguna menyetujui satu halaman utama yang menyatukan enam isian simulator awal, konteks pasar, dan hasil Cek Risiko tanpa pindah halaman. Ia menegaskan kembali bahwa MRG hanya kalkulator sederhana: navigasi Ringkasan–Posisi–Analisis tetap membingungkan, bukan cukup dipindah ke menu opsional. Catatan lama tetap dipertahankan.
 
-**Why:** Pengguna kembali bingung dengan fungsi pada halaman Posisi dan merasa tidak sama dengan MRG lama, lalu menyetujui rancangan satu halaman.
+**Why:** Pengguna kembali bingung dengan fungsi pada halaman Posisi dan merasa tidak sama dengan MRG lama, lalu menyetujui rancangan satu halaman. Setelah perubahan ia kembali mengatakan hasilnya semakin rumit karena menu-menu yang tidak jelas.
 
-**How to apply:** Pertahankan alur inti pada satu halaman adaptif: isian dan hasil berdampingan di layar besar, berurutan di HP. Chart, berita, dan rincian bersifat opsional; jangan memaksa seluruh isi muat dalam satu viewport ponsel.
+**How to apply:** Pertahankan alur inti pada satu halaman adaptif: isian dan hasil berdampingan di layar besar, berurutan di HP. Jangan pertahankan menu dashboard yang bersaing dengan kalkulator. Konteks pasar dan rincian mendukung kalkulator, bukan membentuk aplikasi lain; jangan memaksa seluruh isi muat dalam satu viewport ponsel.
