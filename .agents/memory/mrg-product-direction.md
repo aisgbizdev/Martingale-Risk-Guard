@@ -56,3 +56,9 @@ Pengguna memilih penandaan redaksi Newsmaker agar berita ikut memengaruhi perhit
 **Why:** Pengguna mengonfirmasi pilihan pengganti analisis AI dan membatasi referensi TradePilot hanya pada rancangan interaksi/tampilan, bukan identitas warna.
 
 **How to apply:** Pertahankan skin Newsmaker tanpa mengasumsikan tema gelap atau aksen TradePilot. Perlukan kontrak data penandaan redaksi yang nyata, bukan mengembalikan kewajiban pengguna mengisi atau programmer mengedit penilaian artikel satu per satu. Penandaan yang hilang tidak boleh dianggap netral.
+
+Periksa dokumentasi API Newsmaker dan feed yang sudah dikirim sebelum meminta pengguna atau programmer menyediakan ulang sumber data.
+
+**Why:** Pengguna berulang kali mengingatkan bahwa API berita, harga, dan data lain sudah diberikan dalam dokumentasi sebelumnya.
+
+**How to apply:** Bedakan endpoint sumber yang memang terdokumentasi dari atribut penilaian tambahan yang belum terbukti tersedia. Jangan menganggap ketiadaan atribut interpretasi berarti API berita tidak ada, dan jangan mengklaim atribut tersebut tersedia tanpa verifikasi.
