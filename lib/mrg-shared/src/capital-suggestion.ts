@@ -51,6 +51,7 @@ export interface CapitalSuggestion {
   reference: ReturnType<typeof getStudyReference>;
   calendar: MarketContext["calendar"] | null;
   fundamental: FundamentalAssessment | null;
+  ruleAnalysis?: import("./market-rules").MarketRuleAnalysis | null;
   target: number | null;
   spacing: number | null;
   candidates: Candidate[];
@@ -90,7 +91,7 @@ export function suggestFromCapital(
   const result: CapitalSuggestion = {
     status: "incomplete", capital, evaluatedAt: Number.isFinite(now) ? new Date(now).toISOString() : "",
     reasons: [], quote: quote ? { ...quote } : null, reference,
-    calendar: context?.calendar ?? null, fundamental,
+    calendar: context?.calendar ?? null, fundamental, ruleAnalysis: context?.ruleAnalysis ?? null,
     target: null, spacing: null, candidates: [], selected: null,
   };
   if (!Number.isFinite(capital) || capital <= 0 || capital > 1e12) result.reasons.push("Modal harus positif, terbatas, dan maksimal US$1 triliun.");

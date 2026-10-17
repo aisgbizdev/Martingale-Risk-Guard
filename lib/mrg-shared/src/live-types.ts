@@ -81,6 +81,7 @@ export interface Article extends NewsItem {
 }
 
 export interface MarketContext {
+  ruleAnalysis?: import("./market-rules").MarketRuleAnalysis;
   history: {
     status: "ready" | "unavailable";
     analysis: DailyAnalysis | null;

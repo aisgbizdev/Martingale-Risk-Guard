@@ -4,6 +4,7 @@ import { applySuggestion, captureSuggestion, suggestionSnapshotState, type Sugge
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
+import { MarketRuleSummary } from "@/components/market-rule-summary";
 
 export function CapitalSuggestion({ capital, market }: { capital: string; market: MarketHook }) {
   const { t, language } = useLanguage();
@@ -90,6 +91,7 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
           <p className="live-small">Σ(lot × {snapshot.spacing} × ({t("jumlah layer", "layer count")} − {t("indeks layer dari 0", "layer index from 0")}) × US$100</p>
         </details>}
       </>}
+      <MarketRuleSummary analysis={snapshot.ruleAnalysis} frozen />
       <details><summary>{t("Sumber snapshot & batas simulasi", "Snapshot sources & simulation limits")}</summary>
         <div className="live-small live-stack mt-2">
           <p>{snapshot.quote ? `${snapshot.quote.source} · XUL10 ${snapshot.quote.price} · ${snapshot.quote.asOf}` : t("Harga tidak tersedia", "Price unavailable")}</p>

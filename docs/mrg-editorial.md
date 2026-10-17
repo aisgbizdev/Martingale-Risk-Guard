@@ -23,6 +23,53 @@ Karena itu fundamental dinyatakan belum lengkap; tidak ada asumsi netral,
 pengganti dengan kata kunci judul, atau penilaian yang dibuat-buat. Saran pasar
 lengkap tetap dibatasi. Integrasi penandaan redaksi menunggu kontrak yang nyata.
 
+## Analisis berbasis aturan yang disetujui — tanpa AI
+
+Pengguna menegaskan tidak menggunakan AI dan menyetujui analisis berbasis aturan
+dengan batas berikut. Ini menggantikan rencana pengaktifan pembaca AI di arsip;
+tidak ada aktivasi layanan, panggilan model, atau biaya AI dari jalur aktif.
+
+- `/market/context` menyediakan `ruleAnalysis` dengan asal `method: rules`,
+  versi aturan dan waktu evaluasi. Ringkasan diterima kalkulator serta disalin
+  ke snapshot saran; data baru tidak diam-diam mengganti skenario lama.
+- Kalender: agenda USD dari 24 jam lalu sampai 48 jam berikutnya, ditambah
+  agenda USD yang waktu rilisnya tidak valid. Ringkasan maksimal 12 agenda
+  terdekat; jumlah total dan pemotongan ditampilkan. Kalender harus lengkap,
+  segar dan berzona WIB. Mesin penundaan tetap memeriksa seluruh agenda,
+  bukan hanya 12 yang diringkas.
+- Actual hanya dibandingkan setelah waktu rilis terlewati. Angka kosong,
+  waktu tidak valid, satuan berbeda, rentang atau format ambigu tidak ditebak.
+  Notasi desimal titik, pemisah ribuan koma yang sah, persen dan K/M/B didukung.
+  Actual dibandingkan terpisah dengan forecast dan previous. Lebih tinggi/rendah
+  adalah hubungan angka, **bukan** dampak bullish/bearish emas atau USD.
+  Periode indikator yang tidak dinyatakan dalam kontrak tidak ditebak.
+- Berita: daftar tersaring yang sama, maksimal delapan artikel halaman terbaru.
+  Detail resmi `/berita/show/{slug}` diambil sebagai teks lengkap; judul tidak
+  menjadi bukti dampak. Artikel harus beridentitas/sumber/waktu yang cocok dan
+  berusia ≤24 jam. Isi >120.000 karakter tidak dipotong lalu diklaim lengkap.
+  Isi gagal dimuat, waktu mendatang/usang dan batas cakupan tetap terlihat.
+- Aturan mengenali penyebutan CPI, PCE, payroll, tingkat pengangguran, Fed,
+  PDB, penjualan ritel dan PMI dalam badan artikel. Kutipan diambil persis
+  dari badan tersebut; hash SHA-256 mengidentifikasi isi yang dibaca.
+  Agenda dengan topik yang sama ditautkan sebagai **kecocokan topik saja**,
+  bukan bukti artikel membahas rilis/periode tertentu. CPI tidak disamakan PCE.
+  Tidak ada kecocokan bukan berarti artikel tidak relevan atau pasar aman.
+- Instruksi, opini dan ramalan di dalam artikel tetap data teks. Tidak diikuti
+  sebagai perintah, tidak membuka tautan dan tidak mengubah aturan kalkulator.
+  Aturan ini tidak memahami negasi, syarat, konflik atau konteks seperti redaksi.
+  Karena itu tidak pernah menghasilkan `covered` atau penandaan editorial palsu.
+- Pengambilan detail memakai cache/single-flight yang sudah ada (lima menit,
+  kegagalan lima detik), maksimal dua pengambilan bersamaan per ringkasan.
+  Batas waktu HTTP sumber tetap sepuluh detik per permintaan. Tick harga lima
+  detik dan perubahan modal tidak meminta ulang detail; konteks dimuat terpisah.
+  Setelah isi dimuat ulang, pencocokan dan hash dihitung kembali dari isi baru;
+  cache bukan bukti artikel masih segar.
+
+UI menampilkan ringkasan singkat dan status belum dinilai. Angka, sumber,
+kutipan, waktu dan hash berada pada rincian opsional. Asumsi ATR, budget,
+margin, lot, batas dua layer pada jalur terbatas serta pilihan Buy/Sell tidak
+berubah. Tidak ada dashboard, isian atau kewajiban kurasi manual baru.
+
 Kalkulator visual dapat membuat simulasi manual/default dari harga XUL10 segar
 untuk Buy maupun Sell. Ini bukan saran pasar otomatis. Jarak default 30 poin
 adalah asumsi simulasi eksplisit, bukan hasil pivot/Fibonacci atau temuan studi.
@@ -39,8 +86,9 @@ Ini persetujuan heuristik simulasi, bukan kalibrasi studi atau spesifikasi broke
 
 ## Pembacaan otomatis, bukan isian kurasi manual
 
-Pengguna memilih pembacaan otomatis setelah saran terhenti pada daftar editorial
-yang kosong. Jalur aktif memakai `automatic-fundamental.ts` dan `news-ai.ts`.
+Pengguna sempat memilih pembacaan otomatis setelah saran terhenti pada daftar
+editorial yang kosong. Jalur AI terdahulu memakai `automatic-fundamental.ts` dan `news-ai.ts`;
+jalur ini tidak aktif setelah keputusan tanpa AI.
 `editorial-records.ts` dan validator lama tetap untuk kompatibilitas; tidak
 menjadi prasyarat layanan aktif dan tidak diisi hasil AI seolah peninjauan manusia.
 

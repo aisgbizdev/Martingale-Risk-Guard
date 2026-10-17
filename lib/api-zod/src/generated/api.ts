@@ -33,6 +33,57 @@ export const GetMarketQuotesResponse = zod.object({
  * @summary LGD Daily gold-reference history, calendar and Newsmaker news
  */
 export const GetMarketContextResponse = zod.object({
+  "ruleAnalysis": zod.object({
+  "method": zod.enum(['rules']),
+  "version": zod.string(),
+  "evaluatedAt": zod.string(),
+  "calendarAvailable": zod.boolean(),
+  "calendarTotal": zod.number().int(),
+  "calendarTruncated": zod.boolean(),
+  "calendar": zod.array(zod.object({
+  "event": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "country": zod.string().nullish(),
+  "currency": zod.string(),
+  "impact": zod.enum(['high', 'medium', 'low', 'unknown']),
+  "date": zod.string().nullable(),
+  "time": zod.string(),
+  "at": zod.string().nullable(),
+  "previous": zod.string().nullable(),
+  "forecast": zod.string().nullable(),
+  "actual": zod.string().nullable(),
+  "explanation": zod.string().nullable(),
+  "source": zod.string().nullable()
+}),
+  "phase": zod.enum(['upcoming', 'published', 'awaiting', 'unknown']),
+  "forecastComparison": zod.enum(['above', 'below', 'equal', 'unavailable']),
+  "previousComparison": zod.enum(['above', 'below', 'equal', 'unavailable'])
+})),
+  "newsAvailable": zod.boolean(),
+  "newsTotal": zod.number().int(),
+  "newsTruncated": zod.boolean(),
+  "news": zod.array(zod.object({
+  "item": zod.object({
+  "slug": zod.string(),
+  "title": zod.string(),
+  "titleEn": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "category": zod.string(),
+  "source": zod.string()
+}),
+  "status": zod.enum(['matched', 'no-match', 'unavailable', 'stale', 'invalid-date', 'oversized']),
+  "contentHash": zod.string().nullable(),
+  "matches": zod.array(zod.object({
+  "topic": zod.object({
+  "id": zod.string(),
+  "en": zod.string()
+}),
+  "excerpt": zod.string(),
+  "eventKeys": zod.array(zod.string())
+}))
+}))
+}).optional(),
   "history": zod.object({
   "status": zod.enum(['ready', 'unavailable']),
   "analysis": zod.union([zod.object({

@@ -206,6 +206,90 @@ export interface FundamentalAssessment {
   processing?: boolean;
 }
 
+export type RuleCalendarReadingPhase = typeof RuleCalendarReadingPhase[keyof typeof RuleCalendarReadingPhase];
+
+
+export const RuleCalendarReadingPhase = {
+  upcoming: 'upcoming',
+  published: 'published',
+  awaiting: 'awaiting',
+  unknown: 'unknown',
+} as const;
+
+export type RuleCalendarReadingForecastComparison = typeof RuleCalendarReadingForecastComparison[keyof typeof RuleCalendarReadingForecastComparison];
+
+
+export const RuleCalendarReadingForecastComparison = {
+  above: 'above',
+  below: 'below',
+  equal: 'equal',
+  unavailable: 'unavailable',
+} as const;
+
+export type RuleCalendarReadingPreviousComparison = typeof RuleCalendarReadingPreviousComparison[keyof typeof RuleCalendarReadingPreviousComparison];
+
+
+export const RuleCalendarReadingPreviousComparison = {
+  above: 'above',
+  below: 'below',
+  equal: 'equal',
+  unavailable: 'unavailable',
+} as const;
+
+export interface RuleCalendarReading {
+  event: CalendarEvent;
+  phase: RuleCalendarReadingPhase;
+  forecastComparison: RuleCalendarReadingForecastComparison;
+  previousComparison: RuleCalendarReadingPreviousComparison;
+}
+
+export interface RuleTopicMatch {
+  topic: Copy;
+  excerpt: string;
+  eventKeys: string[];
+}
+
+export type RuleNewsReadingStatus = typeof RuleNewsReadingStatus[keyof typeof RuleNewsReadingStatus];
+
+
+export const RuleNewsReadingStatus = {
+  matched: 'matched',
+  'no-match': 'no-match',
+  unavailable: 'unavailable',
+  stale: 'stale',
+  'invalid-date': 'invalid-date',
+  oversized: 'oversized',
+} as const;
+
+export interface RuleNewsReading {
+  item: NewsItem;
+  status: RuleNewsReadingStatus;
+  /** @nullable */
+  contentHash: string | null;
+  matches: RuleTopicMatch[];
+}
+
+export type MarketRuleAnalysisMethod = typeof MarketRuleAnalysisMethod[keyof typeof MarketRuleAnalysisMethod];
+
+
+export const MarketRuleAnalysisMethod = {
+  rules: 'rules',
+} as const;
+
+export interface MarketRuleAnalysis {
+  method: MarketRuleAnalysisMethod;
+  version: string;
+  evaluatedAt: string;
+  calendarAvailable: boolean;
+  calendarTotal: number;
+  calendarTruncated: boolean;
+  calendar: RuleCalendarReading[];
+  newsAvailable: boolean;
+  newsTotal: number;
+  newsTruncated: boolean;
+  news: RuleNewsReading[];
+}
+
 export type MarketContextHistoryStatus = typeof MarketContextHistoryStatus[keyof typeof MarketContextHistoryStatus];
 
 
@@ -257,6 +341,7 @@ export type MarketContextNews = {
 };
 
 export interface MarketContext {
+  ruleAnalysis?: MarketRuleAnalysis;
   history: MarketContextHistory;
   calendar: MarketContextCalendar;
   news: MarketContextNews;

@@ -203,10 +203,49 @@ components:
         evidence: { type: array, items: { $ref: "#/components/schemas/EditorialEvidence" } }
         reasons: { type: array, items: { type: string } }
         processing: { type: boolean }
+    RuleCalendarReading:
+      type: object
+      required: [event, phase, forecastComparison, previousComparison]
+      properties:
+        event: { $ref: "#/components/schemas/CalendarEvent" }
+        phase: { type: string, enum: [upcoming, published, awaiting, unknown] }
+        forecastComparison: { type: string, enum: [above, below, equal, unavailable] }
+        previousComparison: { type: string, enum: [above, below, equal, unavailable] }
+    RuleTopicMatch:
+      type: object
+      required: [topic, excerpt, eventKeys]
+      properties:
+        topic: { $ref: "#/components/schemas/Copy" }
+        excerpt: { type: string }
+        eventKeys: { type: array, items: { type: string } }
+    RuleNewsReading:
+      type: object
+      required: [item, status, contentHash, matches]
+      properties:
+        item: { $ref: "#/components/schemas/NewsItem" }
+        status: { type: string, enum: [matched, no-match, unavailable, stale, invalid-date, oversized] }
+        contentHash: { type: [string, "null"] }
+        matches: { type: array, items: { $ref: "#/components/schemas/RuleTopicMatch" } }
+    MarketRuleAnalysis:
+      type: object
+      required: [method, version, evaluatedAt, calendarAvailable, calendarTotal, calendarTruncated, calendar, newsAvailable, newsTotal, newsTruncated, news]
+      properties:
+        method: { type: string, enum: [rules] }
+        version: { type: string }
+        evaluatedAt: { type: string }
+        calendarAvailable: { type: boolean }
+        calendarTotal: { type: integer }
+        calendarTruncated: { type: boolean }
+        calendar: { type: array, items: { $ref: "#/components/schemas/RuleCalendarReading" } }
+        newsAvailable: { type: boolean }
+        newsTotal: { type: integer }
+        newsTruncated: { type: boolean }
+        news: { type: array, items: { $ref: "#/components/schemas/RuleNewsReading" } }
     MarketContext:
       type: object
       required: [history, calendar, news]
       properties:
+        ruleAnalysis: { $ref: "#/components/schemas/MarketRuleAnalysis" }
         history:
           type: object
           required: [status, analysis, receivedAt, message]

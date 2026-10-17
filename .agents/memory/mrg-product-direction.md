@@ -45,11 +45,17 @@ Pengguna memilih melengkapi pembacaan berita otomatis terlebih dahulu, bukan men
 
 **How to apply:** Penilaian isi berita tidak boleh bergantung pada pengisian manual per artikel. Tetap pertahankan bukti, asal penilaian, dan kegagalan eksplisit; jangan sekadar menghapus penghalang atau menganggap berita netral. Pilihan otomatis tidak dengan sendirinya menetapkan vendor AI atau persetujuan biaya.
 
-Pengguna kemudian menegaskan tidak ingin menggunakan AI untuk analisis MRG. Ia mengusulkan tampilan dan beberapa fitur seperti TradePilot, tetapi esensi tetap konsep MRG, serta meminta diskusi dahulu.
+Pengguna menegaskan “jgn menggunakan ai” untuk analisis MRG dan memilih tetap tanpa AI ketika ditawari mengaktifkan kembali pembacaan berita AI. Ia mengusulkan tampilan dan beberapa fitur seperti TradePilot, tetapi esensi tetap konsep MRG, serta meminta diskusi dahulu.
 
 **Why:** Pengguna mengatakan “gw gak mau menggunakan ai” dan “esensi nya konsep mrg, design dan beberapa fiturenya mirip tradepilot”.
 
-**How to apply:** Jangan menganggap persetujuan pembacaan berita otomatis sebelumnya sebagai persetujuan AI berkelanjutan. Bahas pengganti berbasis aturan dan data terstruktur, termasuk keterbatasan interpretasi berita bebas; jangan menonaktifkan atau mengganti implementasi sebelum arah disepakati. Referensi TradePilot bukan izin menyalin produk atau menambah dashboard/sinyal di luar kalkulator MRG.
+**How to apply:** Jangan menganggap persetujuan pembacaan berita otomatis sebelumnya atau penugasan ulang rancangan AI lama sebagai persetujuan memakai AI. Bahas pengganti berbasis aturan dan data terstruktur, termasuk keterbatasan interpretasi berita bebas; jangan menonaktifkan atau mengganti implementasi sebelum arah disepakati. Referensi TradePilot bukan izin menyalin produk atau menambah dashboard/sinyal di luar kalkulator MRG.
+
+Pengguna menyetujui analisis berita dan kalender berbasis aturan tanpa AI: perbandingan angka kalender yang kompatibel dan pencocokan topik isi berita dengan agenda, bukan pengganti penilaian dampak redaksi.
+
+**Why:** Pengguna bertanya “berita dan kalender ekonomi dianalisa aja bisa gak tanpa ai?” lalu memilih “Lanjutkan sesuai usulan tanpa AI” setelah keterbatasan dijelaskan.
+
+**How to apply:** Jangan mengubah pencocokan topik menjadi klaim arah emas/USD, bukti rilis sudah terjadi, atau fundamental lengkap. Pertahankan status dampak belum dinilai, batas Linear dua layer, pemeriksaan sumber/modal/kalender, dan skenario yang hanya diperbarui melalui tindakan pengguna.
 
 Pengguna memilih penandaan redaksi Newsmaker agar berita ikut memengaruhi perhitungan, dan menegaskan “warna tetap mengikuti skin newsmaker jgn kearah TP”.
 

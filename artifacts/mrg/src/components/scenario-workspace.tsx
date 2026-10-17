@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
 import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
+import { MarketRuleSummary } from "@/components/market-rule-summary";
 
 type Scenario = ReturnType<typeof buildScenario>;
 type Controls = { side: ScenarioSide | null; strategy: "Linear Averaging" | "Martingale"; layers: number; target: number; spacing: number };
@@ -182,6 +183,9 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
               t("Saran memakai harga XUL10, ATR D1, kalender dan status penilaian berita. Dampak berita belum dinilai: hanya Linear, maksimal 2 layer. Bukan penilaian pasar lengkap.", "Suggestions use XUL10 price, D1 ATR, calendar and news assessment status. Unassessed news impact: Linear only, up to 2 layers. Not a complete market assessment.") :
               t("Default manual: Linear · 3 layer · lot awal 0,1 · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.", "Manual defaults: Linear · 3 layers · first lot 0.1 · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.")}</p>
+            {inputMode === "market" && <MarketRuleSummary
+              analysis={snap?.suggestion ? snap.suggestion.result.ruleAnalysis : market.context.data?.ruleAnalysis}
+              frozen={!!snap?.suggestion} />}
           </div>
         </div>
 

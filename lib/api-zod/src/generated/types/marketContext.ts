@@ -8,8 +8,10 @@
 import type { MarketContextCalendar } from './marketContextCalendar';
 import type { MarketContextHistory } from './marketContextHistory';
 import type { MarketContextNews } from './marketContextNews';
+import type { MarketRuleAnalysis } from './marketRuleAnalysis';
 
 export interface MarketContext {
+  ruleAnalysis?: MarketRuleAnalysis;
   history: MarketContextHistory;
   calendar: MarketContextCalendar;
   news: MarketContextNews;

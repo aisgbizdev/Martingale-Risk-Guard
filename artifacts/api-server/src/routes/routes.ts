@@ -4,6 +4,8 @@ import { riskInputSchema } from "@workspace/mrg-shared/schema";
 import { getHistory, getQuotes } from "../market/prices";
 import { getCalendar } from "../market/calendar";
 import { getArticle, getNews } from "../market/news";
+import { readMarketRules } from "../market/rule-reader";
+import { GetMarketContextResponse } from "@workspace/api-zod";
 
 const app = Router();
   app.get("/market/quotes", async (_req, res) => {
@@ -14,7 +16,8 @@ const app = Router();
   app.get("/market/context", async (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const [history, calendar, news] = await Promise.all([getHistory(), getCalendar(), getNews()]);
-    res.json({ history, calendar, news });
+    const ruleAnalysis = await readMarketRules(news, calendar);
+    res.json(GetMarketContextResponse.parse({ history, calendar, news, ruleAnalysis }));
   });
 
   app.get("/market/news/:slug", async (req, res) => {
