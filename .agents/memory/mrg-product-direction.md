@@ -63,6 +63,12 @@ Pengguna memperjelas bahwa Saran MRG harus menghitung lot awal secara otomatis d
 
 **How to apply:** Pisahkan lot default pembanding manual dari sizing Saran MRG. Jangan menyamakan kapasitas margin teoretis (misalnya US$300.000 dibagi US$1.000 = 300 lot) dengan jumlah lot yang layak; floating loss dan seluruh layer tetap diperhitungkan. Langkah lot adalah asumsi terpisah yang harus jelas, bukan alasan mengunci lot awal otomatis.
 
+Pengguna membatasi perubahan lot otomatis dan skenario ini hanya untuk Saran MRG: “kalau yg isi manual gak usah dirobah dulu tetep seperti itu”.
+
+**Why:** Pengguna secara eksplisit meminta mode manual dipertahankan ketika sizing otomatis diperbaiki.
+
+**How to apply:** Jangan mengubah isian, default, rumus atau hasil Isi Manual/Simulasi Default dalam pengembangan Saran MRG. Perluasan mesin bersama harus mempertahankan perilaku manual; penampilan referensi Pivot/Fibonacci tidak boleh diam-diam mengubah parameter manual.
+
 Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
 
 **Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.
