@@ -12,5 +12,6 @@ export function marketScenario(suggestion: CapitalSuggestion, side: ScenarioSide
   return buildScenario({
     side, capital: suggestion.capital, entry: quote.price, asOf: quote.asOf,
     strategy: selected.strategy, layers: selected.layers, target, spacing, mode: "market",
+    ...(suggestion.priceBasis ? { priceBasis: structuredClone(suggestion.priceBasis) } : {}),
   });
 }

@@ -1,11 +1,13 @@
 import { suggestFromCapital, type CapitalSuggestion } from "./capital-suggestion";
 import type { LiveQuote, MarketContext } from "./live-types";
+import type { ScenarioPriceBasis } from "./scenario-price";
 
 export interface SuggestionSources {
   context: MarketContext | null | undefined;
   quote: LiveQuote | null;
   online: boolean;
   connectionRevision: number;
+  priceBasis?: ScenarioPriceBasis;
 }
 
 export interface SuggestionSnapshot {
@@ -25,7 +27,7 @@ export function captureSuggestion(capital: number, sources: SuggestionSources, n
     allowLimited,
     sources: detached,
     sourceKey: suggestionSourceKey(detached),
-    result: structuredClone(suggestFromCapital(capital, detached.context, detached.quote, now, detached.online, allowLimited)),
+    result: structuredClone(suggestFromCapital(capital, detached.context, detached.quote, now, detached.online, allowLimited, detached.priceBasis)),
   };
 }
 
@@ -33,7 +35,7 @@ export function suggestionSnapshotState(snapshot: SuggestionSnapshot, capital: n
   // Re-evaluate only to detect expiration/window transitions. Never replace the frozen result.
   const { evaluatedAt: _before, ...before } = snapshot.result;
   const { evaluatedAt: _after, ...after } = suggestFromCapital(
-    snapshot.result.capital, snapshot.sources.context, snapshot.sources.quote, now, sources.online, snapshot.allowLimited ?? false,
+    snapshot.result.capital, snapshot.sources.context, snapshot.sources.quote, now, sources.online, snapshot.allowLimited ?? false, snapshot.sources.priceBasis,
   );
   const parametersChanged = capital !== snapshot.result.capital;
   const dataChanged = snapshot.sourceKey !== suggestionSourceKey(sources) ||

@@ -314,6 +314,10 @@ button, input, select { font: inherit; }
 .live-article { white-space:pre-wrap; line-height:1.75; font-size:14px; }
 .live-event { display:grid; grid-template-columns:78px 1fr auto; gap:12px; align-items:start; padding:12px 0; border-top:1px solid hsl(var(--border)); }
 .live-chart-frame { width:100%; height:420px; border:0; border-radius:8px; background:#f7f8fb; }
+/* Vendor ResizeIframe messages can set fixed pixel sizes despite autosize.
+   Keep the single embed fitted to its app-owned frame at every breakpoint. */
+.live-chart-frame > .tradingview-widget-container { width:100% !important; height:100% !important; }
+.live-chart-frame iframe { width:100% !important; height:calc(100% - 32px) !important; display:block; }
 .live-technical-grid { margin-top:12px; }
 .live-technical-tabpanel { display:block; grid-column:1/-1; min-width:0; width:100%; }
 .mrg-technical-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,320px); gap:12px; min-width:0; width:100%; align-items:start; }

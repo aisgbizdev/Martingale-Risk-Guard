@@ -33,6 +33,12 @@ Navigasi bahan analisis tidak boleh membuat pengguna terjebak atau membuang isia
 
 **How to apply:** Pertahankan jalan kembali dan pilihan bagian analisis ketika konten panjang digulir. Bedakan pemulihan isian saat pindah halaman dari menghidupkan kembali hasil saran lama sebagai saran pasar terkini.
 
+Harga terakhir untuk edukasi akhir pekan tidak membuktikan penutupan resmi atau status market tutup.
+
+**Why:** Dokumen feed yang diberikan memuat tick dan waktu sumber, tetapi belum menetapkan kalender sesi/libur XUL10 atau atribut official close. Pengguna ingin MRG tetap berguna Sabtu–Minggu tanpa mengarang data.
+
+**How to apply:** Gunakan acuan historis yang dilabeli jelas dan tombol simulasi, bukan memperpanjang kesegaran live. Jendela akhir pekan adalah aturan penggunaan edukasi, bukan jadwal bursa; verifikasi sumber tambahan sebelum memberi klaim penutupan resmi atau memperluas ke hari libur kerja.
+
 Pengguna meminta grafik langsung dimunculkan sebagai panduan, termasuk ketika orang membuka MRG pada Sabtu–Minggu.
 
 **Why:** Pengguna mengatakan “termasuk grafik juga dimunculkan aja langsung bro, jd ada panduannya kan?” setelah membahas penggunaan akhir pekan.

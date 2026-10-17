@@ -4,6 +4,7 @@ import { buildScenario, type ScenarioSide } from "@shared/scenario-plan";
 import { marketScenario } from "@shared/market-scenario";
 import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import { quoteIsFresh } from "@shared/live-types";
+import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { useStudy } from "@/lib/study-context";
@@ -79,10 +80,18 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   const money = (n: number) => n.toLocaleString(language === "id" ? "id-ID" : "en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
   const cap = Number(capital);
   const quote = market.usableQuote && quoteIsFresh(market.usableQuote, market.now) ? market.usableQuote : null;
+  const providerReady = market.online && !market.quotes.isError && market.quotes.data?.status === "ready";
+  const priceBasis = resolveScenarioPrice(market.quotes.data?.quote, market.now, providerReady);
+  const scenarioQuote = priceBasis?.quote ?? null;
+  const historical = priceBasis?.kind === "historical";
+  const priceTime = scenarioQuote?.asOf ? new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-GB", {
+    dateStyle: "medium", timeStyle: "medium", timeZone: "Asia/Jakarta",
+  }).format(new Date(scenarioQuote.asOf)) + " WIB" : "";
   const capOk = capital.trim() !== "" && Number.isFinite(cap) && cap > 0;
   const sources = {
-    quote: market.usableQuote, context: market.context.isError ? null : market.context.data,
+    quote: scenarioQuote, context: market.context.isError ? null : market.context.data,
     online: market.online, connectionRevision: market.connectionRevision,
+    ...(historical ? { priceBasis: priceBasis! } : {}),
   };
   const marketState = snap?.suggestion ? suggestionSnapshotState(snap.suggestion, cap, sources, market.now) : null;
   useEffect(() => {
@@ -99,12 +108,13 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     ? { ...c, strategy: study.values.strategy, target: Number(study.values.targetPoin), layers: Number(study.values.maxLayer) }
     : c;
   const calculate = (next: Controls) => {
-    const q = market.usableQuote;
-    if (!q || !quoteIsFresh(q, Date.now())) return setErr(t("Harga XUL10 tidak segar; skenario dari harga nyata tidak dapat dibuat.", "XUL10 price is not fresh; a real-price scenario cannot be built."));
+    const basis = resolveScenarioPrice(market.quotes.data?.quote, Date.now(), providerReady);
+    const q = basis?.quote;
+    if (!q) return setErr(t("Acuan XUL10 tidak tersedia atau tidak memenuhi syarat. Studi manual tetap tersedia.", "No eligible XUL10 price basis. Manual study remains available."));
     if (!next.side) return setErr(t("Pilih arah Buy atau Sell lebih dulu.", "Choose Buy or Sell first."));
     if (!capOk) return setErr(t("Isi modal positif pada kolom Modal.", "Enter a positive capital in the Capital field."));
     try {
-      const plan = buildScenario({ side: next.side, capital: cap, entry: q.price, spacing: next.spacing, target: next.target, layers: next.layers, strategy: next.strategy, asOf: q.asOf!, mode: "manual" });
+      const plan = buildScenario({ side: next.side, capital: cap, entry: q.price, spacing: next.spacing, target: next.target, layers: next.layers, strategy: next.strategy, asOf: q.asOf!, mode: "manual", priceBasis: basis! });
       setSnap({ plan, key: keyOf(next, cap) });
       setSourceInvalidated(false);
       setDirectionInvalidated(false);
@@ -114,7 +124,11 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   const suggest = () => {
     if (!c.side) return setErr(t("Pilih arah Buy atau Sell lebih dulu.", "Choose Buy or Sell first."));
     if (!capOk) return setErr(t("Isi modal positif pada kolom Modal.", "Enter positive capital in the Capital field."));
-    const capture = captureSuggestion(cap, sources, Date.now(), true);
+    const basis = resolveScenarioPrice(market.quotes.data?.quote, Date.now(), providerReady);
+    const capture = captureSuggestion(cap, {
+      ...sources, quote: basis?.quote ?? null,
+      priceBasis: basis?.kind === "historical" ? basis : undefined,
+    }, Date.now(), true);
     const result = capture.result;
     if (!result.selected || !["limited", "offered"].includes(result.status)) {
       const heading = result.status === "deferred" ? t("Saran ditunda.", "Suggestion deferred.") :
@@ -135,7 +149,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   };
   const manualAction = () => {
     if (study && !study.submit()) return;
-    if (!quote) { setSnap(null); setErr(null); return; }
+    if (!scenarioQuote) { setSnap(null); setErr(null); return; }
     calculate(eff);
   };
   const useDefault = () => {
@@ -145,7 +159,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
       study.onChange(study.defaults);
       if (!study.submit(study.defaults)) return;
     }
-    if (quote) calculate(n); else { setSnap(null); setErr(null); }
+    if (scenarioQuote) calculate(n); else { setSnap(null); setErr(null); }
   };
 
   const plan = snap?.plan;
@@ -199,9 +213,10 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           </div>
           <div className="live-stack mt-3">
             <div className="rounded-lg bg-muted/70 p-3" data-testid="scenario-price">
-              <span className="live-label">{t("Harga XUL10 (polling)", "XUL10 price (polling)")}</span>
-              <div className="live-mono text-2xl font-medium">{quote ? quote.price.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</div>
-              <span className="live-small">{quote ? `${t("segar", "fresh")} · ${quote.asOf}` : t("Harga tidak tersedia atau tidak segar. Pengambilan harga nyata dinonaktifkan.", "Price unavailable or stale. Real-price capture is disabled.")}</span>
+              <span className="live-label">{historical ? t("Harga XUL10 terakhir · bukan live", "Last XUL10 price · not live") : t("Harga XUL10 (polling)", "XUL10 price (polling)")}</span>
+              <div className="live-mono text-2xl font-medium">{scenarioQuote ? scenarioQuote.price.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</div>
+              <span className="live-small">{scenarioQuote ? `${historical ? t("Acuan historis akhir pekan", "Weekend historical reference") : t("segar", "fresh")} · ${priceTime} · ${scenarioQuote.source}` : t("Harga tidak tersedia atau tidak memenuhi syarat. Studi manual tetap tersedia.", "No eligible price available. Manual study remains available.")}</span>
+              {historical && <p className="live-small mt-2" data-testid="historical-price-disclosure">{t("Bukan penutupan resmi. Jadwal sesi belum terverifikasi; ini tidak menyatakan market pasti tutup. Harga pembukaan dapat gap.", "Not an official close. Session hours are unverified; this does not confirm market closure. Opening prices can gap.")}</p>}
             </div>
             {capitalField}
             <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className="flex gap-2">
@@ -210,13 +225,13 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             </div>
             {inputMode === "manual" && study?.fields}
             {inputMode === "manual" && <div className="live-field">
-              <label htmlFor="sc-spacing">{t("Jarak layer pada harga live (poin)", "Layer spacing on the live price (points)")}</label>
+              <label htmlFor="sc-spacing">{t("Jarak layer skenario (poin)", "Scenario layer spacing (points)")}</label>
               <input id="sc-spacing" className={num} type="number" min="1" step="any" value={c.spacing} onChange={e => upd({ spacing: Number(e.target.value) })} data-testid="input-sc-spacing" />
-              <span className="live-small">{t("Strategi, target, dan layer di atas dipakai juga untuk skenario harga live. Hanya jarak yang khusus untuk live.", "The strategy, target and layers above also drive the live-price scenario. Only spacing is live-specific.")}</span>
+              <span className="live-small">{t("Strategi, target, dan layer di atas juga dipakai pada diagram berbasis acuan XUL10.", "The strategy, target and layers above also drive the XUL10 price-reference diagram.")}</span>
             </div>}
             {err && <p role="alert" className="live-error" data-testid="text-scenario-error">{err}</p>}
             <div className="flex gap-2 flex-wrap">
-              <Button type="button" className="flex-1 min-h-[44px]" disabled={inputMode === "market" ? (!quote || market.context.isPending) : false} onClick={() => inputMode === "market" ? suggest() : manualAction()} data-testid="button-calculate-scenario">{inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung", "Calculate")}</Button>
+              <Button type="button" className="flex-1 min-h-[44px]" disabled={inputMode === "market" ? (!scenarioQuote || market.context.isPending) : false} onClick={() => inputMode === "market" ? suggest() : manualAction()} data-testid="button-calculate-scenario">{historical ? t("Hitung simulasi historis", "Calculate historical simulation") : inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung", "Calculate")}</Button>
               {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
@@ -241,14 +256,16 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           </details>}
           {snap?.suggestion && (sourceInvalidated || marketState?.dataChanged) && <p role="status" className="live-error mt-2" data-testid="suggestion-source-changed">{t("Data berubah/tidak lagi segar. Ini snapshot lama, bukan saran terkini. Tekan Lihat Saran MRG untuk evaluasi baru; level tidak bergeser otomatis.", "Data changed or expired. This is an old snapshot, not a current suggestion. Press View MRG suggestion to reassess; levels never move automatically.")}</p>}
           {inputMode === "manual" && study && <div className="mt-2">{study.result}</div>}
-          {!plan && <p className="live-small mt-2">{inputMode === "manual" && !quote
-            ? t("Perhitungan studi tetap tersedia tanpa harga segar. Diagram entry dan TP memerlukan harga XUL10 segar.", "Study calculations remain available without a fresh price. Entry and TP diagrams require a fresh XUL10 price.")
+          {!plan && <p className="live-small mt-2">{inputMode === "manual" && !scenarioQuote
+            ? t("Perhitungan studi tetap tersedia. Diagram entry dan TP memerlukan harga XUL10 live atau acuan historis akhir pekan yang memenuhi syarat.", "Study calculations remain available. Entry and TP diagrams need a live XUL10 price or an eligible weekend historical reference.")
             : t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
           {plan && <div className="live-stack mt-2">
-            <p className="live-small"><strong>{plan.mode === "manual" ? t("Skenario manual hipotetis", "Hypothetical manual scenario") : t("Snapshot saran MRG", "MRG suggestion snapshot")}</strong> · {plan.side === "buy" ? "Buy" : "Sell"} · {plan.strategy} · {t("snapshot", "snapshot")} {plan.asOf} · {t("harga masuk", "entry")} {plan.entry.toFixed(2)}</p>
+            <p className="live-small"><strong>{plan.priceBasis?.kind === "historical" ? t("Simulasi historis · bukan saran realtime", "Historical simulation · not realtime advice") : plan.mode === "manual" ? t("Skenario manual hipotetis", "Hypothetical manual scenario") : t("Snapshot saran MRG", "MRG suggestion snapshot")}</strong> · {plan.side === "buy" ? "Buy" : "Sell"} · {plan.strategy} · {t("snapshot", "snapshot")} {plan.asOf} · {t("harga masuk", "entry")} {plan.entry.toFixed(2)}</p>
+            {plan.priceBasis?.kind === "historical" && <p role="status" className="mrg-chart-warning" data-testid="historical-scenario-warning">{t("Harga terakhir XUL10 dari Newsmaker, bukan penutupan resmi atau prediksi pembukaan. Gap pembukaan, spread, dan biaya dapat mengubah hasil. Berita dan kalender diperiksa saat evaluasi, bukan pada waktu tick.", "Last XUL10 tick from Newsmaker, not an official close or opening forecast. Opening gaps, spread and fees can change outcomes. News and calendar are checked at evaluation time, not tick time.")}</p>}
+            {plan.priceBasis?.kind === "historical" && (!historical || !samePriceQuote(plan.priceBasis.quote, scenarioQuote)) && <p role="status" className="live-error" data-testid="historical-basis-changed">{t("Acuan berubah atau tidak lagi layak; hasil ini tetap snapshot historis lama. Hitung ulang dengan acuan yang tersedia, level tidak diperbarui otomatis.", "The price basis changed or expired; this remains an old historical snapshot. Recalculate with the available basis; levels never update automatically.")}</p>}
             {changed && <p role="status" className="live-error" data-testid="text-scenario-changed">{t("Arah atau input berubah. Snapshot di bawah adalah skenario lama dan tidak ikut berubah; jalankan perhitungan lagi.", "Direction or inputs changed. The snapshot below is the old scenario and was not rewritten; recalculate to update it.")}</p>}
             {moved !== null && Math.abs(moved) >= 0.01 && <p role="status" className="live-small" data-testid="text-market-moved">{t(`Harga XUL10 sekarang ${quote!.price.toFixed(2)}, bergeser ${moved > 0 ? "+" : ""}${moved.toFixed(2)} dari snapshot. Level tidak diubah otomatis.`, `XUL10 is now ${quote!.price.toFixed(2)}, ${moved > 0 ? "+" : ""}${moved.toFixed(2)} from the snapshot. Levels are not changed automatically.`)}</p>}
-            {!quote && <p role="status" className="live-small">{t("Harga saat ini tidak segar; snapshot tetap sebagai skenario lama.", "The current price is not fresh; the snapshot stays as an old scenario.")}</p>}
+            {!quote && plan.priceBasis?.kind !== "historical" && <p role="status" className="live-small">{t("Harga saat ini tidak segar; snapshot tetap sebagai skenario lama.", "The current price is not fresh; the snapshot stays as an old scenario.")}</p>}
             {sideChanged ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah dipilih ulang: hasil sebelumnya tidak berlaku dan disembunyikan. Tekan Hitung skenario.", "Direction re-selected: the earlier result no longer applies and is hidden. Press Calculate.")}</p> : <>
             <div className={changed ? "opacity-60" : ""}><LevelDiagram plan={plan} t={t} /></div>
             <div className="overflow-x-auto"><table className="text-xs w-full" data-testid="table-scenario">

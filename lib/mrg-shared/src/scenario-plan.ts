@@ -1,4 +1,5 @@
 /** Educational XUL10 price-level diagram; never an order or direction forecast. */
+import type { ScenarioPriceBasis } from "./scenario-price";
 export type ScenarioSide = "buy" | "sell";
 export interface ScenarioInput {
   side: ScenarioSide;
@@ -10,6 +11,7 @@ export interface ScenarioInput {
   strategy: "Linear Averaging" | "Martingale";
   asOf: string;
   mode: "manual" | "market";
+  priceBasis?: ScenarioPriceBasis;
 }
 const cents = (n: number) => Math.round(n * 100) / 100;
 
@@ -21,6 +23,11 @@ export function buildScenario(input: ScenarioInput) {
     !["Linear Averaging", "Martingale"].includes(strategy) ||
     !["manual", "market"].includes(mode) ||
     !Number.isFinite(Date.parse(asOf))) throw new Error("Parameter skenario tidak valid.");
+  if (input.priceBasis && (
+    !["live", "historical"].includes(input.priceBasis.kind) ||
+    input.priceBasis.quote.symbol !== "XUL10" ||
+    input.priceBasis.quote.price !== entry || input.priceBasis.quote.asOf !== asOf
+  )) throw new Error("Acuan harga tidak cocok dengan skenario.");
   const direction = side === "buy" ? 1 : -1;
   const entries = Array.from({ length: layers }, (_, index) => ({
     index: index + 1,

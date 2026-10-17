@@ -1,5 +1,6 @@
 import { calendarIsFresh, quoteIsFresh, type LiveQuote, type MarketContext } from "./live-types";
 import { getStudyReference } from "./study-market";
+import { historicalPriceIsEligible, type ScenarioPriceBasis } from "./scenario-price";
 
 export interface EditorialEvidence {
   slug: string;
@@ -48,6 +49,7 @@ export interface CapitalSuggestion {
   evaluatedAt: string;
   reasons: string[];
   quote: LiveQuote | null;
+  priceBasis?: ScenarioPriceBasis;
   reference: ReturnType<typeof getStudyReference>;
   calendar: MarketContext["calendar"] | null;
   fundamental: FundamentalAssessment | null;
@@ -85,19 +87,25 @@ const fresh = (at: string | null | undefined, now: number, max: number) => {
 export function suggestFromCapital(
   capital: number, context: MarketContext | null | undefined, quote: LiveQuote | null,
   now = Date.now(), online = true, allowLimited = false,
+  priceBasis?: ScenarioPriceBasis,
 ): CapitalSuggestion {
   const reference = getStudyReference(context, now, online);
   const fundamental = context?.news.fundamental ?? null;
   const result: CapitalSuggestion = {
     status: "incomplete", capital, evaluatedAt: Number.isFinite(now) ? new Date(now).toISOString() : "",
     reasons: [], quote: quote ? { ...quote } : null, reference,
+    ...(priceBasis ? { priceBasis: structuredClone(priceBasis) } : {}),
     calendar: context?.calendar ?? null, fundamental, ruleAnalysis: context?.ruleAnalysis ?? null,
     target: null, spacing: null, candidates: [], selected: null,
   };
   if (!Number.isFinite(capital) || capital <= 0 || capital > 1e12) result.reasons.push("Modal harus positif, terbatas, dan maksimal US$1 triliun.");
   if (!Number.isFinite(now) || !online) result.reasons.push("Koneksi atau waktu evaluasi tidak tersedia.");
-  if (!quote || quote.symbol !== "XUL10" || !Number.isFinite(quote.price) || quote.price <= 0 || !quoteIsFresh(quote, now)) {
-    result.reasons.push("Harga XUL10 wajib tersedia dengan timestamp maksimal 20 detik.");
+  const historical = historicalPriceIsEligible(priceBasis, quote, now, online);
+  if (!quote || quote.symbol !== "XUL10" || !Number.isFinite(quote.price) || quote.price <= 0 ||
+    (priceBasis?.kind === "historical" ? !historical : !quoteIsFresh(quote, now))) {
+    result.reasons.push(priceBasis?.kind === "historical"
+      ? "Acuan historis XUL10 tidak valid atau di luar jendela akhir pekan; bukan harga live."
+      : "Harga XUL10 wajib tersedia dengan timestamp maksimal 20 detik.");
   }
   if (!reference.analysis) result.reasons.push("Referensi LGD Daily D1 tertutup belum memenuhi pemeriksaan data.");
   const calendar = context?.calendar;
@@ -139,6 +147,7 @@ export function suggestFromCapital(
   result.target = target;
   result.spacing = spacing;
   result.reasons = [
+    ...(historical ? ["Simulasi historis akhir pekan memakai tick XUL10 terakhir bertanggal, bukan harga live, penutupan resmi, atau prediksi harga pembukaan. Jadwal sesi belum terverifikasi; gap pembukaan dapat mengubah hasil."] : []),
     ...(limited ? ["Saran terbatas: dampak berita belum dinilai, bukan netral. Hanya Linear Averaging maksimal 2 layer; Martingale dan 3 layer tidak ditawarkan."] : []),
     `Harga XUL10 ${quote!.price} (${quote!.asOf}) menjadi jangkar snapshot, bukan bukti tren atau sinyal entry.`,
     `LGD D1 ${analysis.lastDate}: tren ${analysis.trend}, ATR14 ${analysis.atr14}; T=floor(0,25×ATR), S=ceil(0,5×ATR). Referensi emas, bukan seri XUL10 identik.`,
