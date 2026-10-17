@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useSearch } from "wouter";
 import { ArrowLeft, ExternalLink, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMarket, useArticle } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
@@ -68,7 +68,16 @@ export default function AnalysisPage() {
   const calendarFresh = !market.context.isError && calendarIsFresh(context?.calendar, market.now);
   const requestedTab = new URLSearchParams(search).get("tab");
   const activeTab = articleSlug ? "news" : requestedTab === "calendar" || requestedTab === "news" ? requestedTab : "technical";
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const previousSection = useRef(`${activeTab}/${articleSlug ?? ""}`);
+  useEffect(() => {
+    const section = `${activeTab}/${articleSlug ?? ""}`;
+    if (previousSection.current === section) return;
+    previousSection.current = section;
+    navigationRef.current?.scrollIntoView({ block: "start" });
+  }, [activeTab, articleSlug]);
   const selectTab = (tab: "technical" | "calendar" | "news") => {
+    setArticleSlug(null);
     setLocation(`/analysis?tab=${tab}`);
   };
   const filteredEvents = useMemo(() => events.filter((event) => {
@@ -96,6 +105,11 @@ export default function AnalysisPage() {
     <PageIntro compact kicker={t("Analisis pasar · XUL10", "Market analysis · XUL10")} title={t("Konteks, bukan sinyal.", "Context, not signals.")} />
     {!market.context.isLoading && !calendarFresh && <div className="live-alert live-source-warning" role="alert">{t("Kalender tidak tersedia atau kedaluwarsa. Jadwal lama hanya referensi; komponen indeks agenda tidak digunakan.", "Calendar is unavailable or stale. Any old schedule is reference only; the event index component is not used.")}</div>}
     {market.context.isError && <div style={{ marginTop: 10 }}><ErrorBox message={t("Sebagian atau seluruh konteks gagal dimuat. Angka yang tidak tersedia tidak digantikan.", "Some or all context failed to load. Unavailable values are not substituted.")} retry={() => void market.refresh()} /></div>}
+    <div className="live-analysis-navigation" ref={navigationRef} data-testid="analysis-navigation">
+    <Link href="/" className="live-button live-analysis-back" data-testid="analysis-back-calculator" onClick={() => window.scrollTo(0, 0)}>
+      <ArrowLeft size={18} aria-hidden="true" />
+      <span>{t("Kalkulator", "Calculator")}</span>
+    </Link>
     <div className="live-tabs" role="tablist" aria-label={t("Bagian analisis", "Analysis sections")} onKeyDown={(event) => {
       if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
@@ -105,7 +119,8 @@ export default function AnalysisPage() {
       selectTab(tabs[next]);
       requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-analysis-tab="${tabs[next]}"]`)?.focus());
     }}>
-      {(["technical", "calendar", "news"] as const).map((tab) => <button key={tab} type="button" role="tab" data-analysis-tab={tab} id={`analysis-tab-${tab}`} aria-selected={activeTab === tab} tabIndex={activeTab === tab ? 0 : -1} onClick={() => selectTab(tab)}>{tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}</button>)}
+      {(["technical", "calendar", "news"] as const).map((tab) => <button key={tab} type="button" role="tab" data-analysis-tab={tab} id={`analysis-tab-${tab}`} aria-controls={`analysis-panel-${tab}`} aria-selected={activeTab === tab} tabIndex={activeTab === tab ? 0 : -1} onClick={() => selectTab(tab)}>{tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}</button>)}
+    </div>
     </div>
     <div className={`live-grid${activeTab === "technical" ? " live-technical-grid" : ""}`}>
       {activeTab === "technical" && <div className="live-tabpanel live-technical-tabpanel" role="tabpanel" id="analysis-panel-technical" aria-labelledby="analysis-tab-technical">

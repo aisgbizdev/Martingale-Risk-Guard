@@ -914,6 +914,20 @@ footer.live-footer .live-link:hover { color:#fff; }
 .live-header .live-link, .live-header .live-link strong { color:#fff; }
 .live-header .live-link { text-decoration-color:rgba(255,255,255,.6); }
 .live-calculator-back { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; min-width:44px; flex-shrink:0; }
+.live-analysis-navigation {
+  position:sticky; top:0; z-index:35; display:flex; align-items:center; gap:12px;
+  margin-top:10px; padding:8px 0; background:hsl(var(--background));
+  border-bottom:1px solid hsl(var(--border));
+}
+.live-analysis-navigation .live-tabs { margin:0; min-width:0; }
+.live-analysis-navigation .live-tabs button { min-height:44px; }
+.live-analysis-back { white-space:nowrap; flex-shrink:0; min-height:44px; }
+@media (max-width:639px) {
+  .live-analysis-navigation { gap:5px; padding-top:max(6px,env(safe-area-inset-top)); }
+  .live-analysis-back { padding:0 8px; font-size:11px; gap:4px; }
+  .live-analysis-navigation .live-tabs { flex:1; width:auto; gap:2px; padding:3px; }
+  .live-analysis-navigation .live-tabs button { padding:0 5px; font-size:11px; min-width:0; }
+}
 @media (max-width:639px) {
   .live-header .live-brand { flex:1; min-width:0; }
   .live-header .live-brand small { display:none; }

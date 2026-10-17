@@ -6,6 +6,7 @@ import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } f
 import { quoteIsFresh } from "@shared/live-types";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
+import { useStudy } from "@/lib/study-context";
 import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
 import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
@@ -57,9 +58,14 @@ export type StudySlot = {
 };
 export function ScenarioWorkspace({ capital, market, study, capitalField, initialMode = "market", onModeChange }: { capital: string; capitalField?: ReactNode; market: MarketHook; study?: StudySlot; initialMode?: "market" | "manual"; onModeChange?: (m: "market" | "manual") => void }) {
   const { t, language } = useLanguage();
-  const [c, setC] = useState<Controls>({ side: null, ...DEFAULTS });
-  const [inputMode, setInputMode] = useState<"market" | "manual">(initialMode);
-  useEffect(() => { onModeChange?.(initialMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const { calculatorDraft, setCalculatorDraft } = useStudy();
+  const [c, setC] = useState<Controls>(() => calculatorDraft?.controls ?? { side: null, ...DEFAULTS });
+  const [inputMode, setInputMode] = useState<"market" | "manual">(() => calculatorDraft?.mode ?? initialMode);
+  useEffect(() => { onModeChange?.(inputMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // Keep unsaved inputs during in-app navigation, never restore a live-result snapshot.
+  useEffect(() => {
+    setCalculatorDraft({ controls: c, mode: inputMode });
+  }, [c, inputMode, setCalculatorDraft]);
   const pickMode = (m: "market" | "manual") => {
     if (m === inputMode) return;
     setInputMode(m); setErr(null); onModeChange?.(m);

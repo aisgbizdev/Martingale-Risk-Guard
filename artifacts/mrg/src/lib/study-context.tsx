@@ -29,18 +29,32 @@ export interface StudySnapshot {
   confirmedD1: boolean;
 }
 
+export interface CalculatorDraft {
+  controls: {
+    side: "buy" | "sell" | null;
+    strategy: "Linear Averaging" | "Martingale";
+    layers: number;
+    target: number;
+    spacing: number;
+  };
+  mode: "market" | "manual";
+}
+
 interface Ctx {
   draft: StudyDraft;
   setDraft: (d: StudyDraft) => void;
   snapshot: StudySnapshot | null;
   setSnapshot: (s: StudySnapshot | null) => void;
+  calculatorDraft: CalculatorDraft | null;
+  setCalculatorDraft: (d: CalculatorDraft) => void;
 }
 const StudyCtx = createContext<Ctx | null>(null);
 
 export function StudyProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<StudyDraft>(initialDraft);
   const [snapshot, setSnapshot] = useState<StudySnapshot | null>(null);
-  const value = useMemo(() => ({ draft, setDraft, snapshot, setSnapshot }), [draft, snapshot]);
+  const [calculatorDraft, setCalculatorDraft] = useState<CalculatorDraft | null>(null);
+  const value = useMemo(() => ({ draft, setDraft, snapshot, setSnapshot, calculatorDraft, setCalculatorDraft }), [draft, snapshot, calculatorDraft]);
   return <StudyCtx.Provider value={value}>{children}</StudyCtx.Provider>;
 }
 

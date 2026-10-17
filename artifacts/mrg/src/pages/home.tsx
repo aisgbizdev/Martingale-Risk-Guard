@@ -22,9 +22,9 @@ const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "mark
 
 export default function Home() {
   const { language, setLanguage, t } = useLanguage();
-  const { draft, setDraft, snapshot: rawSnap, setSnapshot } = useStudy();
+  const { draft, setDraft, snapshot: rawSnap, setSnapshot, calculatorDraft } = useStudy();
   const market = useMarket();
-  const [manual, setManual] = useState(() => new URLSearchParams(window.location.search).has("modal"));
+  const [manual, setManual] = useState(() => calculatorDraft?.mode === "manual" || new URLSearchParams(window.location.search).has("modal"));
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<RiskInput | null>(null);

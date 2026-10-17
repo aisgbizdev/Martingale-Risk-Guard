@@ -27,6 +27,12 @@ Pengguna menegaskan bahwa penyesuaian desain web dan mobile berlaku untuk tampil
 
 **How to apply:** Periksa header, panel pasar/teknikal, berita, kalender, tabel dan hasil pada ukuran perangkat yang relevan; jangan mengklaim seluruh aplikasi responsif hanya dari perapian kalkulator.
 
+Navigasi bahan analisis tidak boleh membuat pengguna terjebak atau membuang isian kalkulator yang belum dihitung.
+
+**Why:** Pengguna melaporkan bahwa setelah masuk ke indikator D1 ia tidak bisa kembali dan tidak menemukan tombol pilihan.
+
+**How to apply:** Pertahankan jalan kembali dan pilihan bagian analisis ketika konten panjang digulir. Bedakan pemulihan isian saat pindah halaman dari menghidupkan kembali hasil saran lama sebagai saran pasar terkini.
+
 Pengguna meminta grafik langsung dimunculkan sebagai panduan, termasuk ketika orang membuka MRG pada Sabtu–Minggu.
 
 **Why:** Pengguna mengatakan “termasuk grafik juga dimunculkan aja langsung bro, jd ada panduannya kan?” setelah membahas penggunaan akhir pekan.
