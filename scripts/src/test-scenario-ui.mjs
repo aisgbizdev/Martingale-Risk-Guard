@@ -64,12 +64,35 @@ const cases = [
     assert.equal(await id(page, "button-side-sell").getAttribute("aria-pressed"), "false");
     await start(page); await calculate(page); await limited(page);
     await diagram(page, ["4500.00", "4459.00", "4472.67", "4492.67", "4418.00"]);
+    await id(page, "button-filled-1").click();
+    assert.equal(await id(page, "button-filled-1").getAttribute("aria-pressed"), "true");
+    await diagram(page, ["4500.00", "4459.00", "4520.00", "4418.00"]);
+    assert.match(await id(page, "fill-stage-summary").innerText(), /1 dari 2.*1 lot/);
+    assert.equal(await id(page, "fill-stage-average").locator("td").nth(1).innerText(), "4500.00");
+    assert.equal(await id(page, "table-scenario").locator('tr[data-filled="false"]').count(), 1);
+    assert.match(await id(page, "fill-stage-totals").innerText(), /8[.,]200[,.]00/);
+    await id(page, "market-layer-stages").screenshot({ path: resolve(output, `${page.viewportSize().width}-filled-l1.jpg`) });
+    await id(page, "button-filled-2").click();
+    await diagram(page, ["4500.00", "4459.00", "4472.67", "4492.67"]);
+    await id(page, "button-filled-1").click();
+    await calculate(page);
+    assert.equal(await id(page, "button-filled-2").getAttribute("aria-pressed"), "true", "A fresh capture resets to all layers");
     await result(page).locator("summary").filter({ hasText: "Dasar saran" }).click();
     assert.match(await result(page).innerText(), /T=floor\(0,25×ATR\), S=ceil\(0,5×ATR\)/);
   }],
   ["sell-limited", null, async page => {
     await start(page, "sell"); await calculate(page); await limited(page);
     await diagram(page, ["4500.00", "4541.00", "4527.33", "4507.33", "4582.00"]);
+    await id(page, "button-filled-1").click();
+    await diagram(page, ["4500.00", "4541.00", "4480.00", "4582.00"]);
+    assert.match(await id(page, "fill-stage-summary").innerText(), /1 dari 2.*1 lot/);
+    await id(page, "input-modal").fill("300000");
+    assert.equal(await id(page, "button-filled-1").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "fill-stage-tp").locator("td").nth(1).innerText(), "4480.00", "An edited capital must not rewrite the captured stage");
+    await id(page, "mode-manual").click();
+    assert.equal(await id(page, "market-layer-stages").count(), 0);
+    await id(page, "mode-market").click();
+    assert.equal(await id(page, "scenario-diagram").count(), 0, "Mode switching cannot revive a stage");
   }],
   ["direction-never-reactivates-old-result", null, async page => {
     await start(page); await calculate(page); await limited(page);

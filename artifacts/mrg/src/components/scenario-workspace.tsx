@@ -13,16 +13,17 @@ import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
 import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
 import { MarketRuleSummary } from "@/components/market-rule-summary";
+import { MarketLayerStages } from "@/components/market-layer-stages";
 
 type Scenario = ReturnType<typeof buildScenario>;
 type Controls = { side: ScenarioSide | null; strategy: "Linear Averaging" | "Martingale"; layers: number; target: number; spacing: number };
 const DEFAULTS: Omit<Controls, "side"> = { strategy: "Linear Averaging", layers: 3, target: 30, spacing: 30 };
 const keyOf = (c: Controls, capital: number) => [c.side, c.strategy, c.layers, c.target, c.spacing, capital].join("|");
 
-function LevelDiagram({ plan, t }: { plan: Scenario; t: (id: string, en: string) => string }) {
+function LevelDiagram({ plan, t, filledLayers = plan.layers }: { plan: Scenario; t: (id: string, en: string) => string; filledLayers?: number }) {
   const W = 560, H = 340, top = 28, bottom = 28, axisX = 96;
   const levels = [
-    ...plan.entries.map(e => ({ price: e.price, label: `L${e.index} · ${e.lots} lot`, kind: "entry" as const })),
+    ...plan.entries.map(e => ({ price: e.price, label: `L${e.index} · ${e.lots} lot`, kind: e.index <= filledLayers ? "entry" as const : "pending" as const })),
     { price: plan.average, label: t("Rata-rata basket", "Basket average"), kind: "avg" as const },
     { price: plan.tp, label: "TP", kind: "tp" as const },
     { price: plan.stressPrice, label: t("Stress", "Stress"), kind: "stress" as const },
@@ -34,14 +35,14 @@ function LevelDiagram({ plan, t }: { plan: Scenario; t: (id: string, en: string)
   const sorted = [...levels].sort((a, b) => y(a.price) - y(b.price));
   let last = -99;
   const placed = sorted.map(l => { const ly = Math.max(y(l.price), last + 15); last = ly; return { ...l, ly }; });
-  const color = { entry: "hsl(210 83% 39%)", avg: "hsl(216 47% 18%)", tp: "hsl(160 55% 32%)", stress: "hsl(2 59% 46%)" };
+  const color = { entry: "hsl(210 83% 39%)", pending: "hsl(215 18% 43%)", avg: "hsl(216 47% 18%)", tp: "hsl(160 55% 32%)", stress: "hsl(2 59% 46%)" };
   return (
     <svg viewBox={`0 0 ${W} ${Math.max(H, last + 20)}`} role="img" className="w-full h-auto" data-testid="scenario-diagram"
       aria-label={t("Diagram level harga skenario XUL10. Sumbu vertikal adalah harga, bukan waktu.", "XUL10 scenario price-level diagram. The vertical axis is price, not time.")}>
       <line x1={axisX} x2={axisX} y1={top - 10} y2={H - bottom + 10} stroke="hsl(212 24% 70%)" />
       {placed.map((l, i) => (
         <g key={i}>
-          <line x1={axisX - 6} x2={W - 150} y1={y(l.price)} y2={y(l.price)} stroke={color[l.kind]} strokeWidth={l.kind === "entry" ? 1.5 : 2} strokeDasharray={l.kind === "entry" ? undefined : l.kind === "avg" ? "6 3" : "2 4"} />
+          <line x1={axisX - 6} x2={W - 150} y1={y(l.price)} y2={y(l.price)} stroke={color[l.kind]} strokeWidth={l.kind === "entry" ? 1.5 : 2} strokeDasharray={l.kind === "entry" ? undefined : l.kind === "pending" ? "4 4" : l.kind === "avg" ? "6 3" : "2 4"} />
           <text x={axisX - 10} y={y(l.price) + 4} textAnchor="end" fontSize="11" fontFamily="IBM Plex Mono, monospace" fill="hsl(216 47% 18%)">{l.price.toFixed(2)}</text>
           <text x={W - 142} y={l.ly + 4} fontSize="11.5" fontWeight={l.kind === "entry" ? 500 : 700} fill={color[l.kind]}>{l.label}</text>
         </g>
@@ -281,6 +282,10 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             {moved !== null && Math.abs(moved) >= 0.01 && <p role="status" className="live-small" data-testid="text-market-moved">{t(`Harga XUL10 sekarang ${quote!.price.toFixed(2)}, bergeser ${moved > 0 ? "+" : ""}${moved.toFixed(2)} dari snapshot. Level tidak diubah otomatis.`, `XUL10 is now ${quote!.price.toFixed(2)}, ${moved > 0 ? "+" : ""}${moved.toFixed(2)} from the snapshot. Levels are not changed automatically.`)}</p>}
             {!quote && plan.priceBasis?.kind !== "historical" && <p role="status" className="live-small">{t("Harga saat ini tidak segar; snapshot tetap sebagai skenario lama.", "The current price is not fresh; the snapshot stays as an old scenario.")}</p>}
             {sideChanged ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah dipilih ulang: hasil sebelumnya tidak berlaku dan disembunyikan. Tekan Hitung skenario.", "Direction re-selected: the earlier result no longer applies and is hidden. Press Calculate.")}</p> : <>
+            {plan.mode === "market" ? <div className={changed ? "opacity-60" : ""}>
+              <MarketLayerStages plan={plan} t={t} money={money}
+                renderDiagram={stage => <LevelDiagram plan={stage} filledLayers={stage.filledLayers} t={t} />} />
+            </div> : <>
             <div className={changed ? "opacity-60" : ""}><LevelDiagram plan={plan} t={t} /></div>
             <div className="overflow-x-auto"><table className="text-xs w-full" data-testid="table-scenario">
               <caption className="text-left live-small pb-1">{t("Level skenario, basis XUL10. Sumbu adalah harga, bukan waktu.", "Scenario levels, XUL10 basis. The axis is price, not time.")}</caption>
@@ -296,6 +301,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               <dt>{t("Rugi stress", "Stress loss")}</dt><dd>{money(plan.stressLoss)} ({plan.stressPercent.toFixed(1)}%)</dd>
               <dt>{t("Profit di TP", "Profit at TP")}</dt><dd>{money(plan.targetProfit)}</dd>
             </dl>
+            </>}
             {comparison.length > 0 && <details className="live-details" data-testid="manual-strategy-comparison">
               <summary>{t("Bandingkan Linear dan Martingale", "Compare Linear and Martingale")}</summary>
               <p className="live-small mt-2">{t("Modal, arah, harga awal, jarak, target dan jumlah layer sama. Hanya pola lot yang berbeda; ini bukan saran strategi.", "Same capital, direction, starting price, spacing, target and layer count. Only lot sizing differs; this is not a strategy recommendation.")}</p>
@@ -310,7 +316,9 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             </details>}
             {plan.mode === "manual" && comparison.length === 0 && <p role="status" className="live-small">{t("Perbandingan strategi tidak tersedia: parameter menghasilkan level harga alternatif yang tidak valid.", "Strategy comparison unavailable: these parameters produce invalid alternative price levels.")}</p>}
             {(plan.marginPercent > SCENARIO_BUDGET.marginFraction * 100 || plan.stressPercent > SCENARIO_BUDGET.stressFraction * 100) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
-            <p className="live-small">{t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
+            <p className="live-small">{plan.mode === "market"
+              ? t("TP mengikuti asumsi layer terisi yang Anda pilih, bukan target order otomatis. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP follows your chosen assumed filled layers, not an automatic order target. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")
+              : t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
             </>}
           </div>}
           <details className="live-details mt-2" data-testid="scenario-limits">

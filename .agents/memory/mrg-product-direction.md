@@ -75,6 +75,12 @@ Pivot/Fibonacci adalah fitur utama yang harus mudah ditemukan, bukan disembunyik
 
 **How to apply:** Tampilkan panel referensinya langsung di bawah grafik dengan sumber dan keterbatasan yang jelas. Ringkas metode/level tambahan tanpa menyembunyikan akses utama ke Pivot dan Fibonacci.
 
+Pengguna memilih “TP sesuai layer yang terisi”: eksplorasi edukatif tahapan pengisian, bukan deteksi posisi broker. Harga entry dan lot tetap dari snapshot; Isi Manual tetap di luar perubahan ini.
+
+**Why:** Pengguna menyetujui agar rata-rata dan TP tidak hanya dijelaskan untuk keadaan seluruh layer sudah terisi.
+
+**How to apply:** Layer tertunda tidak ikut rata-rata, TP atau margin tahap. Bandingkan stress tahap pada titik harga basket penuh yang sama agar memilih tahap tidak diam-diam memperpendek skenario stress atau menilai ulang kelayakan/alokasi modal. Tampilkan asumsi ini, bukan klaim posisi nyata atau keamanan.
+
 Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
 
 **Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.
