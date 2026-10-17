@@ -57,11 +57,11 @@ Pengguna mengonfirmasi margin/jaminan US$1.000 per 1 lot, menggantikan asumsi US
 
 **How to apply:** Perlakukan sebagai asumsi simulasi pengguna, bukan verifikasi spesifikasi broker. Skala nilai poin dan margin secara proporsional terhadap lot. Margin bukan batas kerugian atau bukti kemampuan akun menahan layer; biaya dan stop-out belum ditetapkan.
 
-Pengguna meminta kembali lot awal 1 lot seperti MRG dasar, bukan default 0,1 lot. Ia menegaskan bahwa perubahan harga 4.500 ke 4.501 adalah 1 poin, bernilai US$100 untung/rugi untuk 1 lot, terpisah dari margin requirement US$1.000.
+Pengguna memperjelas bahwa Saran MRG harus menghitung lot awal secara otomatis dari modal, konteks harga dan batas skenario, bukan mematok 1 atau 0,1 lot. Hasil harus menunjukkan lot awal dan harga entry setiap layer. Perubahan harga 4.500 ke 4.501 tetap 1 poin, bernilai US$100 untung/rugi untuk 1 lot, terpisah dari margin requirement US$1.000.
 
-**Why:** Pengguna merasa ukuran 0,1 lot tetap tidak sesuai dengan kalkulator yang seharusnya mempertimbangkan modal dan konsep MRG awal.
+**Why:** Pengguna menjelaskan bahwa mengganti angka tetap 0,1 menjadi 1 belum memenuhi tujuan hitungan otomatis; yang dibutuhkan adalah ukuran awal dan level entry yang mengikuti skenario.
 
-**How to apply:** Jangan mengecilkan lot diam-diam agar skenario lolos. Kapasitas margin teoretis (misalnya US$300.000 dibagi US$1.000 = 300 lot) bukan instruksi menggunakan seluruh kapasitas; floating loss dan batas skenario tetap diperhitungkan.
+**How to apply:** Pisahkan lot default pembanding manual dari sizing Saran MRG. Jangan menyamakan kapasitas margin teoretis (misalnya US$300.000 dibagi US$1.000 = 300 lot) dengan jumlah lot yang layak; floating loss dan seluruh layer tetap diperhitungkan. Langkah lot adalah asumsi terpisah yang harus jelas, bukan alasan mengunci lot awal otomatis.
 
 Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
 
