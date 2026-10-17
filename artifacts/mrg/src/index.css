@@ -925,3 +925,13 @@ footer.live-footer .live-link:hover { color:#fff; }
 @media (min-width:380px) and (max-width:639px) {
   .mrg-check-page .live-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 }
+
+/* Keep the guide chart visible without making the phone layout a desktop shrink. */
+.mrg-workspace-market .live-chart-frame { height:340px; }
+.mrg-workspace-market .mrg-chart-warning { font-size:12px; line-height:1.5; }
+@media (max-width:639px) {
+  .mrg-workspace-market .live-chart-frame { height:260px; }
+}
+@media (min-width:1024px) {
+  .mrg-workspace-market .live-chart-frame { height:420px; }
+}

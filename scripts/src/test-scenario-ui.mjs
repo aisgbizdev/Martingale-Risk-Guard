@@ -32,6 +32,11 @@ const id = (page, name) => page.getByTestId(name);
 const result = page => id(page, "scenario-result");
 const calculate = page => id(page, "button-calculate-scenario").click();
 async function start(page, side = "buy", capital = "20000") {
+  await id(page, "workspace-market").waitFor({ state: "visible" });
+  await id(page, "workspace-market").locator("script[src*='tradingview']").waitFor({ state: "attached" });
+  assert.equal(await id(page, "workspace-market").isVisible(), true, "Chart panel must be visible without opening a market toggle");
+  assert.equal(await id(page, "workspace-market").locator("script[src*='tradingview']").count(), 1, "Mount exactly one guide chart");
+  assert.equal(await id(page, "button-view-market").count(), 0);
   await id(page, "scenario-price").getByText("4.500,00", { exact: true }).waitFor();
   await id(page, "input-modal").fill(capital);
   await id(page, `button-side-${side}`).click();

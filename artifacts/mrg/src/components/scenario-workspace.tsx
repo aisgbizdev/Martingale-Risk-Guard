@@ -57,14 +57,6 @@ export type StudySlot = {
 };
 export function ScenarioWorkspace({ capital, market, study, capitalField, initialMode = "market", onModeChange }: { capital: string; capitalField?: ReactNode; market: MarketHook; study?: StudySlot; initialMode?: "market" | "manual"; onModeChange?: (m: "market" | "manual") => void }) {
   const { t, language } = useLanguage();
-  const [view, setView] = useState<"market" | "scenario">("scenario");
-  const [largeScreen, setLargeScreen] = useState(() => window.matchMedia("(min-width: 1024px)").matches);
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 1024px)");
-    const changed = () => setLargeScreen(query.matches);
-    query.addEventListener("change", changed);
-    return () => query.removeEventListener("change", changed);
-  }, []);
   const [c, setC] = useState<Controls>({ side: null, ...DEFAULTS });
   const [inputMode, setInputMode] = useState<"market" | "manual">(initialMode);
   useEffect(() => { onModeChange?.(initialMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
@@ -170,33 +162,29 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   return (
     <section aria-label={t("Kalkulator skenario MRG", "MRG scenario calculator")} data-testid="scenario-workspace" className="mb-4">
       <div className="grid gap-4 lg:grid-cols-2 items-start">
-        <div className="order-[9998] lg:hidden" role="group" aria-label={t("Tampilan pasar", "Market view")}>
-          {view === "market"
-            ? <button type="button" className={seg(false) + " w-full"} aria-pressed onClick={() => setView("scenario")} data-testid="button-view-scenario">{t("Sembunyikan pasar", "Hide market")}</button>
-            : <button type="button" className={seg(false) + " w-full"} aria-pressed={false} onClick={() => setView("market")} data-testid="button-view-market">{t("Lihat pasar (opsional): chart & level", "View market (optional): chart & levels")}</button>}
-        </div>
-        <div className={`live-card min-w-0 order-last lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-x-5 ${view === "market" ? "" : "hidden"} lg:grid`}>
-          <div className="min-w-0 lg:col-span-2">
-
-          <h2>{t("Pasar: referensi OANDA XAUUSD", "Market: OANDA XAUUSD reference")}</h2>
-          <div className="flex flex-wrap gap-2 mt-2" aria-label={t("Buka bahan analisis", "Open analysis resources")}>
+        <div className="live-card mrg-workspace-market min-w-0 lg:col-start-1 lg:row-start-1 lg:row-span-2" data-testid="workspace-market">
+          <h2>{t("Grafik pasar", "Market chart")}</h2>
+          <p className="mrg-chart-warning mt-2" data-testid="text-chart-source">
+            {t("OANDA:XAUUSD · TradingView. Referensi visual, bukan harga XUL10 untuk perhitungan.", "OANDA:XAUUSD · TradingView. Visual reference, not the XUL10 calculation price.")}
+          </p>
+          <div className="min-w-0 mt-3"><TradingViewChart online={market.online} /></div>
+          <p className="live-small mt-2">{t("Saat pasar tutup, candle terakhir tetap menjadi referensi; bukan harga live. Layer dan TP XUL10 ditampilkan pada hasil perhitungan.", "When the market is closed, the last candles remain a reference, not a live price. XUL10 layers and TP appear in the calculation results.")}</p>
+          <div className="flex flex-wrap gap-2 mt-3" aria-label={t("Buka bahan analisis", "Open analysis resources")}>
             {(["technical", "calendar", "news"] as const).map(tab => <Link key={tab} href={`/analysis?tab=${tab}`} className="live-button">
               {tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}
             </Link>)}
           </div>
-          <p className="mrg-chart-warning mt-2" data-testid="text-chart-source">
-            {t("Candle di sini dari OANDA XAUUSD (TradingView), sumber berbeda dari harga XUL10 yang dipakai kalkulator. Level skenario tidak digambar di atas chart ini.", "Candles here are OANDA XAUUSD (TradingView), a different source from the XUL10 price the calculator uses. Scenario levels are not drawn over this chart.")}
-          </p>
-          </div>
-          <div className="min-w-0 mt-3">{(view === "market" || largeScreen) && <TradingViewChart online={market.online} />}</div>
-          <div className="min-w-0">
+          <details className="live-details mt-3">
+            <summary>{t("Konteks pasar, Pivot & Fibonacci", "Market context, Pivot & Fibonacci")}</summary>
+            <div className="min-w-0 mt-3">
             {study?.glance}
             <NewsmakerReferenceLevels market={market} />
-          </div>
+            </div>
+          </details>
         </div>
 
         <div className="min-w-0 grid gap-4 lg:contents">
-        <div className="live-card min-w-0">
+        <div className="live-card min-w-0 lg:col-start-2 lg:row-start-1">
           <h2>{t("Kalkulator skenario", "Scenario calculator")}</h2>
           <p className="live-small mt-1">{t("Edukasi: Anda yang memilih arah. MRG tidak menyarankan Buy atau Sell.", "Education: you choose the direction. MRG does not recommend Buy or Sell.")}</p>
           <div className="flex gap-2 mt-3" role="group" aria-label={t("Cara mengisi", "Input method")}>
@@ -237,7 +225,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           </div>
         </div>
 
-        <div className={`live-card min-w-0`} aria-live="polite" data-testid="scenario-result">
+        <div className="live-card min-w-0 lg:col-start-2 lg:row-start-2" aria-live="polite" data-testid="scenario-result">
           <h2>{t("Hasil skenario", "Scenario result")}</h2>
           {snap?.suggestion?.result.status === "limited" && <p role="alert" className="live-error mt-2" data-testid="limited-suggestion-warning">{t("SARAN TERBATAS · Dampak berita belum dinilai, bukan netral. Linear maksimal 2 layer; bukan penilaian pasar lengkap atau jaminan keamanan.", "LIMITED SUGGESTION · News impact is unassessed, not neutral. Linear, up to 2 layers; not a full market assessment or safety guarantee.")}</p>}
           {snap?.suggestion && <details className="live-details mt-2"><summary>{t("Dasar saran & sumber", "Suggestion basis & sources")}</summary>
