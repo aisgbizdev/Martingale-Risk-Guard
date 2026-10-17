@@ -5,6 +5,7 @@ import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { MarketRuleSummary } from "@/components/market-rule-summary";
+import { SCENARIO_CONTRACT } from "@shared/scenario-contract";
 
 export function CapitalSuggestion({ capital, market }: { capital: string; market: MarketHook }) {
   const { t, language } = useLanguage();
@@ -105,7 +106,7 @@ export function CapitalSuggestion({ capital, market }: { capital: string; market
             <blockquote>“{e.excerpt}”</blockquote><p>{e.tag === "high-uncertainty" ? t("Ketidakpastian tinggi", "High uncertainty") : t("Konteks ditinjau—bukan berarti aman", "Context reviewed—not a safety claim")} · {e.rationale}</p>
             <p className="break-all">{e.url}</p>
           </div>)}
-          <p>{t("Asumsi simulasi: 1 poin = harga 1,00; US$100/poin/lot; margin US$2.000/lot. Bukan spesifikasi broker. Margin bukan biaya atau batas rugi.", "Simulation assumptions: 1 point = price 1.00; US$100/point/lot; margin US$2,000/lot. Not broker specifications. Margin is not a cost or loss limit.")}</p>
+          <p>{t(`Asumsi simulasi: 1 poin = harga 1,00; US$${SCENARIO_CONTRACT.dollarsPerPointPerLot}/poin/lot; margin US$${SCENARIO_CONTRACT.marginPerLot.toLocaleString("id-ID")}/lot; lot awal ${SCENARIO_CONTRACT.firstLot}. Bukan spesifikasi broker. Margin bukan biaya atau batas rugi.`, `Simulation assumptions: 1 point = price 1.00; US$${SCENARIO_CONTRACT.dollarsPerPointPerLot}/point/lot; margin US$${SCENARIO_CONTRACT.marginPerLot.toLocaleString("en-US")}/lot; first lot ${SCENARIO_CONTRACT.firstLot}. Not broker specifications. Margin is not a cost or loss limit.`)}</p>
           <p>{t("Simulasi asumsi, bukan skor studi PF/ROM/ER atau label aman. Spread, komisi, swap, slippage dan stop-out belum dihitung. Gerakan lebih jauh bisa memperbesar rugi.", "Assumption simulation, not study PF/ROM/ER or a safety rating. Spread, commission, swap, slippage and stop-out are excluded. Further moves can increase losses.")}</p>
         </div>
       </details>

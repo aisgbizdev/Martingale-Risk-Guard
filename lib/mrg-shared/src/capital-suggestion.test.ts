@@ -27,27 +27,27 @@ function context(): MarketContext {
   };
 }
 
-test("approved USD20k example: target20 spacing41, linear .1/.2 margin600 stress1640 equity18360 funds17760", () => {
-  const result = suggestFromCapital(20000, context(), quote, now);
+test("USD200k whole-lot example: target20 spacing41, lots1/2 margin3000 stress16400", () => {
+  const result = suggestFromCapital(200000, context(), quote, now);
   assert.equal(result.status, "offered");
   assert.equal(result.target, 20);
   assert.equal(result.spacing, 41);
   assert.deepEqual(result.selected, {
-    strategy: "Linear Averaging", layers: 2, lots: [0.1, 0.2], totalLots: 0.3,
-    margin: 600, stressLoss: 1640, stressEquity: 18360, fundsAfterMargin: 17760,
-    marginPercent: 3, stressPercent: 8.200000000000001, passes: true,
+    strategy: "Linear Averaging", layers: 2, lots: [1, 2], totalLots: 3,
+    margin: 3000, stressLoss: 16400, stressEquity: 183600, fundsAfterMargin: 180600,
+    marginPercent: 1.5, stressPercent: 8.200000000000001, passes: true,
   });
-  assert.equal(simulateCandidate(20000, 41, 3, "Linear Averaging").stressLoss, 4100);
+  assert.equal(simulateCandidate(200000, 41, 3, "Linear Averaging").stressLoss, 41000);
   assert.equal(simulateCandidate(20000, 41, 3, "Linear Averaging").passes, false);
-  assert.equal(simulateCandidate(20000, 41, 3, "Martingale").stressLoss, 4510);
-  assert.equal(simulateCandidate(20000, 41, 3, "Martingale").margin, 1400);
+  assert.equal(simulateCandidate(200000, 41, 3, "Martingale").stressLoss, 45100);
+  assert.equal(simulateCandidate(200000, 41, 3, "Martingale").margin, 7000);
 });
 
 test("all four data sources affect availability and technicals/fundamentals alter candidates", () => {
   const data = context();
   data.history.analysis!.lastClose = 4250;
   data.history.analysis!.trend = "mixed";
-  const result = suggestFromCapital(100000, data, quote, now);
+  const result = suggestFromCapital(500000, data, quote, now);
   assert.equal(result.candidates.length, 4);
   assert.equal(result.selected?.layers, 3);
   assert.equal(result.selected?.strategy, "Linear Averaging");
@@ -97,7 +97,7 @@ test("calendar inclusive window, unknown time or impact defer; outside the windo
     data.calendar.events = [{
       id: "usd", currency: "USD", impact: "high", name: "CPI", at: new Date(now + minutes * 60000).toISOString(),
     } as CalendarEvent];
-    assert.equal(suggestFromCapital(20000, data, quote, now).status, deferred ? "deferred" : "offered");
+    assert.equal(suggestFromCapital(200000, data, quote, now).status, deferred ? "deferred" : "offered");
     data.calendar.events[0].at = null;
     assert.equal(suggestFromCapital(20000, data, quote, now).status, "deferred");
     data.calendar.events[0].impact = "unknown";
@@ -106,12 +106,12 @@ test("calendar inclusive window, unknown time or impact defer; outside the windo
 });
 
 test("capital boundaries, margin vs stress, no negative funds disguised as safety, no study metrics", () => {
-  assert.equal(simulateCandidate(16400, 41, 2, "Linear Averaging").passes, true);
-  assert.equal(simulateCandidate(16399, 41, 2, "Linear Averaging").passes, false);
-  assert.equal(simulateCandidate(3000, 1, 2, "Linear Averaging").passes, true);
-  assert.equal(simulateCandidate(2999, 1, 2, "Linear Averaging").passes, false);
+  assert.equal(simulateCandidate(164000, 41, 2, "Linear Averaging").passes, true);
+  assert.equal(simulateCandidate(163999, 41, 2, "Linear Averaging").passes, false);
+  assert.equal(simulateCandidate(15000, 1, 2, "Linear Averaging").passes, true);
+  assert.equal(simulateCandidate(14999, 1, 2, "Linear Averaging").passes, false);
   assert.equal(suggestFromCapital(100, context(), quote, now).status, "no-fit");
-  assert.equal(simulateCandidate(100, 41, 2, "Linear Averaging").fundsAfterMargin, -2140);
+  assert.equal(simulateCandidate(100, 41, 2, "Linear Averaging").fundsAfterMargin, -19300);
   const data = context(), before = JSON.stringify(data);
   const result = suggestFromCapital(20000, data, quote, now);
   assert.equal(JSON.stringify(data), before);
@@ -128,7 +128,7 @@ test("approved limited policy produces Linear two layers, never neutral or a ful
     reasons: ["Penilaian redaksi belum tersedia."], evidence: [],
   };
   assert.equal(suggestFromCapital(100000, data, quote, now).status, "incomplete");
-  const result = suggestFromCapital(100000, data, quote, now, true, true);
+  const result = suggestFromCapital(200000, data, quote, now, true, true);
   assert.equal(result.status, "limited");
   assert.equal(result.fundamental?.status, "incomplete");
   assert.match(result.reasons[0], /bukan netral/);
@@ -137,8 +137,8 @@ test("approved limited policy produces Linear two layers, never neutral or a ful
   assert.equal(result.selected?.layers, 2);
   assert.equal(result.target, 20);
   assert.equal(result.spacing, 41);
-  assert.equal(result.selected?.margin, 600);
-  assert.equal(result.selected?.stressLoss, 1640);
+  assert.equal(result.selected?.margin, 3000);
+  assert.equal(result.selected?.stressLoss, 16400);
 });
 
 test("missing, invalid, stale, future, conflicting and archived AI assessments remain limited", () => {
@@ -152,7 +152,7 @@ test("missing, invalid, stale, future, conflicting and archived AI assessments r
     (d: MarketContext) => { d.news.fundamental!.evidence[0].reviewMethod = "ai"; },
   ]) {
     const d = context(); mutate(d);
-    const result = suggestFromCapital(100000, d, quote, now, true, true);
+    const result = suggestFromCapital(200000, d, quote, now, true, true);
     assert.equal(result.status, "limited");
     assert.equal(result.selected?.layers, 2);
     assert.equal(result.candidates.some(c => c.strategy === "Martingale"), false);
@@ -178,17 +178,17 @@ test("limited policy still blocks missing/stale required sources and still defer
 
 test("three layers are available only with valid full assessment and qualifying conditions/capital", () => {
   const d = context(); d.history.analysis!.trend = "mixed"; d.history.analysis!.lastClose = 4250;
-  const result = suggestFromCapital(100000, d, quote, now, true, true);
+  const result = suggestFromCapital(500000, d, quote, now, true, true);
   assert.equal(result.status, "offered");
   assert.equal(result.selected?.layers, 3);
   d.news.fundamental!.status = "incomplete";
-  assert.equal(suggestFromCapital(100000, d, quote, now, true, true).selected?.layers, 2);
+  assert.equal(suggestFromCapital(500000, d, quote, now, true, true).selected?.layers, 2);
   assert.equal(suggestFromCapital(100, d, quote, now, true, true).status, "no-fit");
 });
 
 test("a limited snapshot builds symmetric Buy/Sell diagrams from the captured quote and exact candidate math", () => {
   const d = context(); delete d.news.fundamental;
-  const result = suggestFromCapital(20000, d, quote, now, true, true);
+  const result = suggestFromCapital(200000, d, quote, now, true, true);
   const buy = marketScenario(result, "buy"), sell = marketScenario(result, "sell");
   for (const plan of [buy, sell]) {
     assert.equal(plan.mode, "market");
@@ -209,13 +209,13 @@ test("a limited snapshot builds symmetric Buy/Sell diagrams from the captured qu
 test("limited captures remain frozen and expire without becoming a three-layer or full suggestion", () => {
   const d = context(); delete d.news.fundamental;
   const sources = { context: d, quote: { ...quote }, online: true, connectionRevision: 0 };
-  const snap = captureSuggestion(20000, sources, now, true);
+  const snap = captureSuggestion(200000, sources, now, true);
   assert.equal(snap.result.status, "limited");
-  assert.equal(suggestionSnapshotState(snap, 20000, sources, now).canApply, true);
-  assert.equal(suggestionSnapshotState(snap, 20000, sources, now + 21000).canApply, false);
-  assert.equal(suggestionSnapshotState(snap, 30000, sources, now).canApply, false);
+  assert.equal(suggestionSnapshotState(snap, 200000, sources, now).canApply, true);
+  assert.equal(suggestionSnapshotState(snap, 200000, sources, now + 21000).canApply, false);
+  assert.equal(suggestionSnapshotState(snap, 300000, sources, now).canApply, false);
   sources.quote.price += 10;
-  assert.equal(suggestionSnapshotState(snap, 20000, sources, now).canApply, false);
+  assert.equal(suggestionSnapshotState(snap, 200000, sources, now).canApply, false);
   assert.equal(snap.result.quote?.price, quote.price);
   assert.equal(snap.result.status, "limited");
   assert.equal(snap.result.selected?.layers, 2);

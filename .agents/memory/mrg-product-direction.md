@@ -57,6 +57,12 @@ Pengguna mengonfirmasi margin/jaminan US$1.000 per 1 lot, menggantikan asumsi US
 
 **How to apply:** Perlakukan sebagai asumsi simulasi pengguna, bukan verifikasi spesifikasi broker. Skala nilai poin dan margin secara proporsional terhadap lot. Margin bukan batas kerugian atau bukti kemampuan akun menahan layer; biaya dan stop-out belum ditetapkan.
 
+Pengguna meminta kembali lot awal 1 lot seperti MRG dasar, bukan default 0,1 lot. Ia menegaskan bahwa perubahan harga 4.500 ke 4.501 adalah 1 poin, bernilai US$100 untung/rugi untuk 1 lot, terpisah dari margin requirement US$1.000.
+
+**Why:** Pengguna merasa ukuran 0,1 lot tetap tidak sesuai dengan kalkulator yang seharusnya mempertimbangkan modal dan konsep MRG awal.
+
+**How to apply:** Jangan mengecilkan lot diam-diam agar skenario lolos. Kapasitas margin teoretis (misalnya US$300.000 dibagi US$1.000 = 300 lot) bukan instruksi menggunakan seluruh kapasitas; floating loss dan batas skenario tetap diperhitungkan.
+
 Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
 
 **Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.

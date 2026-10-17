@@ -1,5 +1,6 @@
 /** Educational XUL10 price-level diagram; never an order or direction forecast. */
 import type { ScenarioPriceBasis } from "./scenario-price";
+import { SCENARIO_CONTRACT, scenarioLots } from "./scenario-contract";
 export type ScenarioSide = "buy" | "sell";
 export interface ScenarioInput {
   side: ScenarioSide;
@@ -29,10 +30,11 @@ export function buildScenario(input: ScenarioInput) {
     input.priceBasis.quote.price !== entry || input.priceBasis.quote.asOf !== asOf
   )) throw new Error("Acuan harga tidak cocok dengan skenario.");
   const direction = side === "buy" ? 1 : -1;
+  const lots = scenarioLots(strategy, layers);
   const entries = Array.from({ length: layers }, (_, index) => ({
     index: index + 1,
     price: entry - direction * index * spacing,
-    lots: cents(0.1 * (strategy === "Martingale" ? 2 ** index : index + 1)),
+    lots: lots[index],
   }));
   const totalLots = cents(entries.reduce((sum, e) => sum + e.lots, 0));
   const average = entries.reduce((sum, e) => sum + e.price * e.lots, 0) / totalLots;
@@ -41,12 +43,12 @@ export function buildScenario(input: ScenarioInput) {
   if ([...entries.map(e => e.price), tp, stressPrice].some(n => !Number.isFinite(n) || n <= 0)) {
     throw new Error("Level harga harus positif. Kurangi jarak, target, atau jumlah layer.");
   }
-  const margin = cents(totalLots * 2000);
+  const margin = cents(totalLots * SCENARIO_CONTRACT.marginPerLot);
   // No rounding of price geometry: avoid fabricating instrument tick-size precision.
   const stressLoss = cents(entries.reduce((sum, e) =>
-    sum - direction * (stressPrice - e.price) * 100 * e.lots, 0));
+    sum - direction * (stressPrice - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
   const targetProfit = cents(entries.reduce((sum, e) =>
-    sum + direction * (tp - e.price) * 100 * e.lots, 0));
+    sum + direction * (tp - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
   return {
     ...input, entries, totalLots, average, tp, margin, stressPrice, stressLoss, targetProfit,
     marginPercent: margin / capital * 100,

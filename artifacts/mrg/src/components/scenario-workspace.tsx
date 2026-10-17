@@ -5,6 +5,7 @@ import { marketScenario } from "@shared/market-scenario";
 import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import { quoteIsFresh } from "@shared/live-types";
 import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
+import { SCENARIO_CONTRACT, SCENARIO_BUDGET } from "@shared/scenario-contract";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { useStudy } from "@/lib/study-context";
@@ -219,6 +220,14 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               {historical && <p className="live-small mt-2" data-testid="historical-price-disclosure">{t("Bukan penutupan resmi. Jadwal sesi belum terverifikasi; ini tidak menyatakan market pasti tutup. Harga pembukaan dapat gap.", "Not an official close. Session hours are unverified; this does not confirm market closure. Opening prices can gap.")}</p>}
             </div>
             {capitalField}
+            <p className="live-small" data-testid="text-scenario-contract">{t(
+              `Lot awal ${SCENARIO_CONTRACT.firstLot} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/poin/lot`,
+              `First lot ${SCENARIO_CONTRACT.firstLot} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/point/lot`,
+            )}</p>
+            {capOk && <p className="live-small" data-testid="text-margin-capacity">{t(
+              `Kapasitas margin teoretis ${Math.floor(cap / SCENARIO_CONTRACT.marginPerLot).toLocaleString("id-ID")} lot sebelum floating loss; bukan jumlah lot yang disarankan.`,
+              `Theoretical margin capacity ${Math.floor(cap / SCENARIO_CONTRACT.marginPerLot).toLocaleString("en-US")} lots before floating loss; not the suggested position size.`,
+            )}</p>}
             <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className="flex gap-2">
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
               <button type="button" className={seg(c.side === "sell")} aria-pressed={c.side === "sell"} onClick={() => upd({ side: "sell" })} data-testid="button-side-sell">Sell</button>
@@ -236,7 +245,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             </div>
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
               t("Saran memakai harga XUL10, ATR D1, kalender dan status penilaian berita. Dampak berita belum dinilai: hanya Linear, maksimal 2 layer. Bukan penilaian pasar lengkap.", "Suggestions use XUL10 price, D1 ATR, calendar and news assessment status. Unassessed news impact: Linear only, up to 2 layers. Not a complete market assessment.") :
-              t("Default manual: Linear · 3 layer · lot awal 0,1 · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.", "Manual defaults: Linear · 3 layers · first lot 0.1 · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.")}</p>
+              t(`Default manual: Linear · 3 layer · lot awal ${SCENARIO_CONTRACT.firstLot} · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.`, `Manual defaults: Linear · 3 layers · first lot ${SCENARIO_CONTRACT.firstLot} · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.`)}</p>
             {inputMode === "market" && <details className="live-details">
               <summary>{t("Pembacaan berita & kalender", "News & calendar context")}</summary>
               <MarketRuleSummary
@@ -295,14 +304,14 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               <p className="live-small mt-2">{t("Margin bukan batas rugi; stress bukan kerugian maksimum. Batas simulasi tetap margin 20% dan stress 10% modal.", "Margin is not a loss limit; stress is not maximum loss. Simulation limits remain 20% capital margin and 10% stress loss.")}</p>
             </details>}
             {plan.mode === "manual" && comparison.length === 0 && <p role="status" className="live-small">{t("Perbandingan strategi tidak tersedia: parameter menghasilkan level harga alternatif yang tidak valid.", "Strategy comparison unavailable: these parameters produce invalid alternative price levels.")}</p>}
-            {(plan.marginPercent > 20 || plan.stressPercent > 10) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
+            {(plan.marginPercent > SCENARIO_BUDGET.marginFraction * 100 || plan.stressPercent > SCENARIO_BUDGET.stressFraction * 100) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
             <p className="live-small">{t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
             </>}
           </div>}
           <details className="live-details mt-2" data-testid="scenario-limits">
             <summary>{t("Batas dan sumber", "Limits and sources")}</summary>
             <div className="live-small live-stack">
-              <p>{t("US$100 per poin per 1 lot, margin US$2.000/lot, lot pertama 0,1. Target diukur dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.", "US$100 per point per 1 lot, margin US$2,000/lot, first lot 0.1. Target is measured from the basket average; stress is one spacing beyond the last layer. No spread, fees, SL or broker stop-out.")}</p>
+              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, lot pertama ${SCENARIO_CONTRACT.firstLot}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, first lot ${SCENARIO_CONTRACT.firstLot}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>
               <p>{t("Harga: XUL10 dari data Newsmaker. Chart: OANDA XAUUSD, sumber berbeda. Pivot/Fibonacci tersedia di panel Pasar sebagai referensi LGD D1; belum memengaruhi parameter. Konten berita tersedia, tetapi metadata dampak editorial belum tersedia.", "Price: XUL10 from Newsmaker data. Chart: OANDA XAUUSD, a different source. Pivot/Fibonacci are available in the Market panel as LGD D1 references; they do not yet influence parameters. News content is available, but editorial impact metadata is not yet available.")}</p>
               <p>{t("Edukasi risiko, bukan sinyal atau order broker.", "Risk education, not a signal or broker order.")}</p>
             </div>

@@ -30,7 +30,7 @@ function sources(): SuggestionSources {
 }
 
 test("ticks during capital editing cannot rewrite or apply the frozen offer", () => {
-  const live = sources(), snapshot = captureSuggestion(20000, live, now);
+  const live = sources(), snapshot = captureSuggestion(200000, live, now);
   const before = structuredClone(snapshot);
   live.quote!.price = 4180;
   live.context!.history.analysis!.atr14 = 100;
@@ -60,10 +60,10 @@ test("each source update/failure blocks application without changing the display
     s => { s.context!.news.items.push({ slug: "new" } as MarketContext["news"]["items"][number]); },
   ];
   for (const mutate of mutations) {
-    const live = sources(), snapshot = captureSuggestion(20000, live, now), before = structuredClone(snapshot);
-    assert.equal(suggestionSnapshotState(snapshot, 20000, live, now).canApply, true);
+    const live = sources(), snapshot = captureSuggestion(200000, live, now), before = structuredClone(snapshot);
+    assert.equal(suggestionSnapshotState(snapshot, 200000, live, now).canApply, true);
     mutate(live);
-    assert.equal(suggestionSnapshotState(snapshot, 20000, live, now).canApply, false);
+    assert.equal(suggestionSnapshotState(snapshot, 200000, live, now).canApply, false);
     assert.deepEqual(snapshot, before);
   }
 });
@@ -83,16 +83,16 @@ test("each source expires independently even without another poll", () => {
     } as CalendarEvent]; },
   ]) {
     const live = sources(); prepare(live);
-    const snapshot = captureSuggestion(20000, live, now);
+    const snapshot = captureSuggestion(200000, live, now);
     assert.equal(snapshot.result.status, "offered");
-    assert.equal(suggestionSnapshotState(snapshot, 20000, live, now).canApply, true);
-    assert.equal(suggestionSnapshotState(snapshot, 20000, live, now + 20001).canApply, false);
+    assert.equal(suggestionSnapshotState(snapshot, 200000, live, now).canApply, true);
+    assert.equal(suggestionSnapshotState(snapshot, 200000, live, now + 20001).canApply, false);
     // Apart from the quote-only case, isolate the other source boundary before the quote expires.
     if (snapshot.sources.context?.calendar.generatedAt !== at() ||
       snapshot.sources.context?.news.fundamental?.evaluatedAt !== at() ||
       snapshot.sources.context?.news.fundamental?.evidence[0].publishedAt !== at() ||
       snapshot.sources.context?.calendar.events.length) {
-      assert.equal(suggestionSnapshotState(snapshot, 20000, live, now + 1001).canApply, false);
+      assert.equal(suggestionSnapshotState(snapshot, 200000, live, now + 1001).canApply, false);
     }
   }
 });
@@ -104,45 +104,45 @@ test("D1 closed-day freshness expires at the Jakarta day boundary", () => {
   live.context!.calendar.generatedAt = live.quote!.asOf;
   live.context!.news.fundamental!.evaluatedAt = live.quote!.asOf!;
   live.context!.history.analysis!.lastDate = "2026-10-12";
-  const snapshot = captureSuggestion(20000, live, midnight - 1000);
+  const snapshot = captureSuggestion(200000, live, midnight - 1000);
   assert.equal(snapshot.result.status, "offered");
-  assert.equal(suggestionSnapshotState(snapshot, 20000, live, midnight + 1).canApply, false);
+  assert.equal(suggestionSnapshotState(snapshot, 200000, live, midnight + 1).canApply, false);
 });
 
 test("offline then reconnect never reactivates an old offer; explicit recapture is required", () => {
-  const live = sources(), active = captureSuggestion(20000, live, now);
+  const live = sources(), active = captureSuggestion(200000, live, now);
   live.online = false; live.connectionRevision++;
-  assert.equal(suggestionSnapshotState(active, 20000, live, now).canApply, false);
+  assert.equal(suggestionSnapshotState(active, 200000, live, now).canApply, false);
   live.online = true; live.connectionRevision++;
-  assert.equal(suggestionSnapshotState(active, 20000, live, now).canApply, false);
-  const preview = captureSuggestion(20000, live, now + 1);
-  assert.equal(suggestionSnapshotState(preview, 20000, live, now + 1).canApply, true);
+  assert.equal(suggestionSnapshotState(active, 200000, live, now).canApply, false);
+  const preview = captureSuggestion(200000, live, now + 1);
+  assert.equal(suggestionSnapshotState(preview, 200000, live, now + 1).canApply, true);
   assert.notEqual(preview, active);
   assert.equal(active.result.evaluatedAt, at());
 });
 
 test("reviewing a replacement preserves the active scenario until an eligible explicit apply", () => {
   const live = sources();
-  const first = captureSuggestion(20000, live, now);
-  let active = applySuggestion(null, first, 20000, live, now);
+  const first = captureSuggestion(200000, live, now);
+  let active = applySuggestion(null, first, 200000, live, now);
   assert.equal(active, first);
   live.context!.history.analysis!.atr14 = 40;
-  const preview = captureSuggestion(30000, live, now + 1);
+  const preview = captureSuggestion(300000, live, now + 1);
   assert.equal(active?.result.spacing, 41);
   assert.equal(preview.result.spacing, 20);
-  assert.equal(applySuggestion(active, preview, 20000, live, now + 1), active);
-  assert.equal(applySuggestion(active, preview, 30000, live, now + 20001), active);
-  assert.equal(applySuggestion(active, preview, 30000, live, now + 1, true), active);
-  active = applySuggestion(active, preview, 30000, live, now + 1);
+  assert.equal(applySuggestion(active, preview, 200000, live, now + 1), active);
+  assert.equal(applySuggestion(active, preview, 300000, live, now + 20001), active);
+  assert.equal(applySuggestion(active, preview, 300000, live, now + 1, true), active);
+  active = applySuggestion(active, preview, 300000, live, now + 1);
   assert.equal(active, preview);
-  assert.equal(first.result.capital, 20000);
+  assert.equal(first.result.capital, 200000);
   for (const capital of [0, 100]) {
     const ineligible = captureSuggestion(capital, live, now + 1);
     assert.equal(applySuggestion(active, ineligible, capital, live, now + 1), active);
   }
   live.online = false;
-  const offline = captureSuggestion(30000, live, now + 1);
-  assert.equal(applySuggestion(active, offline, 30000, live, now + 1), active);
+  const offline = captureSuggestion(300000, live, now + 1);
+  assert.equal(applySuggestion(active, offline, 300000, live, now + 1), active);
 });
 
 test("all six manual assumptions invalidate identity; numeric formatting does not", () => {

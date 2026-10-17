@@ -121,7 +121,7 @@ test("response schema and suggestion snapshot consume the real rules output with
   const validated = GetMarketContextResponse.parse(context);
   const quote = { symbol: "XUL10" as const, price: 4170, bid: null, ask: null, asOf: stamp, source: "Newsmaker" };
   const sources = { context: validated, quote, online: true, connectionRevision: 0 };
-  const capture = captureSuggestion(100_000, sources, now, true);
+  const capture = captureSuggestion(200_000, sources, now, true);
   assert.equal(capture.result.status, "limited");
   assert.equal(capture.result.selected?.layers, 2);
   assert.equal(capture.result.selected?.strategy, "Linear Averaging");
@@ -132,9 +132,9 @@ test("response schema and suggestion snapshot consume the real rules output with
   const near = structuredClone(validated);
   near.calendar.events[0].at = new Date(now + 60_000).toISOString();
   assert.equal(suggestFromCapital(100_000, near, quote, now, true, true).status, "deferred");
-  assert.equal(suggestionSnapshotState(capture, 200_000, sources, now).parametersChanged, true);
+  assert.equal(suggestionSnapshotState(capture, 300_000, sources, now).parametersChanged, true);
   const changed = structuredClone(sources);
   changed.context.ruleAnalysis!.news[0].contentHash = "f".repeat(64);
-  assert.equal(suggestionSnapshotState(capture, 100_000, changed, now).dataChanged, true);
+  assert.equal(suggestionSnapshotState(capture, 200_000, changed, now).dataChanged, true);
   assert.deepEqual(capture.result.ruleAnalysis, ruleAnalysis); // Old scenario not silently replaced.
 });

@@ -12,11 +12,12 @@ test("buy diagram uses descending entries, weighted average and TP above basket"
   assert.deepEqual(s.entries.map(e => e.price), [4500, 4470, 4440]);
   assert.equal(s.average, 4460);
   assert.equal(s.tp, 4490);
-  assert.equal(s.totalLots, 0.6);
-  assert.equal(s.margin, 1200);
+  assert.deepEqual(s.entries.map(e => e.lots), [1, 2, 3]);
+  assert.equal(s.totalLots, 6);
+  assert.equal(s.margin, 6000);
   assert.equal(s.stressPrice, 4410);
-  assert.equal(s.stressLoss, 3000);
-  assert.equal(s.targetProfit, 1800);
+  assert.equal(s.stressLoss, 30000);
+  assert.equal(s.targetProfit, 18000);
 });
 test("sell is symmetric, not a buy plan with renamed labels", () => {
   const b = buildScenario(base), s = buildScenario({ ...base, side: "sell" });
@@ -40,9 +41,9 @@ test("market candidates and diagram have identical margin/stress in either direc
 });
 test("manual defaults support both strategies through five layers without changing study scores", () => {
   const s = buildScenario({ ...base, side: "sell", strategy: "Martingale", layers: 5 });
-  assert.deepEqual(s.entries.map(e => e.lots), [0.1, 0.2, 0.4, 0.8, 1.6]);
-  assert.equal(s.totalLots, 3.1);
-  assert.equal(s.margin, 6200);
+  assert.deepEqual(s.entries.map(e => e.lots), [1, 2, 4, 8, 16]);
+  assert.equal(s.totalLots, 31);
+  assert.equal(s.margin, 31000);
 });
 test("invalid input and impossible price geometry fail explicitly", () => {
   for (const patch of [

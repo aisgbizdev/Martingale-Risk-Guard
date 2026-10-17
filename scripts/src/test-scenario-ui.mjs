@@ -31,7 +31,7 @@ const report = { ...profile, platform: process.platform, architecture: process.a
 const id = (page, name) => page.getByTestId(name);
 const result = page => id(page, "scenario-result");
 const calculate = page => id(page, "button-calculate-scenario").click();
-async function start(page, side = "buy", capital = "20000") {
+async function start(page, side = "buy", capital = "200000") {
   await id(page, "workspace-market").waitFor({ state: "visible" });
   await id(page, "workspace-market").locator("script[src*='tradingview']").waitFor({ state: "attached" });
   assert.equal(await id(page, "workspace-market").isVisible(), true, "Chart panel must be visible without opening a market toggle");
@@ -55,7 +55,7 @@ async function limited(page) {
   assert.match(await id(page, "limited-suggestion-warning").innerText(), /belum dinilai, bukan netral/);
   assert.match(await result(page).innerText(), /Snapshot saran MRG/);
   const text = await result(page).innerText();
-  assert.match(text, /600[,.]00/);
+  assert.match(text, /3[.,]000[,.]00/);
   assert.match(text, /1[.,]640[,.]00/);
 }
 const cases = [

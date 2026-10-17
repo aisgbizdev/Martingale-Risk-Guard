@@ -75,7 +75,7 @@ test("a genuine fresh tick always wins even on a weekend, without changing the l
 test("historical suggestions require explicit matching basis; limited status and both directions are preserved", () => {
   const s = sources();
   assert.equal(suggestFromCapital(20000, s.context, s.quote, saturday, true, true).status, "incomplete");
-  const capture = captureSuggestion(20000, s, saturday, true);
+  const capture = captureSuggestion(200000, s, saturday, true);
   assert.equal(capture.result.status, "limited");
   assert.equal(capture.result.selected?.strategy, "Linear Averaging");
   assert.equal(capture.result.selected?.layers, 2);
@@ -119,14 +119,14 @@ test("historical price does not move D1/calendar/news checks to Friday or relax 
 
 test("expired historical windows or resumed live ticks invalidate, never rewrite captured plans", () => {
   const s = sources();
-  const capture = captureSuggestion(20000, s, saturday, true);
+  const capture = captureSuggestion(200000, s, saturday, true);
   const before = structuredClone(capture);
   const plan = marketScenario(capture.result, "sell");
-  assert.equal(suggestionSnapshotState(capture, 20000, s, saturday).canApply, true);
+  assert.equal(suggestionSnapshotState(capture, 200000, s, saturday).canApply, true);
   const fresh = { ...s, quote: quote(new Date(saturday).toISOString()), priceBasis: undefined };
-  assert.equal(suggestionSnapshotState(capture, 20000, fresh, saturday).dataChanged, true);
-  assert.equal(suggestionSnapshotState(capture, 20000, s, Date.parse("2026-10-19T01:00:00Z")).canApply, false);
-  assert.equal(suggestionSnapshotState(capture, 21000, s, saturday).parametersChanged, true);
+  assert.equal(suggestionSnapshotState(capture, 200000, fresh, saturday).dataChanged, true);
+  assert.equal(suggestionSnapshotState(capture, 200000, s, Date.parse("2026-10-19T01:00:00Z")).canApply, false);
+  assert.equal(suggestionSnapshotState(capture, 210000, s, saturday).parametersChanged, true);
   assert.deepEqual(capture, before);
   assert.equal(plan.entry, 4165.18);
   assert.equal(plan.priceBasis?.kind, "historical");

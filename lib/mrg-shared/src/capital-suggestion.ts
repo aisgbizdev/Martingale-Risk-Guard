@@ -1,6 +1,7 @@
 import { calendarIsFresh, quoteIsFresh, type LiveQuote, type MarketContext } from "./live-types";
 import { getStudyReference } from "./study-market";
 import { historicalPriceIsEligible, type ScenarioPriceBasis } from "./scenario-price";
+import { SCENARIO_CONTRACT, SCENARIO_BUDGET, scenarioLots } from "./scenario-contract";
 
 export interface EditorialEvidence {
   slug: string;
@@ -65,17 +66,17 @@ export function simulateCandidate(capital: number, spacing: number, layers: numb
   if (!Number.isFinite(capital) || capital <= 0 || !Number.isFinite(spacing) || spacing <= 0 ||
     !Number.isInteger(layers) || layers < 2 || layers > 3 ||
     !["Linear Averaging", "Martingale"].includes(strategy)) throw new Error("Invalid simulation parameters");
-  const lots = Array.from({ length: layers }, (_, i) => cents(0.1 * (strategy === "Martingale" ? 2 ** i : i + 1)));
+  const lots = scenarioLots(strategy, layers);
   const totalLots = cents(lots.reduce((sum, lot) => sum + lot, 0));
-  const margin = cents(2000 * totalLots);
+  const margin = cents(SCENARIO_CONTRACT.marginPerLot * totalLots);
   // One spacing beyond the last entry: first layer travels layers * spacing.
-  const stressLoss = cents(lots.reduce((sum, lot, i) => sum + (layers - i) * spacing * 100 * lot, 0));
+  const stressLoss = cents(lots.reduce((sum, lot, i) => sum + (layers - i) * spacing * SCENARIO_CONTRACT.dollarsPerPointPerLot * lot, 0));
   const stressEquity = cents(capital - stressLoss);
   return {
     strategy, layers, lots, totalLots, margin, stressLoss, stressEquity,
     fundsAfterMargin: cents(stressEquity - margin),
     marginPercent: margin / capital * 100, stressPercent: stressLoss / capital * 100,
-    passes: margin <= capital * 0.2 && stressLoss <= capital * 0.1,
+    passes: margin <= capital * SCENARIO_BUDGET.marginFraction && stressLoss <= capital * SCENARIO_BUDGET.stressFraction,
   };
 }
 
@@ -165,6 +166,6 @@ export function suggestFromCapital(
   }
   result.selected = result.candidates.filter(c => c.passes).sort((a, b) => b.layers - a.layers || a.totalLots - b.totalLots)[0] ?? null;
   result.status = result.selected ? (limited ? "limited" : "offered") : "no-fit";
-  if (!result.selected) result.reasons.push("Minimum 2 layer tidak lolos saringan modal; jangan memaksa averaging.");
+  if (!result.selected) result.reasons.push("Kandidat minimum 2 layer dengan lot awal 1 tidak lolos batas margin 20% atau stress 10% modal. Lot tidak diperkecil otomatis; jangan memaksa averaging.");
   return result;
 }

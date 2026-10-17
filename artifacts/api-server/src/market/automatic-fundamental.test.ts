@@ -172,12 +172,12 @@ test("automatically validated evidence reaches the real suggestion engine and hi
     calendar: { status: "ready", complete: true, timezone: "Asia/Jakarta", events: [], generatedAt: stamp, receivedAt: stamp, message: null },
     news: { status: "ready", items: [article], fundamental, receivedAt: stamp, message: null },
   };
-  const result = suggestFromCapital(20000, context, {
+  const result = suggestFromCapital(200000, context, {
     symbol: "XUL10", price: 4170.27, bid: null, ask: null, asOf: stamp, source: "Newsmaker",
   }, now);
   assert.equal(result.status, "offered");
   assert.equal(result.selected?.strategy, "Linear Averaging");
   assert.equal(result.selected?.layers, 2);
-  assert.equal(result.selected?.stressLoss, 1640);
+  assert.equal(result.selected?.stressLoss, 16400);
   assert.equal(result.fundamental?.evidence[0].reviewMethod, "ai");
 });
