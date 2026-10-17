@@ -69,6 +69,12 @@ Pengguna membatasi perubahan lot otomatis dan skenario ini hanya untuk Saran MRG
 
 **How to apply:** Jangan mengubah isian, default, rumus atau hasil Isi Manual/Simulasi Default dalam pengembangan Saran MRG. Perluasan mesin bersama harus mempertahankan perilaku manual; penampilan referensi Pivot/Fibonacci tidak boleh diam-diam mengubah parameter manual.
 
+Pivot/Fibonacci adalah fitur utama yang harus mudah ditemukan, bukan disembunyikan seluruhnya di disclosure konteks pasar.
+
+**Why:** Pengguna mengira fitur tersebut hilang setelah perapian yang menyembunyikannya bersama konteks umum.
+
+**How to apply:** Tampilkan panel referensinya langsung di bawah grafik dengan sumber dan keterbatasan yang jelas. Ringkas metode/level tambahan tanpa menyembunyikan akses utama ke Pivot dan Fibonacci.
+
 Pengguna menyetujui seluruh paket aturan saran modal pada 16 Oktober 2026 setelah lot awal, budget margin/stress, faktor ATR, pembatas strategi, dan dasar penilaian editorial dijelaskan secara eksplisit.
 
 **Why:** Pengguna memilih “Setujui seluruh paket aturan”; persetujuan sebelumnya terhadap pengayaan D1 saja memang belum mencakup heuristik saran modal.

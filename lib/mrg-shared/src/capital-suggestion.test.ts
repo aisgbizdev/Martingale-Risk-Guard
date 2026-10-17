@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { LiveQuote, MarketContext, CalendarEvent } from "./live-types";
-import { simulateCandidate, suggestFromCapital } from "./capital-suggestion";
+import { simulateCandidate, sizeCandidate, suggestFromCapital } from "./capital-suggestion";
 import { marketScenario } from "./market-scenario";
+import { buildScenario } from "./scenario-plan";
 import { captureSuggestion, suggestionSnapshotState } from "./suggestion-snapshot";
 
 const now = Date.parse("2026-10-16T04:54:10Z");
@@ -219,4 +220,89 @@ test("limited captures remain frozen and expire without becoming a three-layer o
   assert.equal(snap.result.quote?.price, quote.price);
   assert.equal(snap.result.status, "limited");
   assert.equal(snap.result.selected?.layers, 2);
+});
+
+test("automatic whole first lot responds to capital and spacing, not theoretical margin capacity", () => {
+  for (const [capital, lots, margin, stress] of [
+    [100000, [1, 2], 3000, 8000],
+    [200000, [2, 4], 6000, 16000],
+    [300000, [3, 6], 9000, 24000],
+  ] as const) {
+    const c = sizeCandidate(capital, 20, 2, "Linear Averaging");
+    assert.deepEqual(c.lots, [...lots]);
+    assert.equal(c.margin, margin);
+    assert.equal(c.stressLoss, stress);
+    assert.equal(c.passes, true);
+    const d = context(); d.history.analysis!.atr14 = 40;
+    const offered = suggestFromCapital(capital, d, quote, now, true, true);
+    assert.deepEqual(offered.selected?.lots, [...lots], "The real suggestion path uses dynamic sizing");
+  }
+  assert.equal(sizeCandidate(100000, 40, 2, "Linear Averaging").passes, false);
+  for (const capital of [200000, 300000])
+    assert.deepEqual(sizeCandidate(capital, 40, 2, "Linear Averaging").lots, [1, 2]);
+  assert.deepEqual(sizeCandidate(300000, 20, 3, "Martingale").lots, [1, 2, 4]);
+  assert.deepEqual(sizeCandidate(600000, 20, 3, "Martingale").lots, [2, 4, 8]);
+});
+
+test("dynamic lots round down at both budget boundaries and maximize only inside those fixed limits", () => {
+  for (const [capital, spacing, passes] of [
+    [160000, 40, true], [159999, 40, false], [15000, 1, true], [14999, 1, false],
+  ] as const) assert.equal(sizeCandidate(capital, spacing, 2, "Linear Averaging").passes, passes);
+  for (const capital of [100000, 200000, 300000, 600000, 1e12])
+    for (const spacing of [1, 20, 40, 41, 60])
+      for (const layers of [2, 3]) for (const strategy of ["Linear Averaging", "Martingale"] as const) {
+        const c = sizeCandidate(capital, spacing, layers, strategy);
+        assert.ok(c.lots.every(n => Number.isSafeInteger(n) && n >= 1));
+        if (!c.passes) {
+          assert.equal(c.lots[0], 1);
+          continue;
+        }
+        assert.ok(c.margin <= capital * .2 && c.stressLoss <= capital * .1);
+        assert.equal(simulateCandidate(capital, spacing, layers, strategy, c.lots[0] + 1).passes, false);
+        for (const side of ["buy", "sell"] as const) {
+          const plan = buildScenario({ capital, spacing, layers, strategy, side, entry: 4500.27,
+            target: 20, mode: "market", asOf: stamp, firstLot: c.lots[0] });
+          const unit = buildScenario({ capital, spacing, layers, strategy, side, entry: 4500.27,
+            target: 20, mode: "market", asOf: stamp });
+          assert.deepEqual(plan.entries.map(e => e.lots), c.lots);
+          assert.deepEqual(plan.entries.map(e => e.price), unit.entries.map(e => e.price));
+          assert.ok(Math.abs(plan.average - unit.average) < 1e-8);
+          assert.ok(Math.abs(plan.tp - unit.tp) < 1e-8);
+          assert.equal(plan.margin, c.margin);
+          assert.equal(plan.stressLoss, c.stressLoss);
+          assert.equal(plan.targetProfit, c.totalLots * 20 * 100);
+        }
+      }
+  for (const firstLot of [0, -1, .1, NaN, Infinity])
+    assert.throws(() => simulateCandidate(300000, 20, 2, "Linear Averaging", firstLot));
+});
+
+test("dynamic snapshots preserve sized lots on either side and never leak sizing into manual defaults", () => {
+  const d = context(); d.history.analysis!.atr14 = 40;
+  const sources = { context: d, quote: { ...quote }, online: true, connectionRevision: 0 };
+  const captured = captureSuggestion(300000, sources, now, true);
+  const frozen = structuredClone(captured);
+  for (const side of ["buy", "sell"] as const) {
+    const plan = marketScenario(captured.result, side);
+    assert.deepEqual(plan.entries.map(e => e.lots), [3, 6]);
+    assert.equal(plan.margin, 9000);
+    assert.equal(plan.stressLoss, 24000);
+    const manualInput = { capital: 300000, spacing: 30, layers: 3, strategy: "Linear Averaging" as const,
+      side, entry: quote.price, target: 30, mode: "manual" as const, asOf: stamp };
+    const before = buildScenario(manualInput);
+    assert.deepEqual(before.entries.map(e => e.lots), [1, 2, 3]);
+    assert.equal(before.margin, 6000);
+    assert.equal(before.stressLoss, 30000);
+    assert.equal(before.targetProfit, 18000);
+    assert.throws(() => buildScenario({ ...manualInput, firstLot: 3 }));
+    assert.deepEqual(buildScenario(manualInput), before);
+  }
+  assert.equal(suggestionSnapshotState(captured, 300000, sources, now).canApply, true);
+  assert.equal(suggestionSnapshotState(captured, 200000, sources, now).canApply, false);
+  sources.context.history.analysis!.atr14 = 80;
+  assert.equal(suggestionSnapshotState(captured, 300000, sources, now).canApply, false);
+  assert.equal(suggestionSnapshotState(captured, 300000, sources, now + 21000).canApply, false);
+  assert.deepEqual(captured, frozen);
+  const forged = structuredClone(captured.result); forged.selected!.lots[1] += 1;
+  assert.throws(() => marketScenario(forged, "buy"), /Hitungan/);
 });

@@ -196,12 +196,12 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             </Link>)}
           </div>
           <details className="live-details mt-3">
-            <summary>{t("Konteks pasar, Pivot & Fibonacci", "Market context, Pivot & Fibonacci")}</summary>
+            <summary>{t("Konteks pasar", "Market context")}</summary>
             <div className="min-w-0 mt-3">
             {study?.glance}
-            <NewsmakerReferenceLevels market={market} />
             </div>
           </details>
+          <NewsmakerReferenceLevels market={market} />
         </div>
 
         <div className="min-w-0 grid gap-4 lg:contents">
@@ -221,8 +221,8 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             </div>
             {capitalField}
             <p className="live-small" data-testid="text-scenario-contract">{t(
-              `Lot awal ${SCENARIO_CONTRACT.firstLot} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/poin/lot`,
-              `First lot ${SCENARIO_CONTRACT.firstLot} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/point/lot`,
+              `${inputMode === "market" ? "Lot awal dihitung otomatis · langkah 1 lot" : `Lot awal ${SCENARIO_CONTRACT.firstLot}`} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/poin/lot`,
+              `${inputMode === "market" ? "Calculated first lot · 1-lot increments" : `First lot ${SCENARIO_CONTRACT.firstLot}`} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/point/lot`,
             )}</p>
             {capOk && <p className="live-small" data-testid="text-margin-capacity">{t(
               `Kapasitas margin teoretis ${Math.floor(cap / SCENARIO_CONTRACT.marginPerLot).toLocaleString("id-ID")} lot sebelum floating loss; bukan jumlah lot yang disarankan.`,
@@ -269,6 +269,11 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             ? t("Perhitungan studi tetap tersedia. Diagram entry dan TP memerlukan harga XUL10 live atau acuan historis akhir pekan yang memenuhi syarat.", "Study calculations remain available. Entry and TP diagrams need a live XUL10 price or an eligible weekend historical reference.")
             : t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
           {plan && <div className="live-stack mt-2">
+            {plan.mode === "market" && <div className="rounded-lg border border-border p-3" data-testid="market-sizing-summary">
+              <strong>{t("Lot awal hasil hitung", "Calculated first lot")}: {plan.entries[0].lots} lot</strong>
+              <p className="live-small mt-1">{t("Ukuran seluruh basket dibatasi margin 20% dan stress 10% modal, dibulatkan ke bawah per 1 lot. Bukan jaminan aman; modal berbeda bisa menghasilkan lot sama.", "The entire basket is capped at 20% capital margin and 10% stress, rounded down in 1-lot increments. Not a safety guarantee; different capital can produce the same lot size.")}</p>
+              <p className="live-small mt-1">{t("L1 adalah harga acuan snapshot XUL10, bukan perintah entry sekarang. Layer berikutnya memakai jarak ATR referensi D1; bukan timing intraday atau level Pivot/Fibo XUL10.", "L1 is the XUL10 snapshot reference, not an instruction to enter now. Later layers use D1 reference ATR spacing, not intraday timing or XUL10 Pivot/Fibo levels.")}</p>
+            </div>}
             <p className="live-small"><strong>{plan.priceBasis?.kind === "historical" ? t("Simulasi historis · bukan saran realtime", "Historical simulation · not realtime advice") : plan.mode === "manual" ? t("Skenario manual hipotetis", "Hypothetical manual scenario") : t("Snapshot saran MRG", "MRG suggestion snapshot")}</strong> · {plan.side === "buy" ? "Buy" : "Sell"} · {plan.strategy} · {t("snapshot", "snapshot")} {plan.asOf} · {t("harga masuk", "entry")} {plan.entry.toFixed(2)}</p>
             {plan.priceBasis?.kind === "historical" && <p role="status" className="mrg-chart-warning" data-testid="historical-scenario-warning">{t("Harga terakhir XUL10 dari Newsmaker, bukan penutupan resmi atau prediksi pembukaan. Gap pembukaan, spread, dan biaya dapat mengubah hasil. Berita dan kalender diperiksa saat evaluasi, bukan pada waktu tick.", "Last XUL10 tick from Newsmaker, not an official close or opening forecast. Opening gaps, spread and fees can change outcomes. News and calendar are checked at evaluation time, not tick time.")}</p>}
             {plan.priceBasis?.kind === "historical" && (!historical || !samePriceQuote(plan.priceBasis.quote, scenarioQuote)) && <p role="status" className="live-error" data-testid="historical-basis-changed">{t("Acuan berubah atau tidak lagi layak; hasil ini tetap snapshot historis lama. Hitung ulang dengan acuan yang tersedia, level tidak diperbarui otomatis.", "The price basis changed or expired; this remains an old historical snapshot. Recalculate with the available basis; levels never update automatically.")}</p>}
@@ -311,7 +316,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           <details className="live-details mt-2" data-testid="scenario-limits">
             <summary>{t("Batas dan sumber", "Limits and sources")}</summary>
             <div className="live-small live-stack">
-              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, lot pertama ${SCENARIO_CONTRACT.firstLot}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, first lot ${SCENARIO_CONTRACT.firstLot}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>
+              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, ${inputMode === "market" ? "lot pertama dihitung otomatis dengan langkah 1 lot" : `lot pertama ${SCENARIO_CONTRACT.firstLot}`}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, ${inputMode === "market" ? "first lot calculated in 1-lot increments" : `first lot ${SCENARIO_CONTRACT.firstLot}`}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>
               <p>{t("Harga: XUL10 dari data Newsmaker. Chart: OANDA XAUUSD, sumber berbeda. Pivot/Fibonacci tersedia di panel Pasar sebagai referensi LGD D1; belum memengaruhi parameter. Konten berita tersedia, tetapi metadata dampak editorial belum tersedia.", "Price: XUL10 from Newsmaker data. Chart: OANDA XAUUSD, a different source. Pivot/Fibonacci are available in the Market panel as LGD D1 references; they do not yet influence parameters. News content is available, but editorial impact metadata is not yet available.")}</p>
               <p>{t("Edukasi risiko, bukan sinyal atau order broker.", "Risk education, not a signal or broker order.")}</p>
             </div>

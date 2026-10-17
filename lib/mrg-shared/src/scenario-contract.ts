@@ -6,7 +6,7 @@ export const SCENARIO_CONTRACT = Object.freeze({
 });
 export const SCENARIO_BUDGET = Object.freeze({ marginFraction: 0.2, stressFraction: 0.1 });
 
-export function scenarioLots(strategy: "Linear Averaging" | "Martingale", layers: number) {
+export function scenarioLots(strategy: "Linear Averaging" | "Martingale", layers: number, firstLot: number = SCENARIO_CONTRACT.firstLot) {
   return Array.from({ length: layers }, (_, i) =>
-    SCENARIO_CONTRACT.firstLot * (strategy === "Martingale" ? 2 ** i : i + 1));
+    firstLot * (strategy === "Martingale" ? 2 ** i : i + 1));
 }

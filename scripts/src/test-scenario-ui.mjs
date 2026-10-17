@@ -56,7 +56,7 @@ async function limited(page) {
   assert.match(await result(page).innerText(), /Snapshot saran MRG/);
   const text = await result(page).innerText();
   assert.match(text, /3[.,]000[,.]00/);
-  assert.match(text, /1[.,]640[,.]00/);
+  assert.match(text, /16[.,]400[,.]00/);
 }
 const cases = [
   ["buy-limited", null, async page => {
@@ -93,12 +93,12 @@ const cases = [
     await id(page, "input-sc-spacing").fill("25");
     await calculate(page);
     await diagram(page, ["4500.00", "4475.00", "4450.00", "4464.29", "4504.29"], 3);
-    assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "0.4");
+    assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "4");
     assert.match(await result(page).innerText(), /Skenario manual hipotetis/);
     assert.equal(await id(page, "limited-suggestion-warning").count(), 0);
     await id(page, "button-default-simulation").click();
     await diagram(page, ["4500.00", "4470.00", "4440.00", "4460.00", "4490.00"], 3);
-    assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "0.3");
+    assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "3");
     assert.equal(await id(page, "select-strategy").inputValue(), "Linear Averaging");
     assert.equal(await id(page, "select-target-poin").inputValue(), "30");
     assert.equal(await id(page, "input-sc-spacing").inputValue(), "30");

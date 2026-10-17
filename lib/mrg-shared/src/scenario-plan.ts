@@ -13,6 +13,8 @@ export interface ScenarioInput {
   asOf: string;
   mode: "manual" | "market";
   priceBasis?: ScenarioPriceBasis;
+  /** Only market suggestions may override the manual first-lot default. */
+  firstLot?: number;
 }
 const cents = (n: number) => Math.round(n * 100) / 100;
 
@@ -30,14 +32,21 @@ export function buildScenario(input: ScenarioInput) {
     input.priceBasis.quote.price !== entry || input.priceBasis.quote.asOf !== asOf
   )) throw new Error("Acuan harga tidak cocok dengan skenario.");
   const direction = side === "buy" ? 1 : -1;
-  const lots = scenarioLots(strategy, layers);
+  const firstLot = input.firstLot ?? SCENARIO_CONTRACT.firstLot;
+  if (!Number.isSafeInteger(firstLot) || firstLot < 1 ||
+    (mode === "manual" && firstLot !== SCENARIO_CONTRACT.firstLot)) throw new Error("Lot awal skenario tidak valid.");
+  const lots = scenarioLots(strategy, layers, firstLot);
   const entries = Array.from({ length: layers }, (_, index) => ({
     index: index + 1,
     price: entry - direction * index * spacing,
     lots: lots[index],
   }));
   const totalLots = cents(entries.reduce((sum, e) => sum + e.lots, 0));
-  const average = entries.reduce((sum, e) => sum + e.price * e.lots, 0) / totalLots;
+  // Market scaling must not move the weighted price or magnify cancellation error.
+  // Preserve the existing manual arithmetic exactly.
+  const weights = mode === "market" ? scenarioLots(strategy, layers) : lots;
+  const average = entries.reduce((sum, e, i) => sum + e.price * weights[i], 0) /
+    weights.reduce((sum, lot) => sum + lot, 0);
   const tp = average + direction * target;
   const stressPrice = entry - direction * layers * spacing;
   if ([...entries.map(e => e.price), tp, stressPrice].some(n => !Number.isFinite(n) || n <= 0)) {
@@ -45,10 +54,12 @@ export function buildScenario(input: ScenarioInput) {
   }
   const margin = cents(totalLots * SCENARIO_CONTRACT.marginPerLot);
   // No rounding of price geometry: avoid fabricating instrument tick-size precision.
-  const stressLoss = cents(entries.reduce((sum, e) =>
-    sum - direction * (stressPrice - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
-  const targetProfit = cents(entries.reduce((sum, e) =>
-    sum + direction * (tp - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
+  const stressLoss = cents(mode === "market"
+    ? entries.reduce((sum, e, i) => sum + (layers - i) * spacing * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0)
+    : entries.reduce((sum, e) => sum - direction * (stressPrice - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
+  const targetProfit = cents(mode === "market"
+    ? target * totalLots * SCENARIO_CONTRACT.dollarsPerPointPerLot
+    : entries.reduce((sum, e) => sum + direction * (tp - e.price) * SCENARIO_CONTRACT.dollarsPerPointPerLot * e.lots, 0));
   return {
     ...input, entries, totalLots, average, tp, margin, stressPrice, stressLoss, targetProfit,
     marginPercent: margin / capital * 100,

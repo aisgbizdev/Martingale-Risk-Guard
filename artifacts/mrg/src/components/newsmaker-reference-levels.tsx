@@ -7,7 +7,9 @@ import { useLanguage } from "@/lib/language-context";
 export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
   const { t } = useLanguage();
   const [view, setView] = useState<"pivot" | "up" | "down">("pivot");
+  const [method, setMethod] = useState<"classic" | "woodie" | "camarilla">("classic");
   const [showAll, setShowAll] = useState(false);
+  const column = (value: typeof method) => value === method ? "" : "hidden sm:table-cell";
   const a = getStudyReference(market.context.isError ? null : market.context.data, market.now, market.online).analysis;
   let levels: ReturnType<typeof newsmakerLevels> | null = null;
   if (a && a.lastOpen !== undefined && a.lastHigh !== undefined && a.lastLow !== undefined) {
@@ -23,11 +25,17 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
       <div className="flex gap-2 flex-wrap my-3" role="group" aria-label={t("Jenis acuan teknikal", "Technical reference type")}>
         {(["pivot", "up", "down"] as const).map(v => <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`rounded-md border px-3 py-2 text-xs min-h-[44px] ${view === v ? "bg-primary text-primary-foreground" : "bg-background"}`}>{v === "pivot" ? "Pivot" : v === "up" ? t("Fibo naik", "Fibo up") : t("Fibo turun", "Fibo down")}</button>)}
       </div>
-      {view === "pivot" ? <div className="overflow-x-auto"><table className="w-full text-xs" data-testid="table-reference-pivots">
+      {view === "pivot" ? <div>
+        <label className="block sm:hidden text-xs mb-2">{t("Metode pivot", "Pivot method")}
+          <select value={method} onChange={e => setMethod(e.target.value as typeof method)} className="block w-full border border-border rounded-md min-h-[44px] px-3 mt-1 bg-background" data-testid="select-pivot-method">
+            <option value="classic">{t("Klasik · utama", "Classic · primary")}</option><option value="woodie">Woodie</option><option value="camarilla">Camarilla</option>
+          </select>
+        </label>
+        <table className="w-full text-xs" style={{ minWidth: 0 }} data-testid="table-reference-pivots">
         <caption className="sr-only">{t("Level pivot referensi LGD Daily", "LGD Daily reference pivot levels")}</caption>
-        <thead><tr><th className="text-left">Level</th><th>{t("Klasik · utama", "Classic · primary")}</th><th>Woodie</th><th>Camarilla</th></tr></thead>
-        <tbody>{(["r4", "r3", "r2", "r1", "p", "s1", "s2", "s3", "s4"] as const).filter(key => showAll || ["r1", "p", "s1"].includes(key)).map(key => <tr key={key} className="border-t border-border"><th className="text-left py-2">{key === "p" ? "Pivot" : key.toUpperCase()}</th>{(["classic", "woodie", "camarilla"] as const).map(method => <td key={method} className="text-right py-2 font-mono">{price(levels![method][key])}</td>)}</tr>)}</tbody>
-      </table></div> : <div className="grid grid-cols-2 gap-3">{(["retracement", "projection"] as const).map(kind => <table key={kind} className="w-full text-xs" data-testid={`table-reference-${kind}`}>
+        <thead><tr><th className="text-left">Level</th><th className={`text-right ${column("classic")}`}>{t("Klasik · utama", "Classic · primary")}</th><th className={`text-right ${column("woodie")}`}>Woodie</th><th className={`text-right ${column("camarilla")}`}>Camarilla</th></tr></thead>
+        <tbody>{(["r4", "r3", "r2", "r1", "p", "s1", "s2", "s3", "s4"] as const).filter(key => showAll || ["r1", "p", "s1"].includes(key)).map(key => <tr key={key} className="border-t border-border"><th className="text-left py-2">{key === "p" ? "Pivot" : key.toUpperCase()}</th>{(["classic", "woodie", "camarilla"] as const).map(m => <td key={m} className={`text-right py-2 font-mono ${column(m)}`}>{price(levels![m][key])}</td>)}</tr>)}</tbody>
+      </table></div> : <div className="grid grid-cols-2 gap-3">{(["retracement", "projection"] as const).map(kind => <table key={kind} className="w-full text-xs" style={{ minWidth: 0 }} data-testid={`table-reference-${kind}`}>
         <caption className="text-left font-semibold pb-2">{kind === "retracement" ? "Retracement" : t("Proyeksi", "Projection")}</caption>
         <tbody>{levels![view][kind].map(l => <tr key={l.ratio} className="border-t border-border"><th className="text-left py-2">{(l.ratio * 100).toFixed(1)}%</th><td className="text-right py-2 font-mono">{price(l.price)}</td></tr>)}</tbody>
       </table>)}</div>}

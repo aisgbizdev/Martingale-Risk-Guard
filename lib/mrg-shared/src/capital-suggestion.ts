@@ -62,11 +62,12 @@ export interface CapitalSuggestion {
 }
 
 const cents = (n: number) => Math.round(n * 100) / 100;
-export function simulateCandidate(capital: number, spacing: number, layers: number, strategy: Candidate["strategy"]): Candidate {
+export function simulateCandidate(capital: number, spacing: number, layers: number, strategy: Candidate["strategy"], firstLot: number = SCENARIO_CONTRACT.firstLot): Candidate {
   if (!Number.isFinite(capital) || capital <= 0 || !Number.isFinite(spacing) || spacing <= 0 ||
     !Number.isInteger(layers) || layers < 2 || layers > 3 ||
+    !Number.isSafeInteger(firstLot) || firstLot < 1 ||
     !["Linear Averaging", "Martingale"].includes(strategy)) throw new Error("Invalid simulation parameters");
-  const lots = scenarioLots(strategy, layers);
+  const lots = scenarioLots(strategy, layers, firstLot);
   const totalLots = cents(lots.reduce((sum, lot) => sum + lot, 0));
   const margin = cents(SCENARIO_CONTRACT.marginPerLot * totalLots);
   // One spacing beyond the last entry: first layer travels layers * spacing.
@@ -78,6 +79,21 @@ export function simulateCandidate(capital: number, spacing: number, layers: numb
     marginPercent: margin / capital * 100, stressPercent: stressLoss / capital * 100,
     passes: margin <= capital * SCENARIO_BUDGET.marginFraction && stressLoss <= capital * SCENARIO_BUDGET.stressFraction,
   };
+}
+
+/** Largest whole first-lot scale inside BOTH basket budgets; never changes price geometry. */
+export function sizeCandidate(capital: number, spacing: number, layers: number, strategy: Candidate["strategy"]): Candidate {
+  const unit = simulateCandidate(capital, spacing, layers, strategy);
+  // Use unrounded costs for allocation: rounding cents must not buy an extra lot.
+  const unitStress = unit.lots.reduce((sum, lot, i) =>
+    sum + (layers - i) * spacing * SCENARIO_CONTRACT.dollarsPerPointPerLot * lot, 0);
+  const firstLot = Math.floor(Math.min(
+    capital * SCENARIO_BUDGET.marginFraction / unit.margin,
+    capital * SCENARIO_BUDGET.stressFraction / unitStress,
+  ));
+  // Keep the minimum example to explain no-fit, not a fractional substitute.
+  if (firstLot < 1) return { ...unit, passes: false };
+  return simulateCandidate(capital, spacing, layers, strategy, firstLot);
 }
 
 const fresh = (at: string | null | undefined, now: number, max: number) => {
@@ -158,14 +174,15 @@ export function suggestFromCapital(
     assessed ? `Fundamental dinilai dari ${fundamental!.evidence.length} artikel dalam cakupan terbatas; bukan seluruh berita pasar.` :
       "Artikel Newsmaker tersedia sebagai konteks. Penandaan dampak redaksi belum valid/lengkap; tidak memakai AI atau mengasumsikan pasar tenang.",
     "Utamakan jumlah layer terbesar yang lolos margin ≤20% dan stress ≤10%; pada jumlah sama pilih paparan lebih kecil.",
+    "Lot awal otomatis = floor(min(budget margin / margin basket 1 lot awal, budget stress / stress basket 1 lot awal)). Langkah 1 lot adalah asumsi simulasi, bukan ketentuan broker; ukuran terbesar di dalam batas bukan jaminan aman. Pembulatan dapat membuat modal berbeda menghasilkan lot sama.",
   ];
   for (const layers of restricted ? [2] : [3, 2]) {
     for (const strategy of restricted ? ["Linear Averaging"] as const : ["Linear Averaging", "Martingale"] as const) {
-      result.candidates.push(simulateCandidate(capital, spacing, layers, strategy));
+      result.candidates.push(sizeCandidate(capital, spacing, layers, strategy));
     }
   }
   result.selected = result.candidates.filter(c => c.passes).sort((a, b) => b.layers - a.layers || a.totalLots - b.totalLots)[0] ?? null;
   result.status = result.selected ? (limited ? "limited" : "offered") : "no-fit";
-  if (!result.selected) result.reasons.push("Kandidat minimum 2 layer dengan lot awal 1 tidak lolos batas margin 20% atau stress 10% modal. Lot tidak diperkecil otomatis; jangan memaksa averaging.");
+  if (!result.selected) result.reasons.push("Tidak ada kandidat minimal 2 layer dengan langkah 1 lot yang lolos batas margin 20% dan stress 10% modal. Lot tidak dibulatkan naik atau diganti pecahan; jangan memaksa averaging.");
   return result;
 }
