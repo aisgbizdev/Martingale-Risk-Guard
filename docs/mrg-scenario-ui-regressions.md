@@ -14,7 +14,7 @@ Jika Chromium berada di lokasi lain, tentukan `MRG_CHROMIUM` ke executable itu.
 ## Pemeriksaan rilis tercatat
 
 `pnpm test:release` memeriksa bahwa Chromium dapat diluncurkan, menjalankan
-`pnpm test`, lalu `pnpm test:scenario-ui` (build baru dan semua 24 kasus).
+`pnpm test`, lalu `pnpm test:scenario-ui` (build baru dan semua 27 kasus).
 Perintah berhenti dengan exit nonzero jika salah satu tahap gagal, matriks tidak
 lengkap, atau laporan bukan hasil putaran tersebut. `MRG_UI_CASES` tidak boleh
 diisi pada pemeriksaan rilis. Tidak perlu memasang browser melalui unduhan saat
@@ -34,9 +34,16 @@ publishing**. Perintah ini tidak melakukan publish.
   ekspektasi tetap, bukan dihitung ulang memakai engine yang sedang diuji.
 - Pergantian arah lalu kembali lagi tidak mengaktifkan diagram lama.
 - Isi Manual, contoh Martingale tiga layer dan reset Simulasi Default diperiksa.
+- Form manual kini memakai satu set kontrol studi untuk strategi, target dan layer.
+  Perhitungan studi tanpa harga live serta reset default tanpa mengubah modal dan
+  kondisi pasar ditambahkan sebagai kasus kesembilan (9 × 3 viewport = 27).
 - Modal tidak valid/tidak mencukupi, kalender high impact dan kalender tidak
   lengkap memberikan alasan; kalender tidak lengkap tidak mematikan mode manual.
 - Penanda limited terlihat; saran pasar tidak salah diberi label manual.
+
+Perubahan penyatuan kalkulator dan perluasan menjadi 27 kasus belum memiliki hasil
+putaran browser baru. Bukti 24 kasus di bawah adalah hasil sebelum perubahan ini,
+bukan kelulusan desain atau alur baru.
 
 ## Isolasi dan bukti
 Setiap kasus memakai browser context baru tanpa profil pengguna. API diintersep

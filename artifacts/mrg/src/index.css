@@ -890,3 +890,38 @@ footer.live-footer .live-link:hover { color:#fff; }
   .mrg-calculator-actions { gap:4px; }
   .mrg-calculator-actions button { padding-inline:9px; }
 }
+
+/* Responsive pass: shared shell, tables, tablet/desktop width use. */
+.live-main, .live-card, .live-grid > * { min-width:0; }
+.live-main img, .live-chart-frame { max-width:100%; }
+.live-card .overflow-x-auto { -webkit-overflow-scrolling:touch; }
+.live-card table th, .live-card table td { padding:5px 8px 5px 0; }
+.mrg-check-page { width:min(1320px,100%); max-width:none; }
+.mrg-check-page .live-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+@media (max-width:639px) { .mrg-check-page .live-form-grid { grid-template-columns:1fr; } }
+@media (min-width:1024px) { .live-container { padding-inline:28px; } .live-header { margin-inline:-28px; padding-inline:28px; } .mrg-check-page { padding-inline:28px; } }
+@media (min-width:768px) and (max-width:1023px) {
+  .live-grid > .live-span-4 { grid-column:span 6; }
+  .live-grid > .live-span-5, .live-grid > .live-span-7, .live-grid > .live-span-8 { grid-column:span 12; }
+  .mrg-check-page .live-form-grid { gap:12px 16px; }
+  .live-card { padding:18px; }
+  .live-title { font-size:clamp(30px,5vw,40px); }
+  .mrg-technical-layout { grid-template-columns:minmax(0,1fr); }
+  .live-event { grid-template-columns:78px minmax(0,1fr) auto; }
+}
+@media (max-width:767px) { .live-event-values { text-align:left; } .live-pagination { flex-wrap:wrap; } }
+@media (min-width:1280px) { .live-grid { gap:20px; } .live-card { padding:22px; } }
+.live-header .live-link, .live-header .live-link strong { color:#fff; }
+.live-header .live-link { text-decoration-color:rgba(255,255,255,.6); }
+.live-calculator-back { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; min-width:44px; flex-shrink:0; }
+@media (max-width:639px) {
+  .live-header .live-brand { flex:1; min-width:0; }
+  .live-header .live-brand small { display:none; }
+  .live-header .live-brand strong { font-size:12px; line-height:1.35; }
+  .live-header > .live-row { flex-shrink:0; }
+  .mrg-check-page .live-stack { gap:10px; }
+  .mrg-check-page .live-card { padding:14px; }
+}
+@media (min-width:380px) and (max-width:639px) {
+  .mrg-check-page .live-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+}

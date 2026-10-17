@@ -21,6 +21,12 @@ Pengguna menyetujui satu halaman utama yang menyatukan enam isian simulator awal
 
 **How to apply:** Pertahankan alur inti pada satu halaman adaptif: isian dan hasil berdampingan di layar besar, berurutan di HP. Jangan pertahankan menu dashboard yang bersaing dengan kalkulator. Konteks pasar dan rincian mendukung kalkulator, bukan membentuk aplikasi lain; jangan memaksa seluruh isi muat dalam satu viewport ponsel.
 
+Pengguna menegaskan bahwa penyesuaian desain web dan mobile berlaku untuk tampilan MRG lainnya juga, bukan hanya kalkulator.
+
+**Why:** Pengguna mengoreksi lingkup dengan “maksud gw desugnnya juga yg lainnya bukan itu aja, sesuaikn dengamn saat di webbase atau di mobile”.
+
+**How to apply:** Periksa header, panel pasar/teknikal, berita, kalender, tabel dan hasil pada ukuran perangkat yang relevan; jangan mengklaim seluruh aplikasi responsif hanya dari perapian kalkulator.
+
 Kalkulator harus didasari teknikal, fundamental/berita, dan kalender ekonomi, dengan default seperti Simulasi Dasar. Pengguna menjelaskan bahwa isian seperti target poin, strategi Martingale/averaging, dan layer dapat menyesuaikan konteks pasar saat evaluasi, bukan hanya hasil penilaian setelah input manual. Ia kemudian menyebut pilihan mengisi manual atau memakai saran MRG berdasarkan teknikal, fundamental, harga berjalan, berita, dan kalender, menggunakan sumber Newsmaker, TradingView, serta Investing yang telah diberikan. Alur saran diperjelas: pengguna cukup menulis modal yang dimiliki, lalu keluar saran; “mungkin modalnya aja yg bisa diisi bebas”.
 
 **Why:** Pengguna menegaskan bahwa menyederhanakan kalkulator tidak berarti menghilangkan dasar analisis pasar yang merupakan tujuan pengembangannya.

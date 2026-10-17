@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { RiskInput } from "@shared/schema";
 import { StatusBadge, RiskScoreMeter, StudySummary } from "@/pages/result";
 import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
-import { Globe, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
+import { Globe, AlertTriangle, CheckCircle } from "lucide-react";
 import { riskInputSchema } from "@shared/schema";
 import { calendarIsFresh, quoteIsFresh } from "@shared/live-types";
 import { getStudyReference, getStudyWarnings } from "@shared/study-market";
@@ -15,7 +15,6 @@ import { useMarket } from "@/hooks/use-market";
 import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
-import { CapitalSuggestion } from "@/components/capital-suggestion";
 import { ScenarioWorkspace } from "@/components/scenario-workspace";
 import { studyRequestOptions } from "@/lib/study-request";
 
@@ -76,19 +75,20 @@ export default function Home() {
     setDraft({ ...draft, marketCondition: "Trending", d1Key: reference.key });
   };
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manual) return;
-    const parsed = riskInputSchema.safeParse({ ...draft, modal: Number(draft.modal) });
-    if (!draft.modal || !(Number(draft.modal) > 0)) return setError(t("Isi modal skenario dengan angka positif.", "Enter a positive scenario capital."));
-    if (!draft.marketCondition) return setError(t("Pilih kondisi pasar: Sideways atau Trending.", "Choose a market condition: Sideways or Trending."));
-    if (!parsed.success) return setError(t("Ada input yang belum valid. Periksa keenam isian.", "Some input is invalid. Check all six fields."));
+  const fail = (message: string) => { setError(message); return false; };
+  const submitStudy = (override: Partial<StudyDraft> = {}): boolean => {
+    const d: StudyDraft = { ...draft, ...override };
+    const parsed = riskInputSchema.safeParse({ ...d, modal: Number(d.modal) });
+    if (!d.modal || !(Number(d.modal) > 0)) return fail(t("Isi modal skenario dengan angka positif.", "Enter a positive scenario capital."));
+    if (!d.marketCondition) return fail(t("Pilih kondisi pasar: Sideways atau Trending.", "Choose a market condition: Sideways or Trending."));
+    if (!parsed.success) return fail(t("Ada input yang belum valid. Periksa keenam isian.", "Some input is invalid. Check all six fields."));
+    setError(null);
     const capturedAt = Date.now();
     const submittedReference = getStudyReference(ctx, capturedAt, market.online);
-    const confirmedD1 = !!draft.d1Key && submittedReference.status === "ready" && submittedReference.key === draft.d1Key && draft.marketCondition === "Trending";
-    if (draft.d1Key && !confirmedD1) {
-      setDraft({ ...draft, d1Key: null, marketCondition: "" });
-      return setError(t("Konfirmasi D1 sudah tidak berlaku. Konfirmasi ulang atau pilih manual.", "The D1 confirmation no longer applies. Reconfirm or choose manually."));
+    const confirmedD1 = !!d.d1Key && submittedReference.status === "ready" && submittedReference.key === d.d1Key && d.marketCondition === "Trending";
+    if (d.d1Key && !confirmedD1) {
+      setDraft({ ...d, d1Key: null, marketCondition: "" });
+      return fail(t("Konfirmasi D1 sudah tidak berlaku. Konfirmasi ulang atau pilih manual.", "The D1 confirmation no longer applies. Reconfirm or choose manually."));
     }
     const p = parsed.data;
     setSnapshot(structuredClone({
@@ -106,11 +106,125 @@ export default function Home() {
     setRequestRevision(revision => revision + 1);
     window.history.replaceState(window.history.state, "", `?${params.toString()}`);
     justSubmitted.current = true;
+    return true;
   };
 
   const liveWarnings = getStudyWarnings(ctx, market.now, market.online);
   const calendarFresh = market.online && calendarIsFresh(ctx?.calendar, market.now);
   const trendWord = reference.analysis?.trend === "up" ? t("naik", "up") : t("turun", "down");
+
+  const studyFields = (
+    <div className="live-stack" data-testid="study-fields">
+      <div className="live-form-grid">
+        <div className="live-field">
+          <label htmlFor="f-target">{t("Target poin per siklus", "Target points per cycle")}</label>
+          <select id="f-target" value={draft.targetPoin} onChange={(e) => set({ targetPoin: e.target.value })} data-testid="select-target-poin">
+            <option value="30">{t("30 poin", "30 points")}</option>
+            <option value="40">{t("40 poin", "40 points")}</option>
+            <option value="50">{t("50 poin", "50 points")}</option>
+          </select>
+        </div>
+        <div className="live-field">
+          <label htmlFor="f-strategy">{t("Strategi studi", "Study strategy")}</label>
+          <select id="f-strategy" value={draft.strategy} onChange={(e) => set({ strategy: e.target.value })} data-testid="select-strategy">
+            <option value="Linear Averaging">Linear Averaging (1-2-3-4)</option>
+            <option value="Martingale">Martingale (1-2-4-8)</option>
+          </select>
+        </div>
+        <div className="live-field">
+          <label htmlFor="f-layer">{t("Batas layer maksimum", "Maximum layer limit")}</label>
+          <select id="f-layer" value={draft.maxLayer} onChange={(e) => set({ maxLayer: e.target.value })} data-testid="select-max-layer">
+            <option value="3">{t("3 layer", "3 layers")}</option>
+            <option value="4">{t("4 layer", "4 layers")}</option>
+            <option value="5">{t("5 layer", "5 layers")}</option>
+          </select>
+        </div>
+        <div className="live-field">
+          <label htmlFor="f-exp">{t("Pengalaman", "Experience")}</label>
+          <select id="f-exp" value={draft.experience} onChange={(e) => set({ experience: e.target.value })} data-testid="select-experience">
+            <option value="Pemula">{t("Pemula (kurang dari 1 tahun)", "Beginner (under 1 year)")}</option>
+            <option value="Berpengalaman">{t("Berpengalaman (lebih dari 3 tahun)", "Experienced (over 3 years)")}</option>
+          </select>
+        </div>
+        <div className="live-field" style={{ gridColumn: "1 / -1" }}>
+          <label htmlFor="f-market">{t("Kondisi pasar", "Market condition")}</label>
+          <select id="f-market" value={draft.marketCondition} onChange={(e) => set({ marketCondition: e.target.value, d1Key: null })} data-testid="select-market-condition" aria-invalid={!!error && !draft.marketCondition}>
+            <option value="">{t("Pilih kondisi pasar", "Choose market condition")}</option>
+            <option value="Sideways">{t("Sideways (bergerak mendatar)", "Sideways (range-bound)")}</option>
+            <option value="Trending">{t("Trending (arah kuat)", "Trending (strong direction)")}</option>
+          </select>
+        </div>
+      </div>
+      <p className="live-small">{t("Parameter studi aturan lama, bukan level harga. Default: Linear Averaging, 30 poin, 3 layer, Pemula.", "Study-rule parameters, not price levels. Defaults: Linear Averaging, 30 points, 3 layers, Beginner.")}</p>
+      {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
+    </div>
+  );
+
+  const studyResult = (
+    <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" className="rounded-lg border border-border p-3 sm:p-4">
+      <h3 className="font-bold mb-2">{t("Hasil studi (aturan lama)", "Study result (original rules)")}</h3>
+      {!submitted && <p className="text-sm text-muted-foreground">{t("Isi parameter studi lalu tekan hitung. Hasil muncul di sini.", "Fill the study parameters and calculate. The result appears here.")}</p>}
+      {stale && <p role="status" className="live-error" data-testid="text-result-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; hitung ulang.", "Inputs changed. The earlier result no longer applies; recalculate.")}</p>}
+      {current && calc.isLoading && !calc.isError && <p className="text-sm text-muted-foreground">{t("Menghitung...", "Calculating...")}</p>}
+      {current && calc.isError && (
+        <div><p className="live-error">{t("Gagal menghitung risiko. Tidak ada hasil pengganti.", "Failed to calculate. No substitute result.")}</p>
+          <Button variant="outline" size="sm" onClick={() => calc.refetch()}>{t("Coba lagi", "Retry")}</Button></div>
+      )}
+      {current && calc.data && !calc.isError && (
+        <div className="live-stack">
+          <p className="text-xs font-semibold text-muted-foreground">{t("Hasil aturan studi untuk skenario Anda, bukan ukuran risiko akun realtime.", "Study-rule output for your scenario, not a live account-risk measure.")}</p>
+          <div className="text-center"><StatusBadge status={calc.data.status} t={t} />
+            <div className="text-4xl font-mono font-bold mt-3" data-testid="text-risk-score">{calc.data.score}<span className="text-xl text-muted-foreground">/100</span></div>
+            <div className="mt-2"><RiskScoreMeter score={calc.data.score} status={calc.data.status} t={t} /></div>
+          </div>
+          <StudySummary result={calc.data} params={current} snapshot={snap} language={language} t={t} compact />
+        </div>
+      )}
+    </section>
+  );
+
+  const glance = (
+    <section className="mrg-market-helper rounded-lg border border-border p-3" data-testid="market-glance">
+      <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
+      <p className="live-small" data-testid="text-quote-status">
+        {market.usableQuote ? `XUL10 ${market.usableQuote.price.toLocaleString("id-ID", { maximumFractionDigits: 2 })} · ${t("segar", "fresh")}` : t("Harga XUL10 tidak tersedia atau tidak segar; tidak ditampilkan sebagai live.", "No fresh live XUL10 price; nothing is shown as live.")}
+        {" · "}{calendarFresh ? t("Kalender lengkap & segar", "Calendar complete & fresh") : t("Kalender belum dapat dinilai", "Calendar cannot be assessed")}
+      </p>
+      {liveWarnings.length > 0 && <ul className="mrg-summary-notes" data-testid="list-context-warnings">{liveWarnings.map((w, i) => <li key={i}>{t(w.id, w.en)}</li>)}</ul>}
+      <div data-testid="market-helper">
+        {reference.status === "ready" ? (
+          <>
+            <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
+            <p className="live-small">{t("LGD Daily · emas referensi, bukan harga XUL10 yang identik.", "LGD Daily · reference gold, not an identical XUL10 price.")}</p>
+            <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
+              <CheckCircle className="w-4 h-4 mr-1" />
+              {draft.d1Key ? t("Trending dari D1 dikonfirmasi", "Trending from D1 confirmed") : t("Gunakan Trending dari referensi ini", "Use Trending from this reference")}
+            </Button>
+          </>
+        ) : (
+          <p>{reference.status === "mixed"
+            ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.")
+            : t("Data pasar tidak tersedia atau tidak segar. Mode manual tetap bisa dihitung.", "Market data is unavailable or not fresh. Manual mode still calculates.")}</p>
+        )}
+        {notice && <p role="status" className="live-error">{notice}</p>}
+        <details className="live-details">
+          <summary>{t("Lihat dasar data", "See the evidence")}</summary>
+          <StudyEvidence reference={reference} warnings={liveWarnings} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
+        </details>
+      </div>
+    </section>
+  );
+
+  const capitalField = (
+          <div className="live-field w-full">
+            <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
+            <div className="flex gap-2 flex-wrap">
+              {[100000, 200000, 300000].map(v => <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>USD {v.toLocaleString("id-ID")}</Button>)}
+            </div>
+            <input id="f-modal" type="number" inputMode="decimal" min="0" max="1000000000000" step="any" value={draft.modal} onChange={e => set({ modal: e.target.value })} placeholder={t("Masukkan modal Anda", "Enter your capital")} data-testid="input-modal" />
+            <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
+          </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,148 +251,13 @@ export default function Home() {
           </div>
         </div>
 
-        <section className="live-card mb-4" aria-label={t("Modal simulasi", "Simulation capital")}>
-          <div className="live-field max-w-xl">
-            <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
-            <div className="flex gap-2 flex-wrap">
-              {[100000, 200000, 300000].map(v => <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>USD {v.toLocaleString("id-ID")}</Button>)}
-            </div>
-            <input id="f-modal" type="number" inputMode="decimal" min="0" max="1000000000000" step="any" value={draft.modal} onChange={e => set({ modal: e.target.value })} placeholder={t("Masukkan modal Anda", "Enter your capital")} data-testid="input-modal" />
-            <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
-          </div>
-        </section>
-        <ScenarioWorkspace capital={draft.modal} market={market} />
-
-        <details className="live-card" open={manual || undefined}>
-        <summary className="font-semibold cursor-pointer">{t("Simulasi Dasar & kelengkapan saran pasar", "Original simulator & market suggestion coverage")}</summary>
-        <p className="live-small my-3">{t("Simulasi Dasar memakai aturan studi lama. Saran pasar lengkap menunggu metadata penilaian redaksi; tidak memakai AI.", "The original simulator uses historical study rules. Full market suggestions await editorial assessment metadata; no AI is used.")}</p>
-        <div className="grid gap-4 lg:grid-cols-2 items-start">
-        <Card>
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="text-lg sm:text-xl">{t("Skenario Anda", "Your scenario")}</CardTitle>
-            <CardDescription>{t("Saran dari modal atau parameter manual seperti MRG dasar.", "Capital-based suggestions or manual parameters as in the original MRG.")}</CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6">
-            <form onSubmit={submit} className="live-stack" noValidate>
-              <div className="flex gap-2">
-                <Button type="button" variant={!manual ? "default" : "outline"} onClick={() => setManual(false)} aria-pressed={!manual}>{t("Saran MRG", "MRG Suggestion")}</Button>
-                <Button type="button" variant={manual ? "default" : "outline"} onClick={() => setManual(true)} aria-pressed={manual} data-testid="button-manual">{t("Isi Manual", "Manual Entry")}</Button>
-              </div>
-              <div className="live-form-grid">
-                {manual && <>
-                <div className="live-field">
-                  <label htmlFor="f-target">{t("Target poin per siklus", "Target points per cycle")}</label>
-                  <select id="f-target" value={draft.targetPoin} onChange={(e) => set({ targetPoin: e.target.value })} data-testid="select-target-poin">
-                    <option value="30">{t("30 poin", "30 points")}</option>
-                    <option value="40">{t("40 poin", "40 points")}</option>
-                    <option value="50">{t("50 poin", "50 points")}</option>
-                  </select>
-                  <span className="live-small">{t("Parameter studi, bukan level harga transaksi.", "A study parameter, not a trade price level.")}</span>
-                </div>
-                <div className="live-field">
-                  <label htmlFor="f-strategy">{t("Strategi", "Strategy")}</label>
-                  <select id="f-strategy" value={draft.strategy} onChange={(e) => set({ strategy: e.target.value })} data-testid="select-strategy">
-                    <option value="Linear Averaging">Linear Averaging (1-2-3-4)</option>
-                    <option value="Martingale">Martingale (1-2-4-8)</option>
-                  </select>
-                  <span className="live-small">{t("Martingale melipatgandakan ukuran; Linear menambah ukuran tetap.", "Martingale doubles size; Linear adds a fixed amount.")}</span>
-                </div>
-                <div className="live-field">
-                  <label htmlFor="f-layer">{t("Batas layer maksimum", "Maximum layer limit")}</label>
-                  <select id="f-layer" value={draft.maxLayer} onChange={(e) => set({ maxLayer: e.target.value })} data-testid="select-max-layer">
-                    <option value="3">{t("3 layer", "3 layers")}</option>
-                    <option value="4">{t("4 layer", "4 layers")}</option>
-                    <option value="5">{t("5 layer", "5 layers")}</option>
-                  </select>
-                </div>
-                <div className="live-field">
-                  <label htmlFor="f-exp">{t("Pengalaman", "Experience")}</label>
-                  <select id="f-exp" value={draft.experience} onChange={(e) => set({ experience: e.target.value })} data-testid="select-experience">
-                    <option value="Pemula">{t("Pemula (kurang dari 1 tahun)", "Beginner (under 1 year)")}</option>
-                    <option value="Berpengalaman">{t("Berpengalaman (lebih dari 3 tahun)", "Experienced (over 3 years)")}</option>
-                  </select>
-                  <span className="live-small">{t("Pengalaman 1-3 tahun: pilih Pemula untuk sementara.", "1-3 years of experience: choose Beginner for now.")}</span>
-                </div>
-                <div className="live-field" style={{ gridColumn: "1 / -1" }}>
-                  <label htmlFor="f-market">{t("Kondisi pasar", "Market condition")}</label>
-                  <select id="f-market" value={draft.marketCondition} onChange={(e) => set({ marketCondition: e.target.value, d1Key: null })} data-testid="select-market-condition" aria-invalid={!!error && !draft.marketCondition}>
-                    <option value="">{t("Pilih kondisi pasar", "Choose market condition")}</option>
-                    <option value="Sideways">{t("Sideways (bergerak mendatar)", "Sideways (range-bound)")}</option>
-                    <option value="Trending">{t("Trending (arah kuat)", "Trending (strong direction)")}</option>
-                  </select>
-                </div>
-                </>}
-              </div>
-
-              <div hidden={manual}><CapitalSuggestion capital={draft.modal} market={market} /></div>
-              {manual && <>
-              <p className="live-small">{t("Default: Linear Averaging · 30 poin · 3 layer · Pemula. Modal dan kondisi pasar tetap Anda tentukan.", "Defaults: Linear Averaging · 30 points · 3 layers · Beginner. Set your own capital and market condition.")}</p>
-              {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
-              <Button type="submit" size="lg" className="w-full h-12" data-testid="button-cek-risiko">
-                {t("Cek Risiko", "Cek Risiko")}<ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-              </>}
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 min-w-0">
-        <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" hidden={!manual} className="rounded-lg border border-border bg-card p-4 sm:p-6">
-          <h2 className="text-lg font-bold mb-2">{t("Hasil Cek Risiko", "Risk check result")}</h2>
-          {!submitted && <p className="text-sm text-muted-foreground">{t("Isi keenam kolom lalu tekan Cek Risiko. Hasil muncul di sini.", "Fill the six fields and press Cek Risiko. The result appears here.")}</p>}
-          {stale && <p role="status" className="live-error" data-testid="text-result-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; tekan Cek Risiko untuk menghitung ulang.", "Inputs changed. The earlier result no longer applies; press Cek Risiko to recalculate.")}</p>}
-          {current && calc.isLoading && !calc.isError && <p className="text-sm text-muted-foreground">{t("Menghitung...", "Calculating...")}</p>}
-          {current && calc.isError && (
-            <div><p className="live-error">{t("Gagal menghitung risiko. Tidak ada hasil pengganti.", "Failed to calculate. No substitute result.")}</p>
-              <Button variant="outline" size="sm" onClick={() => calc.refetch()}>{t("Coba lagi", "Retry")}</Button></div>
-          )}
-          {current && calc.data && !calc.isError && (
-            <div className="live-stack">
-              <p className="text-xs font-semibold text-muted-foreground">{t("Hasil aturan studi untuk skenario Anda, bukan ukuran risiko akun realtime.", "Study-rule output for your scenario, not a live account-risk measure.")}</p>
-              <div className="text-center"><StatusBadge status={calc.data.status} t={t} />
-                <div className="text-4xl font-mono font-bold mt-3" data-testid="text-risk-score">{calc.data.score}<span className="text-xl text-muted-foreground">/100</span></div>
-                <div className="mt-2"><RiskScoreMeter score={calc.data.score} status={calc.data.status} t={t} /></div>
-              </div>
-              <div>
-                <StudySummary result={calc.data} params={current} snapshot={snap} language={language} t={t} compact />
-              </div>
-            </div>
-          )}
-        </section>
-              <section className="mrg-market-helper rounded-lg border border-border p-4" data-testid="market-glance">
-                <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
-                <p className="live-small" data-testid="text-quote-status">
-                  {market.usableQuote ? `XUL10 ${market.usableQuote.price.toLocaleString("id-ID", { maximumFractionDigits: 2 })} · ${t("segar", "fresh")}` : t("Harga XUL10 tidak tersedia atau tidak segar; tidak ditampilkan sebagai live.", "No fresh live XUL10 price; nothing is shown as live.")}
-                  {" · "}{calendarFresh ? t("Kalender lengkap & segar", "Calendar complete & fresh") : t("Kalender belum dapat dinilai", "Calendar cannot be assessed")}
-                </p>
-                {liveWarnings.length > 0 && <ul className="mrg-summary-notes" data-testid="list-context-warnings">{liveWarnings.map((w, i) => <li key={i}>{t(w.id, w.en)}</li>)}</ul>}
-              <div className="mt-3" data-testid="market-helper">
-                {reference.status === "ready" ? (
-                  <>
-                    <p>{t(`Referensi emas D1: tren ${trendWord}. Gunakan sebagai kondisi skenario jika sesuai.`, `Daily gold reference: trending ${trendWord}. Use it as the scenario condition if appropriate.`)}</p>
-                    <p className="live-small">{t("LGD Daily · emas referensi, bukan harga XUL10 yang identik.", "LGD Daily · reference gold, not an identical XUL10 price.")}</p>
-                    {manual && <Button type="button" variant="outline" size="sm" onClick={confirmD1} disabled={!!draft.d1Key && draft.marketCondition === "Trending"} data-testid="button-confirm-d1">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      {draft.d1Key ? t("Trending dari D1 dikonfirmasi", "Trending from D1 confirmed") : t("Gunakan Trending dari referensi ini", "Use Trending from this reference")}
-                    </Button>}
-                  </>
-                ) : (
-                  <p>{reference.status === "mixed"
-                    ? (manual ? t("Referensi harian campuran, belum pasti. Pilih kondisi pasar sendiri.", "The daily reference is mixed, not certain. Choose the market condition yourself.") : t("Referensi D1 campuran bukan bukti Sideways; saran tetap memerlukan data lain yang lengkap.", "Mixed D1 is not evidence of Sideways; suggestions still require complete supporting data."))
-                    : (manual ? t("Data pasar tidak tersedia atau tidak segar. Pilih kondisi pasar sendiri; perhitungan tetap bisa dijalankan.", "Market data is unavailable or not fresh. Choose the market condition yourself; the calculation still works.") : t("Data pasar belum lengkap. Saran tidak dipaksakan; Isi Manual tetap tersedia.", "Market data is incomplete. Suggestions are not forced; Manual Entry is still available."))}</p>
-                )}
-                {notice && <p role="status" className="live-error">{notice}</p>}
-                <details className="live-details">
-                  <summary>{t("Lihat dasar data", "See the evidence")}</summary>
-                  <StudyEvidence reference={reference} warnings={liveWarnings} quote={market.usableQuote} calendar={ctx ? ctx.calendar : null} />
-                </details>
-              </div>
-              </section>
-
-        </div>
-        </div>
-
-        </details>
+        <ScenarioWorkspace capital={draft.modal} capitalField={capitalField} market={market} initialMode={manual ? "manual" : "market"} onModeChange={(m) => setManual(m === "manual")} study={{
+          fields: studyFields, result: studyResult, glance,
+          values: { strategy: draft.strategy === "Martingale" ? "Martingale" : "Linear Averaging", targetPoin: draft.targetPoin, maxLayer: draft.maxLayer, experience: draft.experience },
+          defaults: { strategy: "Linear Averaging", targetPoin: "30", maxLayer: "3", experience: "Pemula" },
+          onChange: (patch) => set(patch),
+          submit: submitStudy,
+        }} />
         <div className="mt-6 text-center px-4">
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4">
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}

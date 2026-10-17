@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { Globe2 } from "lucide-react";
+import { ArrowLeft, Globe2 } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 
@@ -24,7 +24,10 @@ export function LiveShell({ children }: { children: ReactNode }) {
             <img src="/newsmaker-logo-white.png" alt="Newsmaker" />
             <span><strong>Martingale Risk Guard</strong><small>MRG · Newsmaker&nbsp;&nbsp;|&nbsp;&nbsp;Market context · position exposure</small></span>
           </Link>
-          <Link href="/" className="live-link" data-testid="link-back-calculator"><strong>{t("Kembali ke kalkulator", "Back to calculator")}</strong></Link>
+          <Link href="/" className="live-link live-calculator-back" aria-label={t("Kembali ke kalkulator", "Back to calculator")} data-testid="link-back-calculator">
+            <ArrowLeft size={18} aria-hidden="true" />
+            <strong className="hidden sm:inline">{t("Kembali ke kalkulator", "Back to calculator")}</strong>
+          </Link>
           <div className="live-row" style={{ gap: 6 }}>
             <span id="mrg-install-toolbar" className="live-header-install" />
             <button className="live-icon-btn" onClick={() => setLanguage(language === "id" ? "en" : "id")} aria-label={t("Ganti bahasa", "Change language")}>

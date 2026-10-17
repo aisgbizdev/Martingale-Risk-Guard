@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link } from "wouter";
 import { buildScenario, type ScenarioSide } from "@shared/scenario-plan";
 import { marketScenario } from "@shared/market-scenario";
 import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
@@ -47,7 +48,14 @@ function LevelDiagram({ plan, t }: { plan: Scenario; t: (id: string, en: string)
   );
 }
 
-export function ScenarioWorkspace({ capital, market }: { capital: string; market: MarketHook }) {
+export type StudyControls = { strategy: "Linear Averaging" | "Martingale"; targetPoin: string; maxLayer: string; experience: string };
+export type StudySlot = {
+  fields: ReactNode; result: ReactNode; glance: ReactNode;
+  values: StudyControls; defaults: StudyControls;
+  onChange: (patch: Partial<StudyControls>) => void;
+  submit: (override?: Partial<StudyControls>) => boolean;
+};
+export function ScenarioWorkspace({ capital, market, study, capitalField, initialMode = "market", onModeChange }: { capital: string; capitalField?: ReactNode; market: MarketHook; study?: StudySlot; initialMode?: "market" | "manual"; onModeChange?: (m: "market" | "manual") => void }) {
   const { t, language } = useLanguage();
   const [view, setView] = useState<"market" | "scenario">("scenario");
   const [largeScreen, setLargeScreen] = useState(() => window.matchMedia("(min-width: 1024px)").matches);
@@ -58,7 +66,14 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
     return () => query.removeEventListener("change", changed);
   }, []);
   const [c, setC] = useState<Controls>({ side: null, ...DEFAULTS });
-  const [inputMode, setInputMode] = useState<"market" | "manual">("market");
+  const [inputMode, setInputMode] = useState<"market" | "manual">(initialMode);
+  useEffect(() => { onModeChange?.(initialMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const pickMode = (m: "market" | "manual") => {
+    if (m === inputMode) return;
+    setInputMode(m); setErr(null); onModeChange?.(m);
+    // A plan from the other mode must not be shown as this mode's result.
+    setSnap(null); setSourceInvalidated(false); setDirectionInvalidated(false);
+  };
   const [snap, setSnap] = useState<{ plan: Scenario; key: string; suggestion?: SuggestionSnapshot } | null>(null);
   const [sourceInvalidated, setSourceInvalidated] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -81,6 +96,10 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
     setC(prev => ({ ...prev, ...p }));
   };
 
+  // In manual mode strategy/target/layers come from the single shared study draft.
+  const eff: Controls = study && inputMode === "manual"
+    ? { ...c, strategy: study.values.strategy, target: Number(study.values.targetPoin), layers: Number(study.values.maxLayer) }
+    : c;
   const calculate = (next: Controls) => {
     const q = market.usableQuote;
     if (!q || !quoteIsFresh(q, Date.now())) return setErr(t("Harga XUL10 tidak segar; skenario dari harga nyata tidak dapat dibuat.", "XUL10 price is not fresh; a real-price scenario cannot be built."));
@@ -116,38 +135,73 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
       setErr(null);
     } catch (e) { setErr(e instanceof Error ? e.message : t("Saran tidak valid.", "Invalid suggestion.")); }
   };
-  const useDefault = () => { const n = { ...c, ...DEFAULTS }; setC(n); calculate(n); };
+  const manualAction = () => {
+    if (study && !study.submit()) return;
+    if (!quote) { setSnap(null); setErr(null); return; }
+    calculate(eff);
+  };
+  const useDefault = () => {
+    const n: Controls = { ...c, ...DEFAULTS };
+    setC(n);
+    if (study) {
+      study.onChange(study.defaults);
+      if (!study.submit(study.defaults)) return;
+    }
+    if (quote) calculate(n); else { setSnap(null); setErr(null); }
+  };
 
   const plan = snap?.plan;
-  const changed = !!snap && snap.key !== keyOf(c, cap);
+  const changed = !!snap && snap.key !== keyOf(eff, cap);
   const sideChanged = !!plan && (directionInvalidated || plan.side !== c.side);
   const moved = useMemo(() => (plan && quote ? quote.price - plan.entry : null), [plan, quote]);
+  const comparison = useMemo(() => {
+    if (!plan || plan.mode !== "manual") return [];
+    try {
+      return (["Linear Averaging", "Martingale"] as const).map(strategy =>
+        buildScenario({ ...plan, strategy }));
+    } catch {
+      // A valid selected strategy can still have invalid alternative price geometry.
+      return [];
+    }
+  }, [plan]);
   const num = "w-full min-h-[44px] rounded-[10px] border border-input bg-background px-3";
   const seg = (active: boolean) => `min-h-[44px] flex-1 rounded-md border px-3 text-sm font-bold ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`;
 
   return (
     <section aria-label={t("Kalkulator skenario MRG", "MRG scenario calculator")} data-testid="scenario-workspace" className="mb-4">
-      <div role="group" aria-label={t("Tampilan", "View")} className="flex gap-2 mb-3 lg:hidden">
-        <button type="button" className={seg(view === "market")} aria-pressed={view === "market"} onClick={() => setView("market")} data-testid="button-view-market">{t("Pasar", "Market")}</button>
-        <button type="button" className={seg(view === "scenario")} aria-pressed={view === "scenario"} onClick={() => setView("scenario")} data-testid="button-view-scenario">{t("Skenario", "Scenario")}</button>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] items-start">
-        <div className={`live-card min-w-0 ${view === "market" ? "" : "hidden"} lg:block`}>
+      <div className="grid gap-4 lg:grid-cols-2 items-start">
+        <div className="order-[9998] lg:hidden" role="group" aria-label={t("Tampilan pasar", "Market view")}>
+          {view === "market"
+            ? <button type="button" className={seg(false) + " w-full"} aria-pressed onClick={() => setView("scenario")} data-testid="button-view-scenario">{t("Sembunyikan pasar", "Hide market")}</button>
+            : <button type="button" className={seg(false) + " w-full"} aria-pressed={false} onClick={() => setView("market")} data-testid="button-view-market">{t("Lihat pasar (opsional): chart & level", "View market (optional): chart & levels")}</button>}
+        </div>
+        <div className={`live-card min-w-0 order-last lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-x-5 ${view === "market" ? "" : "hidden"} lg:grid`}>
+          <div className="min-w-0 lg:col-span-2">
+
           <h2>{t("Pasar: referensi OANDA XAUUSD", "Market: OANDA XAUUSD reference")}</h2>
+          <div className="flex flex-wrap gap-2 mt-2" aria-label={t("Buka bahan analisis", "Open analysis resources")}>
+            {(["technical", "calendar", "news"] as const).map(tab => <Link key={tab} href={`/analysis?tab=${tab}`} className="live-button">
+              {tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}
+            </Link>)}
+          </div>
           <p className="mrg-chart-warning mt-2" data-testid="text-chart-source">
             {t("Candle di sini dari OANDA XAUUSD (TradingView), sumber berbeda dari harga XUL10 yang dipakai kalkulator. Level skenario tidak digambar di atas chart ini.", "Candles here are OANDA XAUUSD (TradingView), a different source from the XUL10 price the calculator uses. Scenario levels are not drawn over this chart.")}
           </p>
-          {(view === "market" || largeScreen) && <TradingViewChart online={market.online} />}
-          <NewsmakerReferenceLevels market={market} />
+          </div>
+          <div className="min-w-0 mt-3">{(view === "market" || largeScreen) && <TradingViewChart online={market.online} />}</div>
+          <div className="min-w-0">
+            {study?.glance}
+            <NewsmakerReferenceLevels market={market} />
+          </div>
         </div>
 
-        <div className={`min-w-0 grid gap-4 ${view === "scenario" ? "" : "hidden"} lg:grid`}>
+        <div className="min-w-0 grid gap-4 lg:contents">
         <div className="live-card min-w-0">
           <h2>{t("Kalkulator skenario", "Scenario calculator")}</h2>
           <p className="live-small mt-1">{t("Edukasi: Anda yang memilih arah. MRG tidak menyarankan Buy atau Sell.", "Education: you choose the direction. MRG does not recommend Buy or Sell.")}</p>
           <div className="flex gap-2 mt-3" role="group" aria-label={t("Cara mengisi", "Input method")}>
-            <button type="button" className={seg(inputMode === "market")} aria-pressed={inputMode === "market"} onClick={() => { setInputMode("market"); setErr(null); }} data-testid="mode-market">{t("Saran MRG", "MRG suggestion")}</button>
-            <button type="button" className={seg(inputMode === "manual")} aria-pressed={inputMode === "manual"} onClick={() => { setInputMode("manual"); setErr(null); }} data-testid="mode-manual">{t("Isi Manual", "Manual input")}</button>
+            <button type="button" className={seg(inputMode === "market")} aria-pressed={inputMode === "market"} onClick={() => pickMode("market")} data-testid="mode-market">{t("Saran MRG", "MRG suggestion")}</button>
+            <button type="button" className={seg(inputMode === "manual")} aria-pressed={inputMode === "manual"} onClick={() => pickMode("manual")} data-testid="mode-manual">{t("Isi Manual", "Manual input")}</button>
           </div>
           <div className="live-stack mt-3">
             <div className="rounded-lg bg-muted/70 p-3" data-testid="scenario-price">
@@ -155,41 +209,35 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
               <div className="live-mono text-2xl font-medium">{quote ? quote.price.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</div>
               <span className="live-small">{quote ? `${t("segar", "fresh")} · ${quote.asOf}` : t("Harga tidak tersedia atau tidak segar. Pengambilan harga nyata dinonaktifkan.", "Price unavailable or stale. Real-price capture is disabled.")}</span>
             </div>
-            <div className="live-small">{t("Modal", "Capital")}: <strong>{capOk ? money(cap) : "—"}</strong> (<button type="button" className="underline" onClick={() => document.getElementById("f-modal")?.focus()}>{t("ubah", "edit")}</button>)</div>
+            {capitalField}
             <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className="flex gap-2">
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
               <button type="button" className={seg(c.side === "sell")} aria-pressed={c.side === "sell"} onClick={() => upd({ side: "sell" })} data-testid="button-side-sell">Sell</button>
             </div>
-            {inputMode === "manual" && <details className="live-details" open>
-            <summary>{t("Atur parameter", "Adjust parameters")} · {c.strategy === "Martingale" ? "Martingale" : "Linear"} · {c.layers} layer · TP {c.target}</summary>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <div className="live-field"><label htmlFor="sc-strategy">{t("Strategi", "Strategy")}</label>
-                <select id="sc-strategy" value={c.strategy} onChange={e => upd({ strategy: e.target.value as Controls["strategy"] })} data-testid="select-sc-strategy">
-                  <option value="Linear Averaging">Linear (0,1/0,2/0,3)</option><option value="Martingale">Martingale (x2)</option></select></div>
-              <div className="live-field"><label htmlFor="sc-layers">{t("Layer", "Layers")}</label>
-                <select id="sc-layers" value={c.layers} onChange={e => upd({ layers: Number(e.target.value) })} data-testid="select-sc-layers">
-                  {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}</select></div>
-              <div className="live-field"><label htmlFor="sc-target">{t("Target (poin dari rata-rata)", "Target (points from average)")}</label>
-                <input id="sc-target" className={num} type="number" min="1" step="any" value={c.target} onChange={e => upd({ target: Number(e.target.value) })} data-testid="input-sc-target" /></div>
-              <div className="live-field"><label htmlFor="sc-spacing">{t("Jarak layer (poin)", "Layer spacing (points)")}</label>
-                <input id="sc-spacing" className={num} type="number" min="1" step="any" value={c.spacing} onChange={e => upd({ spacing: Number(e.target.value) })} data-testid="input-sc-spacing" /></div>
-            </div>
-            </details>}
+            {inputMode === "manual" && study?.fields}
+            {inputMode === "manual" && <div className="live-field">
+              <label htmlFor="sc-spacing">{t("Jarak layer pada harga live (poin)", "Layer spacing on the live price (points)")}</label>
+              <input id="sc-spacing" className={num} type="number" min="1" step="any" value={c.spacing} onChange={e => upd({ spacing: Number(e.target.value) })} data-testid="input-sc-spacing" />
+              <span className="live-small">{t("Strategi, target, dan layer di atas dipakai juga untuk skenario harga live. Hanya jarak yang khusus untuk live.", "The strategy, target and layers above also drive the live-price scenario. Only spacing is live-specific.")}</span>
+            </div>}
             {err && <p role="alert" className="live-error" data-testid="text-scenario-error">{err}</p>}
             <div className="flex gap-2 flex-wrap">
-              <Button type="button" className="flex-1 min-h-[44px]" disabled={!quote || (inputMode === "market" && market.context.isPending)} onClick={() => inputMode === "market" ? suggest() : calculate(c)} data-testid="button-calculate-scenario">{inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung manual", "Calculate manually")}</Button>
-              {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" disabled={!quote || !c.side} onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
+              <Button type="button" className="flex-1 min-h-[44px]" disabled={inputMode === "market" ? (!quote || market.context.isPending) : false} onClick={() => inputMode === "market" ? suggest() : manualAction()} data-testid="button-calculate-scenario">{inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung", "Calculate")}</Button>
+              {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
               t("Saran memakai harga XUL10, ATR D1, kalender dan status penilaian berita. Dampak berita belum dinilai: hanya Linear, maksimal 2 layer. Bukan penilaian pasar lengkap.", "Suggestions use XUL10 price, D1 ATR, calendar and news assessment status. Unassessed news impact: Linear only, up to 2 layers. Not a complete market assessment.") :
               t("Default manual: Linear · 3 layer · lot awal 0,1 · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.", "Manual defaults: Linear · 3 layers · first lot 0.1 · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.")}</p>
-            {inputMode === "market" && <MarketRuleSummary
+            {inputMode === "market" && <details className="live-details">
+              <summary>{t("Pembacaan berita & kalender", "News & calendar context")}</summary>
+              <MarketRuleSummary
               analysis={snap?.suggestion ? snap.suggestion.result.ruleAnalysis : market.context.data?.ruleAnalysis}
-              frozen={!!snap?.suggestion} />}
+              frozen={!!snap?.suggestion} />
+            </details>}
           </div>
         </div>
 
-        <div className={`live-card min-w-0 ${view === "scenario" ? "" : "hidden"} lg:block`} aria-live="polite" data-testid="scenario-result">
+        <div className={`live-card min-w-0`} aria-live="polite" data-testid="scenario-result">
           <h2>{t("Hasil skenario", "Scenario result")}</h2>
           {snap?.suggestion?.result.status === "limited" && <p role="alert" className="live-error mt-2" data-testid="limited-suggestion-warning">{t("SARAN TERBATAS · Dampak berita belum dinilai, bukan netral. Linear maksimal 2 layer; bukan penilaian pasar lengkap atau jaminan keamanan.", "LIMITED SUGGESTION · News impact is unassessed, not neutral. Linear, up to 2 layers; not a full market assessment or safety guarantee.")}</p>}
           {snap?.suggestion && <details className="live-details mt-2"><summary>{t("Dasar saran & sumber", "Suggestion basis & sources")}</summary>
@@ -198,7 +246,10 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
             <p className="live-small mt-2">{t("Kalender dibuat", "Calendar generated")}: {snap.suggestion.result.calendar?.generatedAt} · D1 {snap.suggestion.result.reference.analysis?.lastDate}</p>
           </details>}
           {snap?.suggestion && (sourceInvalidated || marketState?.dataChanged) && <p role="status" className="live-error mt-2" data-testid="suggestion-source-changed">{t("Data berubah/tidak lagi segar. Ini snapshot lama, bukan saran terkini. Tekan Lihat Saran MRG untuk evaluasi baru; level tidak bergeser otomatis.", "Data changed or expired. This is an old snapshot, not a current suggestion. Press View MRG suggestion to reassess; levels never move automatically.")}</p>}
-          {!plan && <p className="live-small mt-2">{t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
+          {inputMode === "manual" && study && <div className="mt-2">{study.result}</div>}
+          {!plan && <p className="live-small mt-2">{inputMode === "manual" && !quote
+            ? t("Perhitungan studi tetap tersedia tanpa harga segar. Diagram entry dan TP memerlukan harga XUL10 segar.", "Study calculations remain available without a fresh price. Entry and TP diagrams require a fresh XUL10 price.")
+            : t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
           {plan && <div className="live-stack mt-2">
             <p className="live-small"><strong>{plan.mode === "manual" ? t("Skenario manual hipotetis", "Hypothetical manual scenario") : t("Snapshot saran MRG", "MRG suggestion snapshot")}</strong> · {plan.side === "buy" ? "Buy" : "Sell"} · {plan.strategy} · {t("snapshot", "snapshot")} {plan.asOf} · {t("harga masuk", "entry")} {plan.entry.toFixed(2)}</p>
             {changed && <p role="status" className="live-error" data-testid="text-scenario-changed">{t("Arah atau input berubah. Snapshot di bawah adalah skenario lama dan tidak ikut berubah; jalankan perhitungan lagi.", "Direction or inputs changed. The snapshot below is the old scenario and was not rewritten; recalculate to update it.")}</p>}
@@ -220,6 +271,19 @@ export function ScenarioWorkspace({ capital, market }: { capital: string; market
               <dt>{t("Rugi stress", "Stress loss")}</dt><dd>{money(plan.stressLoss)} ({plan.stressPercent.toFixed(1)}%)</dd>
               <dt>{t("Profit di TP", "Profit at TP")}</dt><dd>{money(plan.targetProfit)}</dd>
             </dl>
+            {comparison.length > 0 && <details className="live-details" data-testid="manual-strategy-comparison">
+              <summary>{t("Bandingkan Linear dan Martingale", "Compare Linear and Martingale")}</summary>
+              <p className="live-small mt-2">{t("Modal, arah, harga awal, jarak, target dan jumlah layer sama. Hanya pola lot yang berbeda; ini bukan saran strategi.", "Same capital, direction, starting price, spacing, target and layer count. Only lot sizing differs; this is not a strategy recommendation.")}</p>
+              <div className="overflow-x-auto mt-2"><table className="w-full text-xs">
+                <thead><tr><th className="text-left">{t("Strategi", "Strategy")}</th><th className="text-right">Lot</th><th className="text-right">Margin</th><th className="text-right">{t("Rugi stress", "Stress loss")}</th></tr></thead>
+                <tbody>{comparison.map(item => <tr key={item.strategy}>
+                  <th className="text-left">{item.strategy === "Linear Averaging" ? "Linear" : "Martingale"}</th>
+                  <td className="text-right">{item.totalLots}</td><td className="text-right whitespace-nowrap">{money(item.margin)}</td><td className="text-right whitespace-nowrap">{money(item.stressLoss)}</td>
+                </tr>)}</tbody>
+              </table></div>
+              <p className="live-small mt-2">{t("Margin bukan batas rugi; stress bukan kerugian maksimum. Batas simulasi tetap margin 20% dan stress 10% modal.", "Margin is not a loss limit; stress is not maximum loss. Simulation limits remain 20% capital margin and 10% stress loss.")}</p>
+            </details>}
+            {plan.mode === "manual" && comparison.length === 0 && <p role="status" className="live-small">{t("Perbandingan strategi tidak tersedia: parameter menghasilkan level harga alternatif yang tidak valid.", "Strategy comparison unavailable: these parameters produce invalid alternative price levels.")}</p>}
             {(plan.marginPercent > 20 || plan.stressPercent > 10) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
             <p className="live-small">{t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
             </>}

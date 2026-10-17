@@ -6,6 +6,11 @@ import express from "express";
 import { chromium, firefox, webkit } from "playwright-core";
 import { fixture, highImpactEvent, NOW, viewports } from "./scenario-ui/fixtures.mjs";
 import { browserProfile } from "./scenario-ui/browser-config.mjs";
+import { tsImport } from "tsx/esm/api";
+
+// Exercise the original pure study rules without a live backend or stored user data.
+const { calculateRisk } = await tsImport("../../artifacts/api-server/src/rules.ts", import.meta.url);
+const { riskInputSchema } = await tsImport("../../lib/mrg-shared/src/schema.ts", import.meta.url);
 
 const profile = browserProfile(process.argv.slice(2));
 const buildRoot = resolve("generated-artifacts/scenario-ui-app");
@@ -76,9 +81,10 @@ const cases = [
   ["manual-and-default", null, async page => {
     await start(page);
     await id(page, "mode-manual").click();
-    await id(page, "select-sc-strategy").selectOption("Martingale");
-    await id(page, "select-sc-layers").selectOption("3");
-    await id(page, "input-sc-target").fill("40");
+    await id(page, "select-market-condition").selectOption("Sideways");
+    await id(page, "select-strategy").selectOption("Martingale");
+    await id(page, "select-max-layer").selectOption("3");
+    await id(page, "select-target-poin").selectOption("40");
     await id(page, "input-sc-spacing").fill("25");
     await calculate(page);
     await diagram(page, ["4500.00", "4475.00", "4450.00", "4464.29", "4504.29"], 3);
@@ -88,8 +94,8 @@ const cases = [
     await id(page, "button-default-simulation").click();
     await diagram(page, ["4500.00", "4470.00", "4440.00", "4460.00", "4490.00"], 3);
     assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "0.3");
-    assert.equal(await id(page, "select-sc-strategy").inputValue(), "Linear Averaging");
-    assert.equal(await id(page, "input-sc-target").inputValue(), "30");
+    assert.equal(await id(page, "select-strategy").inputValue(), "Linear Averaging");
+    assert.equal(await id(page, "select-target-poin").inputValue(), "30");
     assert.equal(await id(page, "input-sc-spacing").inputValue(), "30");
     await id(page, "scenario-budget-warning").waitFor();
   }],
@@ -113,8 +119,29 @@ const cases = [
     await id(page, "text-scenario-error").waitFor();
     assert.match(await id(page, "text-scenario-error").innerText(), /Kalender wajib lengkap/);
     assert.equal(await id(page, "scenario-diagram").count(), 0);
-    await id(page, "mode-manual").click(); await calculate(page);
+    await id(page, "mode-manual").click();
+    await id(page, "select-market-condition").selectOption("Sideways");
+    await calculate(page);
     await diagram(page, ["4500.00", "4470.00", "4440.00", "4490.00"], 3);
+  }],
+  ["manual-without-live-price", data => {
+    data.quote.status = "unavailable";
+    data.quote.quote = null;
+  }, async page => {
+    await id(page, "input-modal").fill("20000");
+    await id(page, "mode-manual").click();
+    await id(page, "select-market-condition").selectOption("Sideways");
+    await calculate(page);
+    await id(page, "text-risk-score").waitFor();
+    assert.equal(await id(page, "scenario-diagram").count(), 0, "No invented live-price diagram");
+    await id(page, "select-strategy").selectOption("Martingale");
+    await id(page, "select-experience").selectOption("Berpengalaman");
+    await id(page, "button-default-simulation").click();
+    await id(page, "text-risk-score").waitFor();
+    assert.equal(await id(page, "select-strategy").inputValue(), "Linear Averaging");
+    assert.equal(await id(page, "select-experience").inputValue(), "Pemula");
+    assert.equal(await id(page, "select-market-condition").inputValue(), "Sideways");
+    assert.equal(await id(page, "input-modal").inputValue(), "20000");
   }],
   ["required-direction", null, async page => {
     await id(page, "scenario-price").getByText("4.500,00", { exact: true }).waitFor();
@@ -173,6 +200,14 @@ try {
       apiCalls.push(`${request.method()} ${url.pathname}`);
       if (request.method() === "GET" && url.pathname === "/api/market/quotes") return route.fulfill({ json: data.quote });
       if (request.method() === "GET" && url.pathname === "/api/market/context") return route.fulfill({ json: data.context });
+      if (request.method() === "POST" && url.pathname === "/api/calculate-risk") {
+        const input = riskInputSchema.safeParse(request.postDataJSON());
+        if (!input.success) {
+          errors.push("Invalid unified manual study payload");
+          return route.fulfill({ status: 400, json: { error: "Invalid study input" } });
+        }
+        return route.fulfill({ json: calculateRisk(input.data) });
+      }
       errors.push(`Unexpected API call: ${request.method()} ${url.pathname}`);
       return route.fulfill({ status: 500, json: { error: "Unexpected fixture request" } });
     });
