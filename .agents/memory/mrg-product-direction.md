@@ -129,11 +129,11 @@ Jangan menganggap tidak adanya kolom level jadi dalam API sebagai bukti integras
 
 **How to apply:** Gunakan sumber data dan rumus yang sudah tersedia, bedakan verifikasi kesamaan rumus dari persetujuan aturan pengaruhnya terhadap skenario MRG, dan jangan menyamakan LGD Daily dengan XUL10. Temuan ini tidak berarti kategori berita sudah mengandung penilaian dampak.
 
-Pengguna menyetujui saran terbatas Linear maksimal dua layer saat dampak berita belum dinilai, dengan peringatan jelas. Ia meminta tiga layer jika memungkinkan; jangan menafsirkan ini sebagai izin mengabaikan ketidakpastian.
+Pengguna sebelumnya menyetujui saran terbatas Linear maksimal dua layer saat dampak berita belum dinilai. Ia kemudian mengoreksi pembatasan ini untuk rencana edukatif: “kalau MRG memberikan saran itu harus ada hasil yg keluar bukan pembatasan”.
 
 **Why:** Pengguna memilih agar hasil tetap tersedia secara terbatas, bukan menunggu penandaan dampak redaksi untuk seluruh perhitungan. Fundamental yang belum dinilai tetap bukan netral.
 
-**How to apply:** Pertahankan pemeriksaan harga/D1/kalender/sumber berita dan batas modal. Tiga layer otomatis memerlukan penilaian lengkap dan kondisi/modal yang memenuhi aturan lama; simulasi manual tiga layer tetap tersedia tanpa mengklaim kelayakan. Jangan mengendurkan batas dua layer hanya karena modal besar.
+**How to apply:** Untuk arah rencana edukatif baru, jangan menganggap aturan penolakan strategi lama sebagai kebutuhan tetap pengguna. Pisahkan peta teknikal dari penilaian konteks serta kelayakan lot. Ketidakpastian harus dijelaskan, bukan dianggap netral; instruksi ini bukan izin mengarang data, menjamin keamanan, atau memaksakan layer tanpa struktur teknikal.
 
 Pengguna mengganti arah sebelumnya “Tetap referensi; perhitungan tetap ATR”: Saran MRG kini diminta menyusun kandidat L1–L3, TP, dan SL/batas batal berdasarkan Pivot/Fibonacci. Harga running menentukan posisi terhadap level, konteks teknikal/fundamental menyaring rencana, dan modal digunakan sesudahnya untuk sizing. Isi Manual tetap.
 
