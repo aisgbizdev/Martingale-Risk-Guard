@@ -135,6 +135,12 @@ Pengguna sebelumnya menyetujui saran terbatas Linear maksimal dua layer saat dam
 
 **How to apply:** Untuk rencana edukatif baru, berita belum dinilai, tren, dan jendela kalender memberi syarat atau status tunggu, bukan mengunci strategi/layer ataupun menghilangkan peta. Pisahkan peta teknikal dari penilaian konteks serta kelayakan lot; jangan meneruskan hasil penyaringan model modal lama sebagai prasyarat. Ketidakpastian tetap bukan netral; instruksi ini bukan izin mengarang data, menjamin keamanan, atau memaksakan layer tanpa struktur teknikal.
 
+Pengguna menegaskan jarak antar-layer harus masuk akal untuk skala D1, bukan garis Pivot/Fibo berbeda yang hanya berselisih sekitar satu poin dijadikan layer terpisah.
+
+**Why:** Pengguna menemukan rencana terlalu rapat dan menekankan rentang D1 relatif luas; rumus level yang benar belum membuktikan rencana layering sesuai tujuan.
+
+**How to apply:** Bahas zona dan pemisahan layer relatif terhadap volatilitas sebelum mengubah seleksi. Jangan menganggap faktor ATR tertentu telah disetujui hanya karena pengguna menyetujui tujuan jarak yang masuk akal.
+
 Pengguna mengganti arah sebelumnya “Tetap referensi; perhitungan tetap ATR”: Saran MRG kini diminta menyusun kandidat L1–L3, TP, dan SL/batas batal berdasarkan Pivot/Fibonacci. Harga running menentukan posisi terhadap level, konteks teknikal/fundamental menyaring rencana, dan modal digunakan sesudahnya untuk sizing. Isi Manual tetap.
 
 **Why:** Pengguna menjelaskan bahwa penolakan karena batas modal bukan tujuan kalkulator, lalu menyetujui pengerjaan arah baru. Ia mengulangi agar diskusi mendahului build supaya tidak melebar.
