@@ -10,8 +10,8 @@ export function fixture() {
       history: { status: "ready", receivedAt: NOW, message: null, analysis: {
         source: "LGD Daily", timeframe: "D1", basis: "gold-reference", candleCount: 129,
         firstDate: "2026-04-01", lastDate: "2026-10-15",
-        lastOpen: 4106.12, lastHigh: 4177.27, lastLow: 4099.94, lastClose: 4170.27,
-        ma20: 4201.78, ma50: 4334.38, trend: "down", atr14: 81.74, atrBaseline: 91.89,
+        lastOpen: 4480, lastHigh: 4550, lastLow: 4400, lastClose: 4470,
+        ma20: 4510, ma50: 4550, trend: "down", atr14: 81.74, atrBaseline: 91.89,
         atrPercent: 1.96, support20: 4000, resistance20: 4500,
       } },
       calendar: { status: "ready", complete: true, timezone: "Asia/Jakarta", events: [],

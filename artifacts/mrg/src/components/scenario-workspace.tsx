@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { buildScenario, type ScenarioSide } from "@shared/scenario-plan";
-import { marketScenario } from "@shared/market-scenario";
+import { technicalReferencePlan, type TechnicalReferencePlan, type ReferenceStrategy } from "@shared/technical-reference-plan";
+import { TechnicalReferenceResult } from "@/components/technical-reference-result";
 import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import { quoteIsFresh } from "@shared/live-types";
 import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
@@ -73,9 +74,11 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     if (m === inputMode) return;
     setInputMode(m); setErr(null); onModeChange?.(m);
     // A plan from the other mode must not be shown as this mode's result.
-    setSnap(null); setSourceInvalidated(false); setDirectionInvalidated(false);
+    setSnap(null); setTechnical(null); setSourceInvalidated(false); setDirectionInvalidated(false);
   };
   const [snap, setSnap] = useState<{ plan: Scenario; key: string; suggestion?: SuggestionSnapshot } | null>(null);
+  const [technical, setTechnical] = useState<{ plan: TechnicalReferencePlan; capture: SuggestionSnapshot } | null>(null);
+  const [referenceStrategy, setReferenceStrategy] = useState<ReferenceStrategy>("Linear Averaging");
   const [sourceInvalidated, setSourceInvalidated] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [directionInvalidated, setDirectionInvalidated] = useState(false);
@@ -95,13 +98,14 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     online: market.online, connectionRevision: market.connectionRevision,
     ...(historical ? { priceBasis: priceBasis! } : {}),
   };
-  const marketState = snap?.suggestion ? suggestionSnapshotState(snap.suggestion, cap, sources, market.now) : null;
+  const activeCapture = technical?.capture ?? snap?.suggestion;
+  const marketState = activeCapture ? suggestionSnapshotState(activeCapture, cap, sources, market.now) : null;
   useEffect(() => {
     if (marketState?.dataChanged) setSourceInvalidated(true);
   }, [marketState?.dataChanged]);
   const upd = (p: Partial<Controls>) => {
     setErr(null);
-    if (p.side && p.side !== c.side && snap) setDirectionInvalidated(true);
+    if (p.side && p.side !== c.side && (snap || technical)) setDirectionInvalidated(true);
     setC(prev => ({ ...prev, ...p }));
   };
 
@@ -124,6 +128,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     } catch (e) { setErr(e instanceof Error ? e.message : t("Input tidak valid.", "Invalid input.")); }
   };
   const suggest = () => {
+    setTechnical(null); setSnap(null);
     if (!c.side) return setErr(t("Pilih arah Buy atau Sell lebih dulu.", "Choose Buy or Sell first."));
     if (!capOk) return setErr(t("Isi modal positif pada kolom Modal.", "Enter positive capital in the Capital field."));
     const basis = resolveScenarioPrice(market.quotes.data?.quote, Date.now(), providerReady);
@@ -132,7 +137,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
       priceBasis: basis?.kind === "historical" ? basis : undefined,
     }, Date.now(), true);
     const result = capture.result;
-    if (!result.selected || !["limited", "offered"].includes(result.status)) {
+    if (!["limited", "offered", "no-fit"].includes(result.status)) {
       const heading = result.status === "deferred" ? t("Saran ditunda.", "Suggestion deferred.") :
         result.status === "no-fit" ? t("Tidak ada kandidat yang lolos batas modal.", "No candidate passes the capital limits.") :
         t("Data wajib belum lengkap.", "Required data is incomplete.");
@@ -140,10 +145,8 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
       return setErr(`${heading} ${reason ?? ""}`);
     }
     try {
-      const plan = marketScenario(result, c.side);
-      const next: Controls = { side: c.side, strategy: plan.strategy, layers: plan.layers, target: plan.target, spacing: plan.spacing };
-      setC(next);
-      setSnap({ plan, key: keyOf(next, cap), suggestion: capture });
+      const plan = technicalReferencePlan(result, c.side, referenceStrategy);
+      setTechnical({ plan, capture });
       setDirectionInvalidated(false);
       setSourceInvalidated(false);
       setErr(null);
@@ -190,7 +193,9 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             {t("OANDA:XAUUSD · TradingView. Referensi visual, bukan harga XUL10 untuk perhitungan.", "OANDA:XAUUSD · TradingView. Visual reference, not the XUL10 calculation price.")}
           </p>
           <div className="min-w-0 mt-3"><TradingViewChart online={market.online} /></div>
-          <p className="live-small mt-2">{t("Saat pasar tutup, candle terakhir tetap menjadi referensi; bukan harga live. Layer dan TP XUL10 ditampilkan pada hasil perhitungan.", "When the market is closed, the last candles remain a reference, not a live price. XUL10 layers and TP appear in the calculation results.")}</p>
+          <p className="live-small mt-2">{inputMode === "market"
+            ? t("Chart OANDA adalah panduan visual. Rencana Pivot/Fibonacci pada hasil memakai referensi LGD, bukan level XUL10 presisi. Candle terakhir saat pasar tutup bukan harga live.", "The OANDA chart is a visual guide. Pivot/Fibonacci results use LGD references, not precise XUL10 levels. Last candles during closure are not live prices.")
+            : t("Saat pasar tutup, candle terakhir tetap menjadi referensi; bukan harga live. Layer dan TP XUL10 ditampilkan pada hasil perhitungan.", "When the market is closed, the last candles remain a reference, not a live price. XUL10 layers and TP appear in the calculation results.")}</p>
           <div className="flex flex-wrap gap-2 mt-3" aria-label={t("Buka bahan analisis", "Open analysis resources")}>
             {(["technical", "calendar", "news"] as const).map(tab => <Link key={tab} href={`/analysis?tab=${tab}`} className="live-button">
               {tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}
@@ -233,6 +238,14 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
               <button type="button" className={seg(c.side === "sell")} aria-pressed={c.side === "sell"} onClick={() => upd({ side: "sell" })} data-testid="button-side-sell">Sell</button>
             </div>
+            {inputMode === "market" && <div className="flex flex-wrap gap-2" role="group" aria-label={t("Pola penambahan lot", "Lot progression")}>
+              {(["Linear Averaging", "Martingale"] as const).map(strategy => <button type="button" key={strategy}
+                className={seg(referenceStrategy === strategy)} aria-pressed={referenceStrategy === strategy}
+                data-testid={strategy === "Martingale" ? "reference-strategy-martingale" : "reference-strategy-linear"}
+                onClick={() => { setReferenceStrategy(strategy); setTechnical(null); setErr(null); }}>
+                {strategy === "Martingale" ? "Martingale" : "Linear Averaging"}
+              </button>)}
+            </div>}
             {inputMode === "manual" && study?.fields}
             {inputMode === "manual" && <div className="live-field">
               <label htmlFor="sc-spacing">{t("Jarak layer skenario (poin)", "Scenario layer spacing (points)")}</label>
@@ -245,19 +258,24 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
-              t("Saran memakai harga XUL10, ATR D1, kalender dan status penilaian berita. Dampak berita belum dinilai: hanya Linear, maksimal 2 layer. Bukan penilaian pasar lengkap.", "Suggestions use XUL10 price, D1 ATR, calendar and news assessment status. Unassessed news impact: Linear only, up to 2 layers. Not a complete market assessment.") :
+              t("Rencana edukatif dari Pivot Klasik + Fibonacci LGD D1, bukan entry XUL10 presisi. Harga running menjadi pembanding, tanpa konversi sumber. Dampak berita belum dinilai: Linear maksimal 2 layer.", "Educational plan from Classic Pivot + LGD D1 Fibonacci, not precise XUL10 entries. The running quote is a comparison, with no source conversion. Unassessed news impact: Linear, up to 2 layers.") :
               t(`Default manual: Linear · 3 layer · lot awal ${SCENARIO_CONTRACT.firstLot} · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.`, `Manual defaults: Linear · 3 layers · first lot ${SCENARIO_CONTRACT.firstLot} · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.`)}</p>
             {inputMode === "market" && <details className="live-details">
               <summary>{t("Pembacaan berita & kalender", "News & calendar context")}</summary>
               <MarketRuleSummary
-              analysis={snap?.suggestion ? snap.suggestion.result.ruleAnalysis : market.context.data?.ruleAnalysis}
-              frozen={!!snap?.suggestion} />
+              analysis={activeCapture ? activeCapture.result.ruleAnalysis : market.context.data?.ruleAnalysis}
+              frozen={!!activeCapture} />
             </details>}
           </div>
         </div>
 
         <div className="live-card min-w-0 lg:col-start-2 lg:row-start-2" aria-live="polite" data-testid="scenario-result">
           <h2>{t("Hasil skenario", "Scenario result")}</h2>
+          {inputMode === "market" && technical && <>
+            {(sourceInvalidated || marketState?.dataChanged || cap !== technical.plan.capital) && <p role="status" className="live-error" data-testid="reference-snapshot-stale">{t("Snapshot lama: data atau modal berubah/tidak segar. Hitung ulang; level dan lot tidak bergeser otomatis.", "Old snapshot: data or capital changed/expired. Recalculate; levels and lots never move automatically.")}</p>}
+            {(directionInvalidated || technical.plan.side !== c.side) ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah berubah. Hitung ulang untuk rencana arah yang dipilih.", "Direction changed. Recalculate for the selected side.")}</p> :
+              <TechnicalReferenceResult plan={technical.plan} t={t} money={money} />}
+          </>}
           {snap?.suggestion?.result.status === "limited" && <p role="alert" className="live-error mt-2" data-testid="limited-suggestion-warning">{t("SARAN TERBATAS · Dampak berita belum dinilai, bukan netral. Linear maksimal 2 layer; bukan penilaian pasar lengkap atau jaminan keamanan.", "LIMITED SUGGESTION · News impact is unassessed, not neutral. Linear, up to 2 layers; not a full market assessment or safety guarantee.")}</p>}
           {snap?.suggestion && <details className="live-details mt-2"><summary>{t("Dasar saran & sumber", "Suggestion basis & sources")}</summary>
             <p className="live-small">{t("Evaluasi", "Evaluated")}: {snap.suggestion.result.evaluatedAt}</p>
@@ -266,7 +284,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           </details>}
           {snap?.suggestion && (sourceInvalidated || marketState?.dataChanged) && <p role="status" className="live-error mt-2" data-testid="suggestion-source-changed">{t("Data berubah/tidak lagi segar. Ini snapshot lama, bukan saran terkini. Tekan Lihat Saran MRG untuk evaluasi baru; level tidak bergeser otomatis.", "Data changed or expired. This is an old snapshot, not a current suggestion. Press View MRG suggestion to reassess; levels never move automatically.")}</p>}
           {inputMode === "manual" && study && <div className="mt-2">{study.result}</div>}
-          {!plan && <p className="live-small mt-2">{inputMode === "manual" && !scenarioQuote
+          {!plan && !technical && <p className="live-small mt-2">{inputMode === "manual" && !scenarioQuote
             ? t("Perhitungan studi tetap tersedia. Diagram entry dan TP memerlukan harga XUL10 live atau acuan historis akhir pekan yang memenuhi syarat.", "Study calculations remain available. Entry and TP diagrams need a live XUL10 price or an eligible weekend historical reference.")
             : t("Pilih arah, lalu hitung. Diagram level harga dan tabel muncul di sini.", "Pick a direction, then calculate. A price-level diagram and table appear here.")}</p>}
           {plan && <div className="live-stack mt-2">
@@ -324,8 +342,9 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           <details className="live-details mt-2" data-testid="scenario-limits">
             <summary>{t("Batas dan sumber", "Limits and sources")}</summary>
             <div className="live-small live-stack">
-              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, ${inputMode === "market" ? "lot pertama dihitung otomatis dengan langkah 1 lot" : `lot pertama ${SCENARIO_CONTRACT.firstLot}`}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, ${inputMode === "market" ? "first lot calculated in 1-lot increments" : `first lot ${SCENARIO_CONTRACT.firstLot}`}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>
-              <p>{t("Harga: XUL10 dari data Newsmaker. Chart: OANDA XAUUSD, sumber berbeda. Pivot/Fibonacci tersedia di panel Pasar sebagai referensi LGD D1; belum memengaruhi parameter. Konten berita tersedia, tetapi metadata dampak editorial belum tersedia.", "Price: XUL10 from Newsmaker data. Chart: OANDA XAUUSD, a different source. Pivot/Fibonacci are available in the Market panel as LGD D1 references; they do not yet influence parameters. News content is available, but editorial impact metadata is not yet available.")}</p>
+              {inputMode === "market" ? <p>{t("Rencana LGD edukatif: entry dan TP dari level teknikal, batas batal pada level berikutnya. Sizing ilustratif memakai asumsi US$1.000 margin/lot dan US$100/poin/lot, batas margin 20% dan rugi pada batas batal 10% modal, langkah 1 lot. Batas ini pilihan simulasi, bukan standar keamanan. Jika lot tidak muat, peta harga tetap tampil tanpa alokasi lot. Spread, biaya, gap dan stop-out tidak dihitung.", "Educational LGD plan: entries and TP use technical levels, invalidation uses the next level. Illustrative sizing assumes $1,000 margin/lot and $100/point/lot, a 20% margin budget and a 10% loss-at-invalidation budget, in whole lots. These are simulation choices, not safety standards. If sizing does not fit, the price map remains visible without lot allocation. Spread, fees, gaps and stop-out are excluded.")}</p> :
+              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, lot pertama ${SCENARIO_CONTRACT.firstLot}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, first lot ${SCENARIO_CONTRACT.firstLot}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>}
+              <p>{t("Harga running: XUL10. Chart: OANDA XAUUSD. Saran MRG memakai level LGD D1 sebagai rencana edukatif, tanpa konversi menjadi entry XUL10 presisi. Pivot Klasik dan retracement Fibonacci dari high/low D1 terakhir menentukan kandidat; SL ilustratif memakai level teknikal berikutnya, bukan jarak ATR tetap. Isi Manual tidak memakai metode ini. Metadata dampak editorial belum lengkap.", "Running quote: XUL10. Chart: OANDA XAUUSD. MRG suggestions use LGD D1 levels as educational plans, without conversion into precise XUL10 entries. Classic Pivot and Fibonacci retracements from the last D1 high/low determine candidates; the illustrative SL uses the next technical level, not a fixed ATR spacing. Manual mode does not use this method. Editorial impact metadata is incomplete.")}</p>
               <p>{t("Edukasi risiko, bukan sinyal atau order broker.", "Risk education, not a signal or broker order.")}</p>
             </div>
           </details>

@@ -11,6 +11,8 @@ import { tsImport } from "tsx/esm/api";
 // Exercise the original pure study rules without a live backend or stored user data.
 const { calculateRisk } = await tsImport("../../artifacts/api-server/src/rules.ts", import.meta.url);
 const { riskInputSchema } = await tsImport("../../lib/mrg-shared/src/schema.ts", import.meta.url);
+const { suggestFromCapital } = await tsImport("../../lib/mrg-shared/src/capital-suggestion.ts", import.meta.url);
+const { technicalReferencePlan, referenceFillStage } = await tsImport("../../lib/mrg-shared/src/technical-reference-plan.ts", import.meta.url);
 
 const profile = browserProfile(process.argv.slice(2));
 const buildRoot = resolve("generated-artifacts/scenario-ui-app");
@@ -51,59 +53,76 @@ async function diagram(page, prices, layers = 2) {
   for (const price of prices) assert.ok(labels.includes(price), `Diagram missing price ${price}`);
 }
 async function limited(page) {
-  await id(page, "limited-suggestion-warning").waitFor();
-  assert.match(await id(page, "limited-suggestion-warning").innerText(), /belum dinilai, bukan netral/);
-  assert.match(await result(page).innerText(), /Snapshot saran MRG/);
-  const text = await result(page).innerText();
-  assert.match(text, /3[.,]000[,.]00/);
-  assert.match(text, /16[.,]400[,.]00/);
+  await id(page, "reference-limited").waitFor();
+  assert.match(await id(page, "reference-limited").innerText(), /maksimal 2 layer/);
+  assert.match(await id(page, "reference-warning").innerText(), /BUKAN entry\/SL XUL10/);
+  assert.equal(await id(page, "reference-filled-3").count(), 0);
+}
+async function referenceDiagram(page, side, count = 2, capital = 200000) {
+  const data = fixture();
+  const suggestion = suggestFromCapital(capital, data.context, data.quote.quote, Date.parse(NOW), true, true);
+  const plan = technicalReferencePlan(suggestion, side);
+  const stage = referenceFillStage(plan, count);
+  const table = id(page, "reference-entries");
+  await table.waitFor();
+  const entries = table.locator("tbody tr").filter({ hasText: /^L\d/ });
+  assert.equal(await entries.count(), plan.entries.length);
+  const labels = await id(page, "reference-diagram").locator("text").allTextContents();
+  for (let i = 0; i < plan.entries.length; i++) {
+    assert.equal(await entries.nth(i).locator("td").nth(1).innerText(), plan.entries[i].price.toFixed(2));
+    assert.ok(labels.includes(plan.entries[i].price.toFixed(2)));
+  }
+  assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), stage.average.toFixed(2));
+  assert.equal(await id(page, "reference-tp").locator("td").nth(1).innerText(), stage.target.price.toFixed(2));
+  assert.equal(await id(page, "reference-stop").locator("td").nth(1).innerText(), plan.stop.price.toFixed(2));
+  return { plan, stage };
 }
 const cases = [
   ["buy-limited", null, async page => {
     assert.equal(await id(page, "button-side-buy").getAttribute("aria-pressed"), "false");
     assert.equal(await id(page, "button-side-sell").getAttribute("aria-pressed"), "false");
     await start(page); await calculate(page); await limited(page);
-    await diagram(page, ["4500.00", "4459.00", "4472.67", "4492.67", "4418.00"]);
-    await id(page, "button-filled-1").click();
-    assert.equal(await id(page, "button-filled-1").getAttribute("aria-pressed"), "true");
-    await diagram(page, ["4500.00", "4459.00", "4520.00", "4418.00"]);
-    assert.match(await id(page, "fill-stage-summary").innerText(), /1 dari 2.*1 lot/);
-    assert.equal(await id(page, "fill-stage-average").locator("td").nth(1).innerText(), "4500.00");
-    assert.equal(await id(page, "table-scenario").locator('tr[data-filled="false"]').count(), 1);
-    assert.match(await id(page, "fill-stage-totals").innerText(), /8[.,]200[,.]00/);
-    await id(page, "market-layer-stages").screenshot({ path: resolve(output, `${page.viewportSize().width}-filled-l1.jpg`) });
-    await id(page, "button-filled-2").click();
-    await diagram(page, ["4500.00", "4459.00", "4472.67", "4492.67"]);
-    await id(page, "button-filled-1").click();
+    await referenceDiagram(page, "buy");
+    await id(page, "reference-filled-1").click();
+    assert.equal(await id(page, "reference-filled-1").getAttribute("aria-pressed"), "true");
+    await referenceDiagram(page, "buy", 1);
+    assert.match(await id(page, "reference-entries").innerText(), /tertunda/);
+    await id(page, "technical-reference-result").screenshot({ path: resolve(output, `${page.viewportSize().width}-filled-l1.jpg`) });
+    await id(page, "reference-filled-2").click();
+    await referenceDiagram(page, "buy", 2);
+    await id(page, "reference-filled-1").click();
     await calculate(page);
-    assert.equal(await id(page, "button-filled-2").getAttribute("aria-pressed"), "true", "A fresh capture resets to all layers");
-    await result(page).locator("summary").filter({ hasText: "Dasar saran" }).click();
-    assert.match(await result(page).innerText(), /T=floor\(0,25×ATR\), S=ceil\(0,5×ATR\)/);
+    assert.equal(await id(page, "reference-filled-2").getAttribute("aria-pressed"), "true", "A fresh capture resets to all layers");
+    await id(page, "reference-details").locator("summary").click();
+    assert.match(await id(page, "reference-details").innerText(), /TP memakai level teknikal/);
+    await id(page, "reference-strategy-martingale").click(); await calculate(page);
+    assert.match(await id(page, "text-scenario-error").innerText(), /Strategi ini dibatasi/);
+    assert.equal(await id(page, "technical-reference-result").count(), 0);
   }],
   ["sell-limited", null, async page => {
     await start(page, "sell"); await calculate(page); await limited(page);
-    await diagram(page, ["4500.00", "4541.00", "4527.33", "4507.33", "4582.00"]);
-    await id(page, "button-filled-1").click();
-    await diagram(page, ["4500.00", "4541.00", "4480.00", "4582.00"]);
-    assert.match(await id(page, "fill-stage-summary").innerText(), /1 dari 2.*1 lot/);
+    await referenceDiagram(page, "sell");
+    await id(page, "reference-filled-1").click();
+    const original = await referenceDiagram(page, "sell", 1);
     await id(page, "input-modal").fill("300000");
-    assert.equal(await id(page, "button-filled-1").getAttribute("aria-pressed"), "true");
-    assert.equal(await id(page, "fill-stage-tp").locator("td").nth(1).innerText(), "4480.00", "An edited capital must not rewrite the captured stage");
+    assert.equal(await id(page, "reference-filled-1").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "reference-tp").locator("td").nth(1).innerText(), original.stage.target.price.toFixed(2), "An edited capital must not rewrite the captured stage");
+    await id(page, "reference-snapshot-stale").waitFor();
     await id(page, "mode-manual").click();
-    assert.equal(await id(page, "market-layer-stages").count(), 0);
+    assert.equal(await id(page, "technical-reference-result").count(), 0);
     await id(page, "mode-market").click();
-    assert.equal(await id(page, "scenario-diagram").count(), 0, "Mode switching cannot revive a stage");
+    assert.equal(await id(page, "technical-reference-result").count(), 0, "Mode switching cannot revive a stage");
   }],
   ["direction-never-reactivates-old-result", null, async page => {
     await start(page); await calculate(page); await limited(page);
     await id(page, "button-side-sell").click();
     await id(page, "text-side-invalidated").waitFor();
-    assert.equal(await id(page, "scenario-diagram").count(), 0);
+    assert.equal(await id(page, "reference-diagram").count(), 0);
     await id(page, "button-side-buy").click();
     await id(page, "text-side-invalidated").waitFor();
-    assert.equal(await id(page, "scenario-diagram").count(), 0, "Switching back must not reactivate the old result");
+    assert.equal(await id(page, "reference-diagram").count(), 0, "Switching back must not reactivate the old result");
     await calculate(page);
-    await diagram(page, ["4500.00", "4459.00", "4492.67"]);
+    await referenceDiagram(page, "buy");
     assert.equal(await id(page, "text-side-invalidated").count(), 0);
   }],
   ["manual-and-default", null, async page => {
@@ -133,8 +152,9 @@ const cases = [
     assert.match(await id(page, "text-scenario-error").innerText(), /modal positif/i);
     assert.equal(await id(page, "scenario-diagram").count(), 0);
     await id(page, "input-modal").fill("100"); await calculate(page);
-    assert.match(await id(page, "text-scenario-error").innerText(), /Tidak ada kandidat/);
-    assert.equal(await id(page, "scenario-diagram").count(), 0);
+    await id(page, "reference-no-lot").waitFor();
+    await referenceDiagram(page, "buy", 2, 100);
+    assert.equal(await id(page, "reference-first-lot").count(), 0);
   }],
   ["high-impact-calendar-defers", data => data.context.calendar.events.push(highImpactEvent), async page => {
     await start(page); await calculate(page);

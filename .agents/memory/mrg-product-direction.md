@@ -139,4 +139,4 @@ Pengguna mengganti arah sebelumnya “Tetap referensi; perhitungan tetap ATR”:
 
 **Why:** Pengguna menjelaskan bahwa penolakan karena batas modal bukan tujuan kalkulator, lalu menyetujui pengerjaan arah baru. Ia mengulangi agar diskusi mendahului build supaya tidak melebar.
 
-**How to apply:** Persetujuan arah bukan persetujuan mengarang pemilihan swing, pemetaan level LGD ke XUL10, buffer SL, atau ukuran lot. Sepakati keputusan yang belum jelas sebelum mengaktifkannya. Jangan menjanjikan pembalikan pasti, menganggap widget TradingView API analisis, atau memaksakan semua tiga layer tersedia ketika data/struktur tidak mendukung.
+**How to apply:** Jangan menjanjikan pembalikan pasti, menganggap widget TradingView API analisis, atau memaksakan semua tiga layer tersedia ketika data/struktur tidak mendukung. Pengguna kemudian memilih “Pakai LGD dulu sebagai rencana edukatif, bukan level XUL10 presisi”. Izin ini tidak berarti sumber identik, ada kalibrasi harga, atau high/low D1 adalah swing pasar terkonfirmasi; sumber dan asumsi harus tetap jelas.
