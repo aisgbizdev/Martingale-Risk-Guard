@@ -878,6 +878,7 @@ footer.live-footer .live-link:hover { color:#fff; }
 .mrg-calculator-toolbar .mrg-legacy-brandbar { flex:1; min-width:0; margin:0; padding:0; border:0; box-shadow:none; background:transparent; }
 .mrg-calculator-toolbar .mrg-brand-bar-note { display:none; }
 .mrg-calculator-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.mrg-calculator-toolbar .mrg-calculator-actions > a { color:white; border:1px solid rgb(255 255 255 / .35); font-size:12px; }
 .mrg-calculator-actions button { min-height:44px; border:1px solid rgb(255 255 255 / .35); color:white; }
 .mrg-check-page .mrg-market-helper .mrg-summary-notes { gap:6px; font-size:12px; }
 .mrg-check-page .mrg-market-helper { gap:6px; }
@@ -892,6 +893,10 @@ footer.live-footer .live-link:hover { color:#fff; }
   .mrg-calculator-toolbar .mrg-legacy-brand img { width:32px; }
   .mrg-calculator-toolbar .mrg-legacy-brand strong { font-size:10px; }
   .mrg-calculator-actions { gap:4px; }
+  .mrg-calculator-toolbar { flex-wrap:wrap; }
+  .mrg-calculator-toolbar .mrg-legacy-brandbar { flex-basis:100%; }
+  .mrg-calculator-toolbar .mrg-calculator-actions { width:100%; justify-content:flex-end; }
+  .mrg-calculator-actions > a { padding-inline:8px; font-size:11px; }
   .mrg-calculator-actions button { padding-inline:9px; }
 }
 

@@ -5,7 +5,7 @@ import { captureReferencePlan, referenceSnapshotState, type ReferenceStrategy } 
 import { TechnicalReferenceResult } from "@/components/technical-reference-result";
 import { quoteIsFresh } from "@shared/live-types";
 import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
-import { SCENARIO_CONTRACT, SCENARIO_BUDGET } from "@shared/scenario-contract";
+import { SCENARIO_BUDGET } from "@shared/scenario-contract";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { useStudy } from "@/lib/study-context";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
 import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
 import { MarketRuleSummary } from "@/components/market-rule-summary";
+import { GuideLink } from "@/components/guide-link";
 
 type Scenario = ReturnType<typeof buildScenario>;
 type Controls = { side: ScenarioSide | null; strategy: "Linear Averaging" | "Martingale"; layers: number; target: number; spacing: number };
@@ -177,12 +178,9 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
         <div className="live-card mrg-workspace-market min-w-0 lg:col-start-1 lg:row-start-1 lg:row-span-2" data-testid="workspace-market">
           <h2>{t("Grafik pasar", "Market chart")}</h2>
           <p className="mrg-chart-warning mt-2" data-testid="text-chart-source">
-            {t("OANDA:XAUUSD · TradingView. Referensi visual, bukan harga XUL10 untuk perhitungan.", "OANDA:XAUUSD · TradingView. Visual reference, not the XUL10 calculation price.")}
+            {t("OANDA:XAUUSD · TradingView · bukan harga XUL10", "OANDA:XAUUSD · TradingView · not XUL10 prices")} <GuideLink topic="sumber" compact />
           </p>
           <div className="min-w-0 mt-3"><TradingViewChart online={market.online} /></div>
-          <p className="live-small mt-2">{inputMode === "market"
-            ? t("Chart OANDA adalah panduan visual. Rencana Pivot/Fibonacci pada hasil memakai referensi LGD, bukan level XUL10 presisi. Candle terakhir saat pasar tutup bukan harga live.", "The OANDA chart is a visual guide. Pivot/Fibonacci results use LGD references, not precise XUL10 levels. Last candles during closure are not live prices.")
-            : t("Saat pasar tutup, candle terakhir tetap menjadi referensi; bukan harga live. Layer dan TP XUL10 ditampilkan pada hasil perhitungan.", "When the market is closed, the last candles remain a reference, not a live price. XUL10 layers and TP appear in the calculation results.")}</p>
           <div className="flex flex-wrap gap-2 mt-3" aria-label={t("Buka bahan analisis", "Open analysis resources")}>
             {(["technical", "calendar", "news"] as const).map(tab => <Link key={tab} href={`/analysis?tab=${tab}`} className="live-button">
               {tab === "technical" ? t("Teknikal", "Technical") : tab === "calendar" ? t("Kalender", "Calendar") : t("Berita", "News")}
@@ -199,8 +197,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
 
         <div className="min-w-0 grid gap-4 lg:contents">
         <div className="live-card min-w-0 lg:col-start-2 lg:row-start-1">
-          <h2>{t("Kalkulator skenario", "Scenario calculator")}</h2>
-          <p className="live-small mt-1">{t("Edukasi: Anda yang memilih arah. MRG tidak menyarankan Buy atau Sell.", "Education: you choose the direction. MRG does not recommend Buy or Sell.")}</p>
+          <div className="flex justify-between items-center gap-2"><h2>{t("Kalkulator skenario", "Scenario calculator")}</h2><GuideLink compact /></div>
           <div className="flex gap-2 mt-3" role="group" aria-label={t("Cara mengisi", "Input method")}>
             <button type="button" className={seg(inputMode === "market")} aria-pressed={inputMode === "market"} onClick={() => pickMode("market")} data-testid="mode-market">{t("Saran MRG", "MRG suggestion")}</button>
             <button type="button" className={seg(inputMode === "manual")} aria-pressed={inputMode === "manual"} onClick={() => pickMode("manual")} data-testid="mode-manual">{t("Isi Manual", "Manual input")}</button>
@@ -213,14 +210,6 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               {historical && <p className="live-small mt-2" data-testid="historical-price-disclosure">{t("Bukan penutupan resmi. Jadwal sesi belum terverifikasi; ini tidak menyatakan market pasti tutup. Harga pembukaan dapat gap.", "Not an official close. Session hours are unverified; this does not confirm market closure. Opening prices can gap.")}</p>}
             </div>
             {capitalField}
-            <p className="live-small" data-testid="text-scenario-contract">{t(
-              `${inputMode === "market" ? "Lot awal dihitung otomatis · langkah 1 lot" : `Lot awal ${SCENARIO_CONTRACT.firstLot}`} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/poin/lot`,
-              `${inputMode === "market" ? "Calculated first lot · 1-lot increments" : `First lot ${SCENARIO_CONTRACT.firstLot}`} · margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot · ${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)}/point/lot`,
-            )}</p>
-            {capOk && <p className="live-small" data-testid="text-margin-capacity">{t(
-              `Kapasitas margin teoretis ${Math.floor(cap / SCENARIO_CONTRACT.marginPerLot).toLocaleString("id-ID")} lot sebelum floating loss; bukan jumlah lot yang disarankan.`,
-              `Theoretical margin capacity ${Math.floor(cap / SCENARIO_CONTRACT.marginPerLot).toLocaleString("en-US")} lots before floating loss; not the suggested position size.`,
-            )}</p>}
             <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className="flex gap-2">
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
               <button type="button" className={seg(c.side === "sell")} aria-pressed={c.side === "sell"} onClick={() => upd({ side: "sell" })} data-testid="button-side-sell">Sell</button>
@@ -230,23 +219,25 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
                 className={seg(referenceStrategy === strategy)} aria-pressed={referenceStrategy === strategy}
                 data-testid={strategy === "Martingale" ? "reference-strategy-martingale" : "reference-strategy-linear"}
                 onClick={() => { setReferenceStrategy(strategy); setTechnical(null); setErr(null); }}>
-                {strategy === "Martingale" ? "Martingale" : "Linear Averaging"}
+                {strategy === "Martingale" ? "Martingale · 1:2:4" : "Linear · 1:2:3"}
               </button>)}
             </div>}
             {inputMode === "manual" && study?.fields}
             {inputMode === "manual" && <div className="live-field">
               <label htmlFor="sc-spacing">{t("Jarak layer skenario (poin)", "Scenario layer spacing (points)")}</label>
               <input id="sc-spacing" className={num} type="number" min="1" step="any" value={c.spacing} onChange={e => upd({ spacing: Number(e.target.value) })} data-testid="input-sc-spacing" />
-              <span className="live-small">{t("Strategi, target, dan layer di atas juga dipakai pada diagram berbasis acuan XUL10.", "The strategy, target and layers above also drive the XUL10 price-reference diagram.")}</span>
             </div>}
             {err && <p role="alert" className="live-error" data-testid="text-scenario-error">{err}</p>}
             <div className="flex gap-2 flex-wrap">
               <Button type="button" className="flex-1 min-h-[44px]" disabled={inputMode === "market" ? (!scenarioQuote || market.context.isPending) : false} onClick={() => inputMode === "market" ? suggest() : manualAction()} data-testid="button-calculate-scenario">{historical ? t("Hitung simulasi historis", "Calculate historical simulation") : inputMode === "market" ? t("Lihat Saran MRG", "View MRG suggestion") : t("Hitung", "Calculate")}</Button>
               {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
-            <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
-              t("Rencana edukatif Pivot/Fibonacci LGD D1 untuk kedua strategi, hingga 3 layer sesuai level yang tersedia. Berita dan kalender memberi syarat/tunggu, bukan menghilangkan rencana. Bukan entry XUL10 presisi.", "Educational LGD D1 Pivot/Fibonacci plans for both strategies, up to 3 layers where levels exist. News and calendar supply conditions/wait status, not hide the plan. Not precise XUL10 entries.") :
-              t(`Default manual: Linear · 3 layer · lot awal ${SCENARIO_CONTRACT.firstLot} · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.`, `Manual defaults: Linear · 3 layers · first lot ${SCENARIO_CONTRACT.firstLot} · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.`)}</p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="live-small" data-testid="text-default-disclosure">{inputMode === "market"
+                ? t("Pivot/Fibo LGD D1 · bukan level XUL10 presisi", "LGD D1 Pivot/Fibo · not precise XUL10 levels")
+                : t("Manual · parameter pilihan Anda", "Manual · your chosen parameters")}</span>
+              <GuideLink topic={inputMode === "market" ? "pivot-fibo" : "cara-pakai"} compact />
+            </div>
             {inputMode === "market" && <details className="live-details">
               <summary>{t("Pembacaan berita & kalender", "News & calendar context")}</summary>
               <MarketRuleSummary
@@ -314,15 +305,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               : t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
             </>}
           </div>}
-          <details className="live-details mt-2" data-testid="scenario-limits">
-            <summary>{t("Batas dan sumber", "Limits and sources")}</summary>
-            <div className="live-small live-stack">
-              {inputMode === "market" ? <p>{t("Rencana LGD edukatif: entry dan TP dari level teknikal, batas batal pada level berikutnya. Sizing ilustratif memakai asumsi US$1.000 margin/lot dan US$100/poin/lot, batas margin 20% dan rugi pada batas batal 10% modal, langkah 1 lot. Batas ini pilihan simulasi, bukan standar keamanan. Jika lot tidak muat, peta harga tetap tampil tanpa alokasi lot. Spread, biaya, gap dan stop-out tidak dihitung.", "Educational LGD plan: entries and TP use technical levels, invalidation uses the next level. Illustrative sizing assumes $1,000 margin/lot and $100/point/lot, a 20% margin budget and a 10% loss-at-invalidation budget, in whole lots. These are simulation choices, not safety standards. If sizing does not fit, the price map remains visible without lot allocation. Spread, fees, gaps and stop-out are excluded.")}</p> :
-              <p>{t(`${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per poin per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, lot pertama ${SCENARIO_CONTRACT.firstLot}. Harga 4.500 ke 4.501 = 1 poin. Target dari rata-rata basket; stress satu jarak setelah layer terakhir. Tanpa spread, biaya, SL atau stop-out broker.`, `${money(SCENARIO_CONTRACT.dollarsPerPointPerLot)} per point per 1 lot, margin ${money(SCENARIO_CONTRACT.marginPerLot)}/lot, first lot ${SCENARIO_CONTRACT.firstLot}. Price 4,500 to 4,501 = 1 point. Target from the basket average; stress one spacing beyond the last layer. No spread, fees, SL or broker stop-out.`)}</p>}
-              <p>{t("Harga running: XUL10. Chart: OANDA XAUUSD. Saran MRG memakai level LGD D1 sebagai rencana edukatif, tanpa konversi menjadi entry XUL10 presisi. Pivot Klasik dan retracement Fibonacci dari high/low D1 terakhir menentukan kandidat; SL ilustratif memakai level teknikal berikutnya, bukan jarak ATR tetap. Isi Manual tidak memakai metode ini. Metadata dampak editorial belum lengkap.", "Running quote: XUL10. Chart: OANDA XAUUSD. MRG suggestions use LGD D1 levels as educational plans, without conversion into precise XUL10 entries. Classic Pivot and Fibonacci retracements from the last D1 high/low determine candidates; the illustrative SL uses the next technical level, not a fixed ATR spacing. Manual mode does not use this method. Editorial impact metadata is incomplete.")}</p>
-              <p>{t("Edukasi risiko, bukan sinyal atau order broker.", "Risk education, not a signal or broker order.")}</p>
-            </div>
-          </details>
+          <div className="mt-2" data-testid="scenario-limits"><GuideLink topic="sumber" /></div>
         </div>
         </div>
       </div>

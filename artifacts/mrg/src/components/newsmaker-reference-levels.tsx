@@ -3,6 +3,7 @@ import { newsmakerLevels } from "@shared/newsmaker-levels";
 import { getStudyReference } from "@shared/study-market";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
+import { GuideLink } from "@/components/guide-link";
 
 export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
   const { t } = useLanguage();
@@ -17,11 +18,11 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
   }
   const price = (n: number) => n.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return <section className="mt-4 border-t border-border pt-3" data-testid="newsmaker-reference-levels">
-    <h3 className="font-semibold">{t("Pivot & Fibonacci · Newsmaker", "Pivot & Fibonacci · Newsmaker")}</h3>
-    <p className="live-small mt-1">{t("Dihitung dari OHLC API, dengan rumus kalkulator Newsmaker. Referensi LGD Daily, bukan level XUL10 identik atau sinyal.", "Computed from API OHLC using Newsmaker calculator formulas. LGD Daily reference, not identical XUL10 levels or signals.")}</p>
-    <p className="live-small mt-2" data-testid="reference-levels-policy">{t("Acuan utama: Pivot Klasik. Fibonacci sebagai pembanding; Woodie/Camarilla referensi tambahan. Target, jarak dan batas layer tidak disesuaikan oleh level ini; perhitungan saran tetap memakai ATR dan batas risiko.", "Primary reference: Classic Pivot. Fibonacci is a comparison; Woodie/Camarilla are additional references. These levels do not adjust target, spacing or layer limits; suggestions still use ATR and risk limits.")}</p>
+    <div className="flex justify-between items-center gap-2"><h3 className="font-semibold">Pivot & Fibonacci</h3><GuideLink topic="pivot-fibo" compact /></div>
+    <p className="live-small mt-1" data-testid="reference-levels-policy">{t("Referensi LGD D1, bukan level XUL10 presisi.", "LGD D1 reference, not precise XUL10 levels.")}</p>
     {!levels || !a ? <p role="status" className="live-small mt-2">{t("OHLC D1 tertutup belum tersedia/segar. Level tidak dibuat-buat.", "Fresh closed D1 OHLC is unavailable. No substitute levels.")}</p> : <>
-      <p className="live-small mt-2">LGD Daily · {a.lastDate} · O {price(a.lastOpen!)} · H {price(a.lastHigh!)} · L {price(a.lastLow!)} · C {price(a.lastClose)}</p>
+      <p className="live-small mt-2">LGD Daily · {a.lastDate}</p>
+      <details className="live-details mt-2"><summary>{t("Data OHLC sumber", "Source OHLC data")}</summary><p className="live-small">O {price(a.lastOpen!)} · H {price(a.lastHigh!)} · L {price(a.lastLow!)} · C {price(a.lastClose)}</p></details>
       <div className="flex gap-2 flex-wrap my-3" role="group" aria-label={t("Jenis acuan teknikal", "Technical reference type")}>
         {(["pivot", "up", "down"] as const).map(v => <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`rounded-md border px-3 py-2 text-xs min-h-[44px] ${view === v ? "bg-primary text-primary-foreground" : "bg-background"}`}>{v === "pivot" ? "Pivot" : v === "up" ? t("Fibo naik", "Fibo up") : t("Fibo turun", "Fibo down")}</button>)}
       </div>
@@ -40,7 +41,6 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
         <tbody>{levels![view][kind].map(l => <tr key={l.ratio} className="border-t border-border"><th className="text-left py-2">{(l.ratio * 100).toFixed(1)}%</th><td className="text-right py-2 font-mono">{price(l.price)}</td></tr>)}</tbody>
       </table>)}</div>}
       {view === "pivot" && <button type="button" onClick={() => setShowAll(v => !v)} aria-expanded={showAll} className="text-xs underline min-h-[44px]">{showAll ? t("Ringkas level", "Fewer levels") : t("Semua level R4–S4", "All levels R4–S4")}</button>}
-      <p className="live-small mt-2">{t("Acuan high/low otomatis memakai candle D1 tertutup terakhir, bukan swing pilihan pengguna. Level hanya referensi, bukan harga entry/TP XUL10.", "Automatic high/low anchors use the last closed D1 candle, not a user-selected swing. Levels are reference only, not XUL10 entry/TP prices.")}</p>
       <a className="live-small underline inline-block mt-2" href="https://www.newsmaker.id/id/tools/pivot-fibonacci" target="_blank" rel="noopener noreferrer">{t("Kalkulator sumber Newsmaker", "Newsmaker source calculator")}</a>
     </>}
   </section>;

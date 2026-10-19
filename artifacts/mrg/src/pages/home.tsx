@@ -17,6 +17,7 @@ import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
 import { ScenarioWorkspace } from "@/components/scenario-workspace";
 import { studyRequestOptions } from "@/lib/study-request";
+import { GuideLink } from "@/components/guide-link";
 
 const KEYS = ["modal", "targetPoin", "strategy", "maxLayer", "experience", "marketCondition"] as const;
 
@@ -37,7 +38,7 @@ export default function Home() {
   useEffect(() => {
     if (!justSubmitted.current || !current || !calc.data) return;
     justSubmitted.current = false;
-    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    if (resultRef.current?.closest("[hidden]") || window.matchMedia("(min-width: 1024px)").matches) return;
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [calc.data, current]);
   const snap = current && rawSnap && rawSnap.paramsKey === paramsKey(current) ? rawSnap : null;
@@ -155,14 +156,13 @@ export default function Home() {
           </select>
         </div>
       </div>
-      <p className="live-small">{t("Parameter studi aturan lama, bukan level harga. Default: Linear Averaging, 30 poin, 3 layer, Pemula.", "Study-rule parameters, not price levels. Defaults: Linear Averaging, 30 points, 3 layers, Beginner.")}</p>
       {error && <p role="alert" className="live-error" data-testid="text-form-error">{error}</p>}
     </div>
   );
 
   const studyResult = (
     <section id="hasil-cek" ref={resultRef} aria-live="polite" data-testid="inline-result" className="rounded-lg border border-border p-3 sm:p-4">
-      <h3 className="font-bold mb-2">{t("Hasil studi (aturan lama)", "Study result (original rules)")}</h3>
+      <div className="flex items-center justify-between gap-2"><h3 className="font-bold mb-2">{t("Hasil studi (aturan lama)", "Study result (original rules)")}</h3><GuideLink topic="studi" compact /></div>
       {!submitted && <p className="text-sm text-muted-foreground">{t("Isi parameter studi lalu tekan hitung. Hasil muncul di sini.", "Fill the study parameters and calculate. The result appears here.")}</p>}
       {stale && <p role="status" className="live-error" data-testid="text-result-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; hitung ulang.", "Inputs changed. The earlier result no longer applies; recalculate.")}</p>}
       {current && calc.isLoading && !calc.isError && <p className="text-sm text-muted-foreground">{t("Menghitung...", "Calculating...")}</p>}
@@ -172,7 +172,6 @@ export default function Home() {
       )}
       {current && calc.data && !calc.isError && (
         <div className="live-stack">
-          <p className="text-xs font-semibold text-muted-foreground">{t("Hasil aturan studi untuk skenario Anda, bukan ukuran risiko akun realtime.", "Study-rule output for your scenario, not a live account-risk measure.")}</p>
           <div className="text-center"><StatusBadge status={calc.data.status} t={t} />
             <div className="text-4xl font-mono font-bold mt-3" data-testid="text-risk-score">{calc.data.score}<span className="text-xl text-muted-foreground">/100</span></div>
             <div className="mt-2"><RiskScoreMeter score={calc.data.score} status={calc.data.status} t={t} /></div>
@@ -222,7 +221,6 @@ export default function Home() {
               {[100000, 200000, 300000].map(v => <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>USD {v.toLocaleString("id-ID")}</Button>)}
             </div>
             <input id="f-modal" type="number" inputMode="decimal" min="0" max="1000000000000" step="any" value={draft.modal} onChange={e => set({ modal: e.target.value })} placeholder={t("Masukkan modal Anda", "Enter your capital")} data-testid="input-modal" />
-            <span className="live-small">{t("Modal simulasi, bukan saldo akun atau anjuran setoran.", "Simulation capital, not an account balance or deposit advice.")}</span>
           </div>
   );
 
@@ -233,6 +231,7 @@ export default function Home() {
         <header className="mrg-calculator-toolbar">
           <MRGBrandBar />
           <div className="mrg-calculator-actions">
+           <GuideLink />
           <span id="mrg-install-toolbar" className="live-header-install" />
           <Button variant="default" onClick={() => setLanguage(language === "id" ? "en" : "id")} className="gap-2" aria-label={t("Ganti ke bahasa Inggris", "Switch to Indonesian")} data-testid="button-language-toggle">
             <Globe className="w-4 h-4" />{language === "id" ? "EN" : "ID"}
@@ -242,9 +241,6 @@ export default function Home() {
 
         <div className="mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed mt-1">
-            {t("Isi modal → pilih Buy atau Sell → pelajari skenarionya.", "Enter capital → choose Buy or Sell → explore the scenario.")}
-          </p>
           <div className="mt-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs">{t("Edukasi risiko · bukan sinyal atau transaksi broker", "Risk education · not trading signals or broker orders")}</span>
@@ -263,7 +259,7 @@ export default function Home() {
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}
           </p>
           <div className="flex justify-center gap-4 text-xs flex-wrap">
-            <Link href="/literasi" className="text-muted-foreground hover:text-foreground underline">{t("Literasi", "Literacy")}</Link>
+            <GuideLink />
             <Link href="/privacy" className="text-muted-foreground hover:text-foreground underline" data-testid="link-privacy">{t("Kebijakan Privasi", "Privacy Policy")}</Link>
             <Link href="/terms" className="text-muted-foreground hover:text-foreground underline" data-testid="link-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Link>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { MRGBrandBar } from "@/components/live/mrg-brand-bar";
+import { GuideLink } from "@/components/guide-link";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -286,15 +287,17 @@ export function StudySummary({ result, params, snapshot, language, t, compact = 
   );
   return (
     <div className="mrg-summary" data-testid="study-summary">
-      <p className="text-xs text-muted-foreground">{t("Skor aturan studi, bukan probabilitas rugi. Ambang: 0-35 relatif rendah, 36-60 berisiko, 61-100 tidak layak menurut aturan studi.", "Study-rule score, not a loss probability. Thresholds: 0-35 relatively low, 36-60 risky, 61-100 not viable under the study rules.")}</p>
-      <div className="mrg-summary-box">
+      <p className="text-xs text-muted-foreground">{compact
+        ? t("Skor studi historis, bukan probabilitas rugi.", "Historical study score, not loss probability.")
+        : t("Skor aturan studi, bukan probabilitas rugi. Ambang: 0-35 relatif rendah, 36-60 berisiko, 61-100 tidak layak menurut aturan studi.", "Study-rule score, not a loss probability. Thresholds: 0-35 relatively low, 36-60 risky, 61-100 not viable under the study rules.")}</p>
+      {!compact && <div className="mrg-summary-box">
         {shown.map((x, i) => <p key={i} style={{ marginBottom: 6 }}>{x}</p>)}
-      </div>
+      </div>}
       {warningsBox}
       {compact ? (
         <details className="live-details" data-testid="summary-more">
-          <summary>{t("Catatan perilaku dan sumber (opsional)", "Behavior notes and sources (optional)")}</summary>
-          {notesBox}{sourceBox}
+          <summary>{t("Konteks dan sumber studi", "Study context and source")}</summary>
+          {sourceBox}<GuideLink topic="studi" />
         </details>
       ) : (<>{notesBox}{sourceBox}</>)}
     </div>

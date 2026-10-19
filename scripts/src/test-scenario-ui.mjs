@@ -54,7 +54,7 @@ async function diagram(page, prices, layers = 2) {
 async function limited(page) {
   await id(page, "reference-context-status").waitFor();
   assert.match(await id(page, "reference-context-status").innerText(), /Konteks belum lengkap/);
-  assert.match(await id(page, "reference-warning").innerText(), /BUKAN entry\/SL XUL10/);
+  assert.match(await id(page, "reference-warning").innerText(), /bukan level XUL10 presisi/);
   assert.equal(await id(page, "reference-filled-3").count(), 1);
 }
 async function referenceDiagram(page, side, count = 3, capital = 200000, strategy = "Linear Averaging") {
@@ -74,7 +74,7 @@ async function referenceDiagram(page, side, count = 3, capital = 200000, strateg
     if (i > 0) assert.ok(Math.abs(Number(plan.entries[i].price.toFixed(2)) - Number(plan.entries[i - 1].price.toFixed(2))) + .00001 >= plan.spacing.minimumGap);
   }
   assert.ok(!labels.some(label => /^L\d/.test(label)));
-  assert.match(await id(page, "reference-spacing").innerText(), /0,20 × ATR14 D1/);
+  assert.match(await id(page, "reference-spacing").innerText(), /0,20 × ATR D1/);
   assert.match(await id(page, "reference-filled-1").innerText(), new RegExp(`${side === "buy" ? "Buy" : "Sell"} 1`));
   assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), stage.average.toFixed(2));
   assert.equal(await id(page, "reference-tp").locator("td").nth(1).innerText(), stage.target.price.toFixed(2));
@@ -98,8 +98,8 @@ const cases = [
     await calculate(page);
     assert.equal(await id(page, "reference-filled-3").getAttribute("aria-pressed"), "true", "A fresh capture resets to all layers");
     await id(page, "reference-details").locator("summary").click();
-    assert.match(await id(page, "reference-details").innerText(), /TP memakai level teknikal/);
-    assert.match(await id(page, "reference-zone-audit").innerText(), /bukan rencana aktif/);
+    assert.match(await id(page, "reference-details").innerText(), /snapshot/);
+    assert.match(await id(page, "reference-zone-audit").innerText(), /zona tersendiri|digabung/);
     await id(page, "reference-strategy-martingale").click(); await calculate(page);
     await referenceDiagram(page, "buy", 3, 200000, "Martingale");
     assert.equal(await id(page, "text-scenario-error").count(), 0);
@@ -173,7 +173,9 @@ const cases = [
   ["incomplete-calendar-blocks-but-manual-works", data => { data.context.calendar.complete = false; }, async page => {
     await start(page); await calculate(page);
     await referenceDiagram(page, "buy");
-    assert.match(await id(page, "reference-context-status").innerText(), /Kalender belum lengkap/);
+    assert.match(await id(page, "reference-context-status").innerText(), /Konteks belum lengkap/);
+    await id(page, "reference-details").locator("summary").click();
+    assert.match(await id(page, "reference-details").innerText(), /Kalender belum lengkap/);
     assert.equal(await id(page, "text-scenario-error").count(), 0);
     await id(page, "mode-manual").click();
     await id(page, "select-market-condition").selectOption("Sideways");
@@ -185,7 +187,9 @@ const cases = [
   }, async page => {
     await start(page, "sell"); await id(page, "reference-strategy-martingale").click(); await calculate(page);
     await referenceDiagram(page, "sell", 3, 200000, "Martingale");
-    assert.match(await id(page, "reference-context-status").innerText(), /fundamental belum diketahui/);
+    assert.match(await id(page, "reference-context-status").innerText(), /Konteks belum lengkap/);
+    await id(page, "reference-details").locator("summary").click();
+    assert.match(await id(page, "reference-details").innerText(), /fundamental belum diketahui/);
     assert.equal(await id(page, "text-scenario-error").count(), 0);
   }],
   ["missing-ohlc-no-fabrication", data => { delete data.context.history.analysis.lastOpen; }, async page => {
@@ -247,6 +251,73 @@ const cases = [
     await id(page, "text-scenario-error").waitFor();
     assert.match(await id(page, "text-scenario-error").innerText(), /Pilih arah Buy atau Sell/);
     assert.equal(await id(page, "scenario-diagram").count(), 0);
+  }],
+  ["guide-preserves-market-snapshot", null, async page => {
+    await start(page, "sell", "1000000");
+    await id(page, "reference-strategy-martingale").click();
+    await calculate(page);
+    await referenceDiagram(page, "sell", 3, 1000000, "Martingale");
+    await id(page, "reference-filled-2").click();
+    const before = await referenceDiagram(page, "sell", 2, 1000000, "Martingale");
+    const help = id(page, "reference-average").getByRole("link");
+    await help.scrollIntoViewIfNeeded();
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await help.click();
+    await id(page, "section-rata-rata").waitFor({ state: "visible" });
+    await page.waitForFunction(() => document.activeElement?.id === "rata-rata");
+    assert.equal(await id(page, "scenario-result").isVisible(), false, "Calculator must be hidden behind guide");
+    await page.screenshot({ path: resolve(screenshots, `${page.viewportSize().width}-guide.jpg`), type: "jpeg" });
+    await id(page, "button-kembali").click();
+    try {
+      await page.waitForFunction(y => Math.abs(window.scrollY - y) < 3, scrollBefore);
+    } catch (e) {
+      throw new Error(`Return scroll expected ${scrollBefore}, actual ${await page.evaluate(() => ({ y: window.scrollY, max: document.documentElement.scrollHeight - innerHeight })) .then(JSON.stringify)}`, { cause: e });
+    }
+    assert.equal(await id(page, "reference-filled-2").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), before.stage.average.toFixed(2));
+    assert.equal(await id(page, "input-modal").inputValue(), "1000000");
+    assert.equal(await id(page, "reference-strategy-martingale").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "reference-snapshot-stale").count(), 0);
+    await id(page, "reference-average").getByRole("link").click();
+    await id(page, "section-rata-rata").waitFor({ state: "visible" });
+    // Hidden polling/staleness logic must remain alive without silently recapturing.
+    await page.context().setOffline(true);
+    await page.goBack();
+    await id(page, "reference-snapshot-stale").waitFor({ state: "visible" });
+    assert.equal(await id(page, "reference-filled-2").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), before.stage.average.toFixed(2));
+    await page.context().setOffline(false);
+  }],
+  ["guide-preserves-manual-and-direct-entry", null, async page => {
+    await start(page);
+    await id(page, "mode-manual").click();
+    await id(page, "select-market-condition").selectOption("Sideways");
+    await id(page, "select-strategy").selectOption("Martingale");
+    await id(page, "select-target-poin").selectOption("40");
+    await id(page, "input-sc-spacing").fill("25");
+    await calculate(page);
+    await id(page, "table-scenario").waitFor();
+    const before = await id(page, "table-scenario").innerText();
+    const score = await id(page, "text-risk-score").innerText();
+    await page.locator('header.mrg-calculator-toolbar a[href*="/literasi"]').click();
+    await id(page, "heading-panduan").waitFor({ state: "visible" });
+    await page.goBack();
+    await id(page, "table-scenario").waitFor({ state: "visible" });
+    assert.equal(await id(page, "table-scenario").innerText(), before);
+    assert.equal(await id(page, "text-risk-score").innerText(), score);
+    assert.equal(await id(page, "input-sc-spacing").inputValue(), "25");
+    assert.equal(await id(page, "select-target-poin").inputValue(), "40");
+    assert.equal(await id(page, "mode-manual").getAttribute("aria-pressed"), "true");
+    await page.goto(`${origin}/literasi#pivot-fibo`);
+    await page.waitForFunction(() => document.activeElement?.id === "pivot-fibo");
+    assert.equal(await id(page, "scenario-workspace").count(), 0, "Direct guide must not mount calculator");
+    await page.locator('[data-testid="button-language-toggle"]:visible').click();
+    assert.equal(await id(page, "heading-panduan").innerText(), "Guide & Literacy");
+    await id(page, "link-toc-glosarium").click();
+    await page.waitForFunction(() => document.activeElement?.id === "glosarium");
+    assert.match(await id(page, "list-glosarium").innerText(), /Position size/);
+    await id(page, "button-kembali").click();
+    await id(page, "scenario-workspace").waitFor({ state: "visible" });
   }],
 ];
 const only = process.env.MRG_UI_CASES?.split(",").filter(Boolean);
