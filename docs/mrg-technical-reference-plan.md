@@ -16,19 +16,32 @@ adalah panduan terpisah, bukan API analisis.
 - Kandidat berasal dari Pivot Klasik, retracement arah terkait, serta high/low
   D1. Level sama pada ketelitian tampilan dua desimal digabung; tidak ada
   klaim ketelitian tick instrumen.
-- Buy memilih level berbeda di bawah harga pembanding, terdekat dahulu;
-  Sell mencerminkan aturan ini di atas harga pembanding.
+- Buy memilih zona di bawah harga pembanding, terdekat dahulu; Sell mencerminkan
+  aturan di atas harga pembanding. Nama yang tampil Buy 1–3 atau Sell 1–3;
+  label di Isi Manual tetap.
+- Pengguna memilih penyaring **0,20 × ATR14 LGD D1** sebagai aturan awal untuk
+  dicoba, bukan parameter optimal/aman yang sudah teruji. Minimum dibulatkan
+  ke atas pada dua desimal tampilan (minimal 0,01), bukan klaim tick XUL10.
+- Harga wakil setiap zona tetap level rumus asli terdekat. Kandidat berikutnya
+  yang jaraknya kurang dari minimum terhadap wakil masuk zona tersebut, bukan
+  menjadi entry tambahan. Perbandingan tidak dirantai lewat anggota terakhir:
+  rangkaian harga berdekatan tidak boleh menyerap seluruh rentang.
+- Pemisahan dinilai pada harga dua desimal yang terlihat. ATR hanya menyaring
+  level yang tersedia, tidak membuat grid atau harga sintetis. ATR tidak valid
+  menghentikan pembentukan rencana dengan alasan jelas, tanpa jarak cadangan.
 - Maksimal tiga entry untuk Linear maupun Martingale, jika struktur teknikal
   menyediakan level dan batas batal. Berita belum dinilai, tren searah,
   ketidakpastian, dan kalender tidak lagi menghapus rencana atau mengunci
   strategi. Tidak ada penambahan layer rekaan demi memenuhi jumlah.
 - Satu level teknikal lebih jauh selalu dicadangkan sebagai batas batal
   ilustratif. Tanpa batas tersebut, jangan membuat entry tambahan.
-- SL/batas batal adalah level teknikal berikutnya, tanpa buffer ATR rekaan.
+- SL/batas batal adalah wakil zona teknikal berikutnya yang juga memenuhi
+  pemisahan minimum dari entry terakhir, tanpa buffer ATR rekaan.
   Ini bukan stop broker, bukan jaminan harga eksekusi, dan bukan kerugian
   maksimum; spread, biaya, slippage, dan gap tidak dihitung.
-- TP adalah level teknikal terdekat yang berada pada sisi profit dari rata-rata
-  layer yang diasumsikan terisi. Pemilihan tahap tidak mengubah entry, lot
+- Kumpulan target tetap level teknikal pada sisi profit entry pertama; TP
+  dipilih dari kumpulan tersebut pada sisi profit rata-rata terisi. TP tidak
+  otomatis diperlebar mengikuti penyaring entry. Pemilihan tahap tidak mengubah entry, lot
   yang dialokasikan ke tiap layer, atau batas batal basket penuh.
 - Harga menyentuh level bukan konfirmasi entry. Rencana tidak mendeteksi fill
   akun, tidak menyarankan arah, dan tidak melakukan transaksi.
@@ -36,7 +49,8 @@ adalah panduan terpisah, bukan API analisis.
 ## Modal sesudah geometri
 
 Modal tidak mengubah level harga. Pola relatif tetap Linear 1:2:3 atau
-Martingale 1:2:4 sesuai izin konteks, bukan penamaan ulang pola manual.
+Martingale 1:2:4, dipotong sesuai jumlah zona yang tersedia; konteks tidak
+mengunci strategi. Ini bukan penamaan ulang pola manual.
 Sizing memakai asumsi edukatif US$1.000 margin/lot, US$100/poin/lot.
 Lot awal adalah bilangan bulat terbesar yang memenuhi kedua budget:
 margin basket 20% modal dan kerugian pada batas batal 10% modal.
@@ -66,3 +80,25 @@ aturan berita/kalender tidak mengklaim memahami arah seluruh berita.
 Rencana hanya diganti saat pengguna menghitung ulang. Pergantian modal/data
 menandai snapshot lama; pergantian arah meminta perhitungan baru, dan
 pergantian mode membuang hasil agar tidak hidup kembali.
+
+## Bukti perbandingan bertanggal
+
+Contoh regresi, **bukan harga live**: OHLC LGD Daily 16 Oktober 2026 =
+4164,47 / 4198,45 / 4147,22 / 4168,94; ATR14 D1 81.
+Pembanding XUL10 4178,59 pada 19 Oktober 2026 pukul 03:00 UTC.
+Minimum penyaring = 16,20 poin. Angka di bawah mengikuti dua desimal tampilan.
+
+| Arah | Entry lama (terdekat tanpa zona) | Entry setelah penyaring | Batas batal lama → baru |
+| --- | --- | --- | --- |
+| Buy | 4172,84 / 4171,54 / 4166,79 | 4172,84 / 4147,22 / 4120,31 | 4158,18 → 4093,39 |
+| Sell | 4178,88 / 4187,49 / 4195,85 | 4178,88 / 4195,85 / 4222,77 | 4198,45 → 4247,08 |
+
+Contoh Buy: 4171,54, 4166,79 dan 4158,18 berada kurang dari minimum
+terhadap wakil 4172,84, sehingga tidak menjadi posisi tambahan.
+UI memperlihatkan jarak aktual, ATR/faktor, serta rincian zona dan perbandingan
+pemilihan lama dari snapshot yang sama. Bagian perbandingan bukan rencana aktif.
+
+Pemisahan lebih lebar dapat memperbesar jarak batas batal dan mengecilkan lot;
+seluruh sizing dan tahap terisi dihitung kembali, budget tidak dinaikkan.
+Aturan ini berlaku ke semua Saran MRG dengan data valid, termasuk referensi
+akhir pekan yang memenuhi syarat, bukan khusus satu modal atau snapshot.

@@ -139,7 +139,7 @@ Pengguna menegaskan jarak antar-layer harus masuk akal untuk skala D1, bukan gar
 
 **Why:** Pengguna menemukan rencana terlalu rapat dan menekankan rentang D1 relatif luas; rumus level yang benar belum membuktikan rencana layering sesuai tujuan.
 
-**How to apply:** Bahas zona dan pemisahan layer relatif terhadap volatilitas sebelum mengubah seleksi. Jangan menganggap faktor ATR tertentu telah disetujui hanya karena pengguna menyetujui tujuan jarak yang masuk akal.
+**How to apply:** Pengguna kemudian memilih **0,20 × ATR14 D1** sebagai penyaring jarak untuk dicoba: “coba dulu pake ini kalau dah cioba masih kurang oke, nanti kita perbaiki dulu”. Harga tetap level Pivot/Fibo asli; faktor ini bukan klaim optimal atau aman dan tidak boleh diganti diam-diam.
 
 Pengguna menegaskan perbaikan aturan berlaku untuk seluruh Saran MRG, bukan hanya hasil yang dicontohkan.
 

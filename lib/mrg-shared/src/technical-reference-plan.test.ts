@@ -5,6 +5,8 @@ import { technicalReferencePlan as buildReferencePlan, referenceFillStage, captu
 import type { SuggestionSources } from "./suggestion-snapshot";
 import type { ScenarioSide } from "./scenario-plan";
 import { newsmakerLevels } from "./newsmaker-levels";
+import { referenceDistance, referenceSpacing, selectReferenceZones } from "./reference-zones";
+import { resolveScenarioPrice } from "./scenario-price";
 
 function fixture(capital = 100000, unrestricted = false): CapitalSuggestion {
   return {
@@ -38,7 +40,7 @@ function technicalReferencePlan(f: CapitalSuggestion, side: ScenarioSide, strate
 
 test("LGD plan is independent of old capital/strategy gates and uses genuine nonuniform formula levels on both sides", () => {
   for (const side of ["buy", "sell"] as const) {
-    const input = fixture();
+    const input = fixture(300000);
     const copy = structuredClone(input);
     const plan = technicalReferencePlan(input, side);
     assert.equal(plan.source, "LGD Daily");
@@ -119,7 +121,102 @@ test("old deferred/incomplete status cannot gate plans; invalid required price/O
   const bad = fixture(); bad.reference.analysis!.lastHigh = 4100;
   assert.throws(() => technicalReferencePlan(bad, "buy"), /OHLC/);
   const far = fixture(); far.quote!.price = 999999;
-  assert.throws(() => technicalReferencePlan(far, "sell"), /Belum ada level/);
+  assert.throws(() => technicalReferencePlan(far, "sell"), /Belum ada zona/);
+});
+
+test("approved D1 zone spacing fixes the dated close-level example, without inventing formula prices", () => {
+  const f = fixture(300000);
+  const buy = technicalReferencePlan(f, "buy");
+  assert.deepEqual(buy.previousSelection.entries.map(e => e.price.toFixed(2)), ["4172.84", "4171.54", "4166.79"]);
+  assert.equal(buy.spacing.factor, .2);
+  assert.equal(buy.spacing.atr14, 81);
+  assert.equal(buy.spacing.minimumGap, 16.2);
+  assert.deepEqual(buy.entries.map(e => e.price.toFixed(2)), ["4172.84", "4147.22", "4120.31"]);
+  assert.equal(buy.stop.price.toFixed(2), "4093.39");
+  assert.ok(buy.entries[0].members.some(m => m.price.toFixed(2) === "4171.54"));
+  const sell = technicalReferencePlan(f, "sell");
+  assert.deepEqual(sell.entries.map(e => e.price.toFixed(2)), ["4178.88", "4195.85", "4222.77"]);
+  assert.equal(sell.stop.price.toFixed(2), "4247.08");
+});
+
+test("zone anchors prevent chaining, respect display boundaries and do not mutate input", () => {
+  const levels = [100, 91, 82, 73, 64].map(price => ({ price, labels: [String(price)] }));
+  const original = structuredClone(levels);
+  const zones = selectReferenceZones(levels, 10);
+  assert.deepEqual(zones.map(z => z.price), [100, 82, 64]);
+  assert.deepEqual(zones[0].members.map(m => m.price), [100, 91]);
+  assert.deepEqual(levels, original);
+  assert.equal(selectReferenceZones([{ price: 100, labels: [] }, { price: 83.8, labels: [] }], 16.2).length, 2);
+  assert.equal(selectReferenceZones([{ price: 100, labels: [] }, { price: 83.81, labels: [] }], 16.2).length, 1);
+  assert.equal(selectReferenceZones([{ price: 100.004, labels: [] }, { price: 100, labels: [] }], .01).length, 1);
+  assert.equal(referenceSpacing(81.74).minimumGap, 16.35);
+  assert.equal(referenceSpacing(80).minimumGap, 16);
+  assert.equal(referenceSpacing(.000001).minimumGap, .01);
+  for (const bad of [0, -1, NaN, Infinity]) assert.throws(() => referenceSpacing(bad), /ATR14/);
+});
+
+test("zone separation applies to every strategy/capital across D1 snapshots and volatility regimes", () => {
+  for (const scale of [.5, 1, 2]) for (const atr of [20, 81, 160, 300]) {
+    for (const side of ["buy", "sell"] as const) {
+      let geometry: unknown;
+      for (const capital of [10, 100000, 200000, 300000, 1000000]) for (const strategy of ["Linear Averaging", "Martingale"] as const) {
+        const f = fixture(capital);
+        f.quote!.price *= scale;
+        const a = f.reference.analysis!;
+        for (const key of ["lastOpen", "lastHigh", "lastLow", "lastClose", "ma20", "ma50", "support20", "resistance20"] as const) a[key]! *= scale;
+        a.atr14 = atr * scale; a.atrBaseline *= scale;
+        const plan = technicalReferencePlan(f, side, strategy);
+        const current = { entries: plan.entries, stop: plan.stop, targets: plan.targets };
+        if (geometry) assert.deepEqual(current, geometry); else geometry = current;
+        for (let i = 1; i < plan.entries.length; i++) assert.ok(referenceDistance(plan.entries[i - 1].price, plan.entries[i].price) >= plan.spacing.minimumGap);
+        assert.ok(referenceDistance(plan.stop.price, plan.entries.at(-1)!.price) >= plan.spacing.minimumGap);
+        for (let n = 1; n <= plan.entries.length; n++) {
+          const stage = referenceFillStage(plan, n);
+          assert.ok((side === "buy" ? 1 : -1) * (stage.target.price - stage.average) > 0);
+          if (plan.firstLot === null) assert.equal(stage.margin, null);
+          else {
+            assert.ok(stage.margin! <= capital * .2 + .01);
+            assert.ok(stage.lossAtStop! <= capital * .1 + .01);
+          }
+        }
+      }
+    }
+  }
+});
+
+test("insufficient separated zones never force three entries, invalid ATR never falls back", () => {
+  const f = fixture();
+  f.reference.analysis!.atr14 = 300;
+  const plan = technicalReferencePlan(f, "buy");
+  assert.equal(plan.entries.length, 1);
+  assert.ok(referenceDistance(plan.stop.price, plan.entries[0].price) >= 60);
+  assert.throws(() => referenceFillStage(plan, 2));
+  f.reference.analysis!.atr14 = 1000;
+  assert.throws(() => technicalReferencePlan(f, "buy"), /Belum ada zona/);
+  for (const atr of [0, -1, NaN, Infinity]) {
+    f.reference.analysis!.atr14 = atr;
+    assert.throws(() => technicalReferencePlan(f, "buy"), /ATR14/);
+  }
+});
+
+test("eligible weekend reference uses the same zones and keeps its historical snapshot frozen", () => {
+  const f = fixture(300000);
+  const live = technicalReferencePlan(f, "buy");
+  f.evaluatedAt = "2026-10-17T03:00:00Z";
+  f.reference.receivedAt = f.evaluatedAt;
+  f.quote!.asOf = "2026-10-16T16:00:00Z";
+  const s = sources(f), now = Date.parse(f.evaluatedAt);
+  const basis = resolveScenarioPrice(s.quote, now, true);
+  assert.equal(basis?.kind, "historical");
+  s.priceBasis = basis!;
+  const snap = captureReferencePlan(f.capital, s, now, "buy", "Linear Averaging");
+  assert.deepEqual(snap.plan.entries, live.entries);
+  assert.deepEqual(snap.plan.stop, live.stop);
+  assert.ok(snap.plan.contextReasons.some(r => /bukan live/.test(r.id)));
+  const original = structuredClone(snap.plan);
+  s.context!.history.analysis!.atr14 = 120;
+  assert.equal(referenceSnapshotState(snap, f.capital, s, now).dataChanged, true);
+  assert.deepEqual(snap.plan, original);
 });
 
 test("calendar events and unknown context change plan conditions, never geometry or strategy availability", () => {

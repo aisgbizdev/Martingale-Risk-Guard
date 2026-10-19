@@ -5,8 +5,9 @@ import { getStudyReference } from "./study-market";
 import { newsmakerLevels } from "./newsmaker-levels";
 import { SCENARIO_BUDGET, SCENARIO_CONTRACT, scenarioLots } from "./scenario-contract";
 import type { ScenarioSide } from "./scenario-plan";
+import { referenceSpacing, selectReferenceZones, type ReferenceLevel } from "./reference-zones";
 
-export type ReferenceLevel = { price: number; labels: string[] };
+export type { ReferenceLevel } from "./reference-zones";
 export type ReferenceStrategy = "Linear Averaging" | "Martingale";
 
 /** Educational cross-source comparison. No offset, ratio or claim of XUL10 calibration. */
@@ -20,6 +21,7 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
     (historical ? !historicalPriceIsEligible(sources.priceBasis, quote, now, sources.online) : !quoteIsFresh(quote, now))) {
     throw new Error("Acuan harga XUL10 tidak tersedia atau tidak segar. Muat ulang harga lalu hitung; tidak membuat harga pengganti.");
   }
+  const spacing = referenceSpacing(sources.context?.history.analysis?.atr14 ?? NaN);
   const a = getStudyReference(sources.context, now, sources.online).analysis;
   if (!a || a.source !== "LGD Daily" || ![a.lastOpen, a.lastHigh, a.lastLow, a.lastClose].every(n => typeof n === "number" && Number.isFinite(n) && n > 0)) {
     throw new Error("OHLC LGD D1 selesai terakhir belum lengkap; tidak memakai angka pengganti.");
@@ -76,7 +78,7 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
   const pool: ReferenceLevel[] = [];
   const add = (price: number, label: string) => {
     if (!Number.isFinite(price) || price <= 0) return;
-    const existing = pool.find(l => Math.abs(l.price - price) < 0.005);
+    const existing = pool.find(l => l.price.toFixed(2) === price.toFixed(2));
     if (existing) existing.labels.push(label); else pool.push({ price, labels: [label] });
   };
   Object.entries(levels.classic).forEach(([name, price]) => add(price, `Pivot ${name.toUpperCase()}`));
@@ -88,11 +90,12 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
   const anchor = quote.price;
   const adverse = pool.filter(l => direction * (anchor - l.price) > 0.005)
     .sort((x, y) => direction * (y.price - x.price));
-  // Reserve one deeper technical level for invalidation, never fabricate an SL distance.
-  const count = Math.min(maxLayers, adverse.length - 1);
-  if (count < 1) throw new Error("Belum ada level entry dan batas batal berurutan di sisi harga ini. Tunggu, jangan memaksakan layer.");
-  const entries = adverse.slice(0, count).map((l, i) => ({ ...l, index: i + 1 }));
-  const stop = adverse[count];
+  const zones = selectReferenceZones(adverse, spacing.minimumGap);
+  // The stop needs a separate zone too; never invent levels or a synthetic ATR stop.
+  const count = Math.min(maxLayers, zones.length - 1);
+  if (count < 1) throw new Error("Belum ada zona entry dan batas batal terpisah yang memenuhi jarak D1. Tunggu, jangan memaksakan layer.");
+  const entries = zones.slice(0, count).map((l, i) => ({ ...l, index: i + 1 }));
+  const stop = zones[count];
   const targets = pool.filter(l => direction * (l.price - entries[0].price) > 0.005)
     .sort((x, y) => direction * (x.price - y.price));
   if (!targets.length) throw new Error("Level TP teknikal yang mendukung skenario belum tersedia.");
@@ -106,6 +109,9 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
     side, strategy, capital, evaluatedAt: new Date(now).toISOString(),
     source: "LGD Daily" as const, sourceDate: a.lastDate,
     selectionQuote: { ...quote }, entries, stop, targets, weights,
+    spacing, zones,
+    previousSelection: { entries: adverse.slice(0, Math.min(3, adverse.length - 1)),
+      stop: adverse[Math.min(3, adverse.length - 1)] ?? null },
     firstLot: firstLot >= 1 ? firstLot : null,
     maxLayers, newsUnassessed: !assessed,
     contextStatus: waiting ? "wait" as const : (!calendarReady || !assessed) ? "incomplete" as const : "conditional" as const,

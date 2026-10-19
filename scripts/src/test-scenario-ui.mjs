@@ -63,13 +63,19 @@ async function referenceDiagram(page, side, count = 3, capital = 200000, strateg
   const stage = referenceFillStage(plan, count);
   const table = id(page, "reference-entries");
   await table.waitFor();
-  const entries = table.locator("tbody tr").filter({ hasText: /^L\d/ });
+  const entries = table.locator("tbody tr").filter({ hasText: /^(Buy|Sell) \d/ });
   assert.equal(await entries.count(), plan.entries.length);
   const labels = await id(page, "reference-diagram").locator("text").allTextContents();
   for (let i = 0; i < plan.entries.length; i++) {
+    assert.ok((await entries.nth(i).locator("td").first().innerText()).startsWith(`${side === "buy" ? "Buy" : "Sell"} ${i + 1}`));
     assert.equal(await entries.nth(i).locator("td").nth(1).innerText(), plan.entries[i].price.toFixed(2));
     assert.ok(labels.includes(plan.entries[i].price.toFixed(2)));
+    assert.ok(labels.includes(`${side === "buy" ? "Buy" : "Sell"} ${i + 1}`));
+    if (i > 0) assert.ok(Math.abs(Number(plan.entries[i].price.toFixed(2)) - Number(plan.entries[i - 1].price.toFixed(2))) + .00001 >= plan.spacing.minimumGap);
   }
+  assert.ok(!labels.some(label => /^L\d/.test(label)));
+  assert.match(await id(page, "reference-spacing").innerText(), /0,20 × ATR14 D1/);
+  assert.match(await id(page, "reference-filled-1").innerText(), new RegExp(`${side === "buy" ? "Buy" : "Sell"} 1`));
   assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), stage.average.toFixed(2));
   assert.equal(await id(page, "reference-tp").locator("td").nth(1).innerText(), stage.target.price.toFixed(2));
   assert.equal(await id(page, "reference-stop").locator("td").nth(1).innerText(), plan.stop.price.toFixed(2));
@@ -93,6 +99,7 @@ const cases = [
     assert.equal(await id(page, "reference-filled-3").getAttribute("aria-pressed"), "true", "A fresh capture resets to all layers");
     await id(page, "reference-details").locator("summary").click();
     assert.match(await id(page, "reference-details").innerText(), /TP memakai level teknikal/);
+    assert.match(await id(page, "reference-zone-audit").innerText(), /bukan rencana aktif/);
     await id(page, "reference-strategy-martingale").click(); await calculate(page);
     await referenceDiagram(page, "buy", 3, 200000, "Martingale");
     assert.equal(await id(page, "text-scenario-error").count(), 0);
@@ -205,6 +212,34 @@ const cases = [
     assert.equal(await id(page, "select-experience").inputValue(), "Pemula");
     assert.equal(await id(page, "select-market-condition").inputValue(), "Sideways");
     assert.equal(await id(page, "input-modal").inputValue(), "20000");
+  }],
+  ["large-capital-keeps-zones", null, async page => {
+    await start(page, "buy", "1000000"); await calculate(page);
+    await id(page, "reference-first-lot").waitFor();
+    await referenceDiagram(page, "buy", 3, 1000000);
+    await id(page, "reference-filled-2").click();
+    await referenceDiagram(page, "buy", 2, 1000000);
+    await id(page, "reference-strategy-martingale").click(); await calculate(page);
+    await referenceDiagram(page, "buy", 3, 1000000, "Martingale");
+    await id(page, "reference-first-lot").waitFor();
+  }],
+  ["fewer-distinct-zones", data => { data.context.history.analysis.atr14 = 600; }, async page => {
+    await start(page); await calculate(page);
+    await id(page, "technical-reference-result").waitFor();
+    await id(page, "reference-fewer-layers").waitFor();
+    assert.equal(await id(page, "reference-filled-3").count(), 0);
+    assert.match(await id(page, "reference-entries").innerText(), /Buy 1/);
+    assert.match(await id(page, "reference-spacing").innerText(), /120.00/);
+    await id(page, "reference-filled-1").click();
+    await id(page, "reference-average").waitFor();
+  }],
+  ["invalid-atr-no-fallback", data => { data.context.history.analysis.atr14 = 0; }, async page => {
+    await start(page); await calculate(page);
+    await id(page, "text-scenario-error").waitFor();
+    assert.match(await id(page, "text-scenario-error").innerText(), /ATR14.*tidak valid/);
+    assert.equal(await id(page, "technical-reference-result").count(), 0);
+    await id(page, "mode-manual").click(); await id(page, "select-market-condition").selectOption("Sideways"); await calculate(page);
+    await diagram(page, ["4500.00", "4470.00", "4440.00", "4490.00"], 3);
   }],
   ["required-direction", null, async page => {
     await id(page, "scenario-price").getByText("4.500,00", { exact: true }).waitFor();
