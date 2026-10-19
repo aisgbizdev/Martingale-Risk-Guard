@@ -141,6 +141,12 @@ Pengguna menegaskan jarak antar-layer harus masuk akal untuk skala D1, bukan gar
 
 **How to apply:** Bahas zona dan pemisahan layer relatif terhadap volatilitas sebelum mengubah seleksi. Jangan menganggap faktor ATR tertentu telah disetujui hanya karena pengguna menyetujui tujuan jarak yang masuk akal.
 
+Pengguna menegaskan perbaikan aturan berlaku untuk seluruh Saran MRG, bukan hanya hasil yang dicontohkan.
+
+**Why:** Pengguna meminta semua saran ikut disesuaikan agar masuk akal, bukan perbaikan khusus screenshot.
+
+**How to apply:** Terapkan aturan umum pada semua arah, strategi dan modal yang valid; periksa beberapa kondisi pasar. Batas sebelumnya bahwa Isi Manual tidak diubah tetap berlaku.
+
 Pengguna mengganti arah sebelumnya “Tetap referensi; perhitungan tetap ATR”: Saran MRG kini diminta menyusun kandidat L1–L3, TP, dan SL/batas batal berdasarkan Pivot/Fibonacci. Harga running menentukan posisi terhadap level, konteks teknikal/fundamental menyaring rencana, dan modal digunakan sesudahnya untuk sizing. Isi Manual tetap.
 
 **Why:** Pengguna menjelaskan bahwa penolakan karena batas modal bukan tujuan kalkulator, lalu menyetujui pengerjaan arah baru. Ia mengulangi agar diskusi mendahului build supaya tidak melebar.
