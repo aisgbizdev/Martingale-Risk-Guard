@@ -31,7 +31,15 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
     <p role="alert" className="live-error" data-testid="reference-warning">{t(
       "Referensi LGD Daily, BUKAN entry/SL XUL10 yang presisi. Kutipan seleksi XUL10 hanya pembanding, tanpa konversi. Fibonacci memakai high/low D1 selesai terakhir, BUKAN swing pasar terkonfirmasi.",
       "LGD Daily reference, NOT precise XUL10 entries/SL. The XUL10 selection quote is comparison only, with no conversion. Fibonacci uses the last completed D1 high/low, NOT a confirmed market swing.")}</p>
-    {plan.limited && <p className="live-small" data-testid="reference-limited">{t("Konteks berita belum dinilai: dibatasi maksimal 2 layer; tidak ada layer ketiga rekaan.", "News unassessed: limited to max 2 layers; no fabricated third layer.")}</p>}
+     <div className="rounded-lg border border-border p-3 space-y-2" data-testid="reference-context-status" role="status">
+       <strong className="text-sm">{plan.contextStatus === "wait"
+         ? t("Rencana tersedia · Tunggu agenda/kejelasan", "Plan available · Wait for event/clarity")
+         : plan.contextStatus === "incomplete"
+           ? t("Rencana tersedia · Konteks belum lengkap", "Plan available · Context incomplete")
+           : t("Rencana tersedia · Bersyarat, bukan perintah entry", "Plan available · Conditional, not an entry instruction")}</strong>
+       {plan.contextReasons.map((r, i) => <p className="live-small" key={i}>{t(r.id, r.en)}</p>)}
+       {plan.entries.length < plan.maxLayers && <p className="live-small" data-testid="reference-fewer-layers">{t(`Struktur menyediakan ${plan.entries.length} layer dengan batas batal berikutnya. Tidak memaksakan tiga layer.`, `The structure provides ${plan.entries.length} layers with a further invalidation level. No forced third layer.`)}</p>}
+     </div>
     <div className="flex flex-wrap gap-2" role="group" aria-label={t("Pilih asumsi layer terisi", "Choose assumed filled layers")}>
       {plan.entries.map(e => <button key={e.index} type="button" data-testid={`reference-filled-${e.index}`} aria-pressed={count === e.index}
         onClick={() => setSel({ plan, count: e.index })}
@@ -82,7 +90,6 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
       <p className="live-small">{t("Sumber", "Source")}: {plan.source} · {t("tanggal D1", "D1 date")} {plan.sourceDate} · {t("snapshot", "snapshot")} {String(plan.evaluatedAt)}</p>
        <p className="live-small">{t("Harga running XUL10 saat evaluasi (hanya pembanding)", "Running XUL10 quote at evaluation (comparison only)")}: {fx(plan.selectionQuote.price)} · {plan.selectionQuote.asOf} · {plan.selectionQuote.source}</p>
        <p className="live-small">{t("L1–L3 dipilih dari level berbeda terdekat di sisi penambahan posisi; level berikutnya menjadi batas batal. TP memakai level teknikal terdekat di sisi profit dari rata-rata terisi. Tidak ada konfirmasi pembalikan otomatis; harga menyentuh level bukan perintah entry.", "L1–L3 use the nearest distinct levels on the adverse side; the next level is the invalidation boundary. TP uses the nearest technical level on the profitable side of the filled average. There is no automatic reversal confirmation; touching a level is not an entry instruction.")}</p>
-      <ul className="live-small">{plan.contextReasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
     </details>
   </section>;
 }

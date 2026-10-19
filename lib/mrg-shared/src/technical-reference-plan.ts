@@ -1,4 +1,7 @@
-import type { CapitalSuggestion } from "./capital-suggestion";
+import type { SuggestionSources } from "./suggestion-snapshot";
+import { calendarIsFresh, quoteIsFresh, type Copy } from "./live-types";
+import { historicalPriceIsEligible } from "./scenario-price";
+import { getStudyReference } from "./study-market";
 import { newsmakerLevels } from "./newsmaker-levels";
 import { SCENARIO_BUDGET, SCENARIO_CONTRACT, scenarioLots } from "./scenario-contract";
 import type { ScenarioSide } from "./scenario-plan";
@@ -7,20 +10,69 @@ export type ReferenceLevel = { price: number; labels: string[] };
 export type ReferenceStrategy = "Linear Averaging" | "Martingale";
 
 /** Educational cross-source comparison. No offset, ratio or claim of XUL10 calibration. */
-export function technicalReferencePlan(result: CapitalSuggestion, side: ScenarioSide, strategy: ReferenceStrategy = "Linear Averaging") {
+export function technicalReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy = "Linear Averaging") {
   if (!["buy", "sell"].includes(side) || !["Linear Averaging", "Martingale"].includes(strategy)) throw new Error("Arah/strategi tidak valid.");
-  if (!["offered", "limited", "no-fit"].includes(result.status) || !result.quote || !result.candidates.length) {
-    throw new Error("Data atau konteks belum memenuhi pemeriksaan; rencana teknikal tidak diaktifkan.");
+  if (!Number.isFinite(capital) || capital <= 0 || capital > 1e12) throw new Error("Modal harus positif dan maksimal US$1 triliun.");
+  if (!sources.online || !Number.isFinite(now)) throw new Error("Koneksi/waktu evaluasi tidak tersedia. Sambungkan kembali lalu hitung ulang.");
+  const quote = sources.quote;
+  const historical = sources.priceBasis?.kind === "historical";
+  if (!quote || quote.symbol !== "XUL10" || !Number.isFinite(quote.price) || quote.price <= 0 ||
+    (historical ? !historicalPriceIsEligible(sources.priceBasis, quote, now, sources.online) : !quoteIsFresh(quote, now))) {
+    throw new Error("Acuan harga XUL10 tidak tersedia atau tidak segar. Muat ulang harga lalu hitung; tidak membuat harga pengganti.");
   }
-  const a = result.reference.analysis;
+  const a = getStudyReference(sources.context, now, sources.online).analysis;
   if (!a || a.source !== "LGD Daily" || ![a.lastOpen, a.lastHigh, a.lastLow, a.lastClose].every(n => typeof n === "number" && Number.isFinite(n) && n > 0)) {
     throw new Error("OHLC LGD D1 selesai terakhir belum lengkap; tidak memakai angka pengganti.");
   }
   const levels = newsmakerLevels({ open: a.lastOpen!, high: a.lastHigh!, low: a.lastLow!, close: a.lastClose });
   if (a.lastHigh! <= a.lastLow!) throw new Error("Rentang D1 datar; level Pivot/Fibonacci bertumpuk.");
-  const allowed = result.candidates.filter(c => c.strategy === strategy);
-  if (!allowed.length) throw new Error("Strategi ini dibatasi oleh konteks berita/tren saat evaluasi.");
-  const maxLayers = Math.min(3, Math.max(...allowed.map(c => c.layers)));
+  // Context describes conditions; it does not gate strategies or erase the price map.
+  const maxLayers = 3;
+  const contextReasons: Copy[] = [];
+  const note = (id: string, en: string) => contextReasons.push({ id, en });
+  const fresh = (at: string | null | undefined, age: number) => {
+    const delta = now - Date.parse(at ?? "");
+    return Number.isFinite(delta) && delta >= 0 && delta <= age;
+  };
+  const calendar = sources.context?.calendar;
+  const calendarReady = !!calendar && calendarIsFresh(calendar, now) && calendar.timezone === "Asia/Jakarta";
+  let waiting = false;
+  if (!calendarReady) note("Kalender belum lengkap/segar; waktu risiko agenda belum dapat dinilai. Rencana ini hanya peta teknikal, bukan saran pasar lengkap.", "Calendar incomplete/stale; event timing risk is unknown. This is a technical map, not a complete market recommendation.");
+  else {
+    // Inspect the complete snapshot, not the capped presentation of event readings.
+    for (const event of calendar.events) {
+      if (event.currency !== "USD") continue;
+      const minutes = (Date.parse(event.at ?? "") - now) / 60_000;
+      if ((event.impact === "high" && !Number.isFinite(minutes)) ||
+        (event.impact === "unknown" && (!Number.isFinite(minutes) || (minutes >= -15 && minutes <= 120)))) {
+        waiting = true;
+        note(`Tunggu kejelasan waktu/dampak agenda USD: ${event.name}. Level tetap ilustratif, bukan instruksi entry.`,
+          `Wait for clarity on USD event timing/impact: ${event.name}. Levels remain illustrative, not entry instructions.`);
+      }
+      if (event.impact === "high" && minutes >= -15 && minutes <= 120) {
+        waiting = true;
+        note(`Tunggu agenda ${event.name} (${event.at}); jendela 120 menit sebelum–15 menit sesudah. Setelahnya evaluasi ulang, bukan otomatis entry.`,
+          `Wait for ${event.name} (${event.at}); from 120 minutes before to 15 minutes after. Reassess afterwards; no automatic entry.`);
+      }
+    }
+    if (!waiting) note("Tidak ditemukan agenda USD high impact di jendela peringatan pada kalender ini; bukan bukti pasar aman atau dampak rilis selesai.", "No high-impact USD event found in this calendar's warning window; not evidence of safety or that release effects have ended.");
+  }
+  const news = sources.context?.news;
+  const f = news?.fundamental;
+  const newsReady = news?.status === "ready" && fresh(news.receivedAt, 15 * 60_000);
+  const assessed = newsReady && f?.status === "assessed" && fresh(f.evaluatedAt, 15 * 60_000) &&
+    f.evidence.length > 0 && f.evidence.every(e =>
+      fresh(e.publishedAt, 24 * 3600_000) && fresh(e.reviewedAt, 24 * 3600_000) &&
+      Date.parse(e.reviewedAt) >= Date.parse(e.publishedAt) && !!e.excerpt?.trim() && !!e.rationale?.trim() &&
+      /^[a-f0-9]{64}$/.test(e.contentHash) && ["covered", "high-uncertainty"].includes(e.tag) && e.reviewMethod !== "ai");
+  if (!newsReady) note("Sumber berita belum tersedia/segar; kondisi fundamental belum diketahui. Peta harga tetap tampil tanpa menganggap berita netral.", "News is unavailable/stale; fundamental conditions are unknown. The price map remains visible without treating news as neutral.");
+  else if (!assessed) note("Berita tersedia, tetapi dampak belum dinilai dengan bukti redaksi yang valid. Linear dan Martingale tetap ilustrasi, bukan strategi yang dinyatakan layak.", "News is available but impact lacks valid editorial evidence. Linear and Martingale remain illustrations, not strategies declared suitable.");
+  else {
+    note(`Konteks redaksi mencakup ${f!.evidence.length} artikel terpilih, bukan seluruh berita pasar.`, `Editorial context covers ${f!.evidence.length} selected articles, not the entire market.`);
+    if (f!.evidence.some(e => e.tag === "high-uncertainty")) note("Redaksi menandai ketidakpastian tinggi; pertimbangkan menunggu kejelasan dan evaluasi ulang, bukan menambah layer otomatis.", "Editorial evidence marks high uncertainty; consider waiting for clarity and reassessing, not automatically adding layers.");
+  }
+  note(`Tren referensi LGD D1: ${a.trend}. Bukan prediksi arah XUL10; menyentuh level belum membuktikan pembalikan.`, `LGD D1 reference trend: ${a.trend}. Not an XUL10 direction forecast; touching a level does not confirm a reversal.`);
+  if (historical) note("Acuan XUL10 adalah tick terakhir akhir pekan, bukan live atau penutupan resmi. Gap pembukaan dapat mengubah skenario.", "XUL10 uses a last weekend reference tick, not live or an official close. Opening gaps can change the scenario.");
   const pool: ReferenceLevel[] = [];
   const add = (price: number, label: string) => {
     if (!Number.isFinite(price) || price <= 0) return;
@@ -33,7 +85,7 @@ export function technicalReferencePlan(result: CapitalSuggestion, side: Scenario
   // These are range anchors, not an inferred multi-day market swing.
   add(a.lastLow!, "Low D1"); add(a.lastHigh!, "High D1");
   const direction = side === "buy" ? 1 : -1;
-  const anchor = result.quote.price;
+  const anchor = quote.price;
   const adverse = pool.filter(l => direction * (anchor - l.price) > 0.005)
     .sort((x, y) => direction * (y.price - x.price));
   // Reserve one deeper technical level for invalidation, never fabricate an SL distance.
@@ -47,20 +99,40 @@ export function technicalReferencePlan(result: CapitalSuggestion, side: Scenario
   const weights = scenarioLots(strategy, count);
   const unitMargin = weights.reduce((sum, w) => sum + w * SCENARIO_CONTRACT.marginPerLot, 0);
   const unitLoss = entries.reduce((sum, e, i) => sum + direction * (e.price - stop.price) * weights[i] * SCENARIO_CONTRACT.dollarsPerPointPerLot, 0);
-  const firstLot = Math.floor(Math.min(result.capital * SCENARIO_BUDGET.marginFraction / unitMargin,
-    result.capital * SCENARIO_BUDGET.stressFraction / unitLoss));
+  const firstLot = Math.floor(Math.min(capital * SCENARIO_BUDGET.marginFraction / unitMargin,
+    capital * SCENARIO_BUDGET.stressFraction / unitLoss));
   if (!Number.isSafeInteger(firstLot) || firstLot < 0) throw new Error("Ukuran modal menghasilkan perhitungan lot yang tidak valid.");
   return {
-    side, strategy, capital: result.capital, evaluatedAt: result.evaluatedAt,
+    side, strategy, capital, evaluatedAt: new Date(now).toISOString(),
     source: "LGD Daily" as const, sourceDate: a.lastDate,
-    selectionQuote: { ...result.quote }, entries, stop, targets, weights,
+    selectionQuote: { ...quote }, entries, stop, targets, weights,
     firstLot: firstLot >= 1 ? firstLot : null,
-    maxLayers, limited: result.fundamental?.status !== "assessed",
-    contextReasons: result.reasons.filter(r => !/T=floor|Utamakan jumlah|Lot awal otomatis|Tidak ada kandidat minimal|menjadi jangkar snapshot/.test(r)),
+    maxLayers, newsUnassessed: !assessed,
+    contextStatus: waiting ? "wait" as const : (!calendarReady || !assessed) ? "incomplete" as const : "conditional" as const,
+    contextReasons,
   };
 }
 
 export type TechnicalReferencePlan = ReturnType<typeof technicalReferencePlan>;
+
+export function captureReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy) {
+  const detached = structuredClone(sources);
+  return { plan: technicalReferencePlan(capital, detached, now, side, strategy), sources: detached, sourceKey: JSON.stringify(detached) };
+}
+
+export function referenceSnapshotState(snapshot: ReturnType<typeof captureReferencePlan>, capital: number, sources: SuggestionSources, now: number) {
+  let expired = false;
+  try {
+    const current = technicalReferencePlan(snapshot.plan.capital, snapshot.sources, now, snapshot.plan.side, snapshot.plan.strategy);
+    const { evaluatedAt: _before, ...before } = snapshot.plan;
+    const { evaluatedAt: _after, ...after } = current;
+    expired = JSON.stringify(before) !== JSON.stringify(after);
+  } catch { expired = true; }
+  return {
+    parametersChanged: capital !== snapshot.plan.capital,
+    dataChanged: expired || JSON.stringify(sources) !== snapshot.sourceKey || !sources.online,
+  };
+}
 
 export function referenceFillStage(plan: TechnicalReferencePlan, filled: number) {
   if (!Number.isInteger(filled) || filled < 1 || filled > plan.entries.length) throw new RangeError("Tahap layer tidak valid.");

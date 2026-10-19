@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";
 import { buildScenario, type ScenarioSide } from "@shared/scenario-plan";
-import { technicalReferencePlan, type TechnicalReferencePlan, type ReferenceStrategy } from "@shared/technical-reference-plan";
+import { captureReferencePlan, referenceSnapshotState, type ReferenceStrategy } from "@shared/technical-reference-plan";
 import { TechnicalReferenceResult } from "@/components/technical-reference-result";
-import { captureSuggestion, suggestionSnapshotState, type SuggestionSnapshot } from "@shared/suggestion-snapshot";
 import { quoteIsFresh } from "@shared/live-types";
 import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
 import { SCENARIO_CONTRACT, SCENARIO_BUDGET } from "@shared/scenario-contract";
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { TradingViewChart } from "@/components/live/tradingview-chart";
 import { NewsmakerReferenceLevels } from "@/components/newsmaker-reference-levels";
 import { MarketRuleSummary } from "@/components/market-rule-summary";
-import { MarketLayerStages } from "@/components/market-layer-stages";
 
 type Scenario = ReturnType<typeof buildScenario>;
 type Controls = { side: ScenarioSide | null; strategy: "Linear Averaging" | "Martingale"; layers: number; target: number; spacing: number };
@@ -76,8 +74,8 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     // A plan from the other mode must not be shown as this mode's result.
     setSnap(null); setTechnical(null); setSourceInvalidated(false); setDirectionInvalidated(false);
   };
-  const [snap, setSnap] = useState<{ plan: Scenario; key: string; suggestion?: SuggestionSnapshot } | null>(null);
-  const [technical, setTechnical] = useState<{ plan: TechnicalReferencePlan; capture: SuggestionSnapshot } | null>(null);
+  const [snap, setSnap] = useState<{ plan: Scenario; key: string } | null>(null);
+  const [technical, setTechnical] = useState<ReturnType<typeof captureReferencePlan> | null>(null);
   const [referenceStrategy, setReferenceStrategy] = useState<ReferenceStrategy>("Linear Averaging");
   const [sourceInvalidated, setSourceInvalidated] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -98,8 +96,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     online: market.online, connectionRevision: market.connectionRevision,
     ...(historical ? { priceBasis: priceBasis! } : {}),
   };
-  const activeCapture = technical?.capture ?? snap?.suggestion;
-  const marketState = activeCapture ? suggestionSnapshotState(activeCapture, cap, sources, market.now) : null;
+  const marketState = technical ? referenceSnapshotState(technical, cap, sources, market.now) : null;
   useEffect(() => {
     if (marketState?.dataChanged) setSourceInvalidated(true);
   }, [marketState?.dataChanged]);
@@ -132,21 +129,11 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     if (!c.side) return setErr(t("Pilih arah Buy atau Sell lebih dulu.", "Choose Buy or Sell first."));
     if (!capOk) return setErr(t("Isi modal positif pada kolom Modal.", "Enter positive capital in the Capital field."));
     const basis = resolveScenarioPrice(market.quotes.data?.quote, Date.now(), providerReady);
-    const capture = captureSuggestion(cap, {
-      ...sources, quote: basis?.quote ?? null,
-      priceBasis: basis?.kind === "historical" ? basis : undefined,
-    }, Date.now(), true);
-    const result = capture.result;
-    if (!["limited", "offered", "no-fit"].includes(result.status)) {
-      const heading = result.status === "deferred" ? t("Saran ditunda.", "Suggestion deferred.") :
-        result.status === "no-fit" ? t("Tidak ada kandidat yang lolos batas modal.", "No candidate passes the capital limits.") :
-        t("Data wajib belum lengkap.", "Required data is incomplete.");
-      const reason = result.status === "no-fit" ? result.reasons.at(-1) : result.reasons.slice(0, 2).join(" ");
-      return setErr(`${heading} ${reason ?? ""}`);
-    }
     try {
-      const plan = technicalReferencePlan(result, c.side, referenceStrategy);
-      setTechnical({ plan, capture });
+      setTechnical(captureReferencePlan(cap, {
+        ...sources, quote: basis?.quote ?? null,
+        priceBasis: basis?.kind === "historical" ? basis : undefined,
+      }, Date.now(), c.side, referenceStrategy));
       setDirectionInvalidated(false);
       setSourceInvalidated(false);
       setErr(null);
@@ -258,13 +245,13 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               {inputMode === "manual" && <Button type="button" variant="outline" className="flex-1 min-h-[44px]" onClick={useDefault} data-testid="button-default-simulation">{t("Simulasi default", "Default simulation")}</Button>}
             </div>
             <p className="live-small" data-testid="text-default-disclosure">{inputMode === "market" ?
-              t("Rencana edukatif dari Pivot Klasik + Fibonacci LGD D1, bukan entry XUL10 presisi. Harga running menjadi pembanding, tanpa konversi sumber. Dampak berita belum dinilai: Linear maksimal 2 layer.", "Educational plan from Classic Pivot + LGD D1 Fibonacci, not precise XUL10 entries. The running quote is a comparison, with no source conversion. Unassessed news impact: Linear, up to 2 layers.") :
+              t("Rencana edukatif Pivot/Fibonacci LGD D1 untuk kedua strategi, hingga 3 layer sesuai level yang tersedia. Berita dan kalender memberi syarat/tunggu, bukan menghilangkan rencana. Bukan entry XUL10 presisi.", "Educational LGD D1 Pivot/Fibonacci plans for both strategies, up to 3 layers where levels exist. News and calendar supply conditions/wait status, not hide the plan. Not precise XUL10 entries.") :
               t(`Default manual: Linear · 3 layer · lot awal ${SCENARIO_CONTRACT.firstLot} · target/jarak 30 poin. Bukan saran pasar atau hasil pivot/Fibonacci.`, `Manual defaults: Linear · 3 layers · first lot ${SCENARIO_CONTRACT.firstLot} · target/spacing 30 points. Not a market suggestion or pivot/Fibonacci-derived.`)}</p>
             {inputMode === "market" && <details className="live-details">
               <summary>{t("Pembacaan berita & kalender", "News & calendar context")}</summary>
               <MarketRuleSummary
-              analysis={activeCapture ? activeCapture.result.ruleAnalysis : market.context.data?.ruleAnalysis}
-              frozen={!!activeCapture} />
+              analysis={technical ? technical.sources.context?.ruleAnalysis : market.context.data?.ruleAnalysis}
+              frozen={!!technical} />
             </details>}
           </div>
         </div>
@@ -276,13 +263,6 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             {(directionInvalidated || technical.plan.side !== c.side) ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah berubah. Hitung ulang untuk rencana arah yang dipilih.", "Direction changed. Recalculate for the selected side.")}</p> :
               <TechnicalReferenceResult plan={technical.plan} t={t} money={money} />}
           </>}
-          {snap?.suggestion?.result.status === "limited" && <p role="alert" className="live-error mt-2" data-testid="limited-suggestion-warning">{t("SARAN TERBATAS · Dampak berita belum dinilai, bukan netral. Linear maksimal 2 layer; bukan penilaian pasar lengkap atau jaminan keamanan.", "LIMITED SUGGESTION · News impact is unassessed, not neutral. Linear, up to 2 layers; not a full market assessment or safety guarantee.")}</p>}
-          {snap?.suggestion && <details className="live-details mt-2"><summary>{t("Dasar saran & sumber", "Suggestion basis & sources")}</summary>
-            <p className="live-small">{t("Evaluasi", "Evaluated")}: {snap.suggestion.result.evaluatedAt}</p>
-            <ul className="live-small space-y-2 mt-2">{snap.suggestion.result.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>
-            <p className="live-small mt-2">{t("Kalender dibuat", "Calendar generated")}: {snap.suggestion.result.calendar?.generatedAt} · D1 {snap.suggestion.result.reference.analysis?.lastDate}</p>
-          </details>}
-          {snap?.suggestion && (sourceInvalidated || marketState?.dataChanged) && <p role="status" className="live-error mt-2" data-testid="suggestion-source-changed">{t("Data berubah/tidak lagi segar. Ini snapshot lama, bukan saran terkini. Tekan Lihat Saran MRG untuk evaluasi baru; level tidak bergeser otomatis.", "Data changed or expired. This is an old snapshot, not a current suggestion. Press View MRG suggestion to reassess; levels never move automatically.")}</p>}
           {inputMode === "manual" && study && <div className="mt-2">{study.result}</div>}
           {!plan && !technical && <p className="live-small mt-2">{inputMode === "manual" && !scenarioQuote
             ? t("Perhitungan studi tetap tersedia. Diagram entry dan TP memerlukan harga XUL10 live atau acuan historis akhir pekan yang memenuhi syarat.", "Study calculations remain available. Entry and TP diagrams need a live XUL10 price or an eligible weekend historical reference.")
@@ -300,10 +280,6 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
             {moved !== null && Math.abs(moved) >= 0.01 && <p role="status" className="live-small" data-testid="text-market-moved">{t(`Harga XUL10 sekarang ${quote!.price.toFixed(2)}, bergeser ${moved > 0 ? "+" : ""}${moved.toFixed(2)} dari snapshot. Level tidak diubah otomatis.`, `XUL10 is now ${quote!.price.toFixed(2)}, ${moved > 0 ? "+" : ""}${moved.toFixed(2)} from the snapshot. Levels are not changed automatically.`)}</p>}
             {!quote && plan.priceBasis?.kind !== "historical" && <p role="status" className="live-small">{t("Harga saat ini tidak segar; snapshot tetap sebagai skenario lama.", "The current price is not fresh; the snapshot stays as an old scenario.")}</p>}
             {sideChanged ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah dipilih ulang: hasil sebelumnya tidak berlaku dan disembunyikan. Tekan Hitung skenario.", "Direction re-selected: the earlier result no longer applies and is hidden. Press Calculate.")}</p> : <>
-            {plan.mode === "market" ? <div className={changed ? "opacity-60" : ""}>
-              <MarketLayerStages plan={plan} t={t} money={money}
-                renderDiagram={stage => <LevelDiagram plan={stage} filledLayers={stage.filledLayers} t={t} />} />
-            </div> : <>
             <div className={changed ? "opacity-60" : ""}><LevelDiagram plan={plan} t={t} /></div>
             <div className="overflow-x-auto"><table className="text-xs w-full" data-testid="table-scenario">
               <caption className="text-left live-small pb-1">{t("Level skenario, basis XUL10. Sumbu adalah harga, bukan waktu.", "Scenario levels, XUL10 basis. The axis is price, not time.")}</caption>
@@ -319,7 +295,6 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               <dt>{t("Rugi stress", "Stress loss")}</dt><dd>{money(plan.stressLoss)} ({plan.stressPercent.toFixed(1)}%)</dd>
               <dt>{t("Profit di TP", "Profit at TP")}</dt><dd>{money(plan.targetProfit)}</dd>
             </dl>
-            </>}
             {comparison.length > 0 && <details className="live-details" data-testid="manual-strategy-comparison">
               <summary>{t("Bandingkan Linear dan Martingale", "Compare Linear and Martingale")}</summary>
               <p className="live-small mt-2">{t("Modal, arah, harga awal, jarak, target dan jumlah layer sama. Hanya pola lot yang berbeda; ini bukan saran strategi.", "Same capital, direction, starting price, spacing, target and layer count. Only lot sizing differs; this is not a strategy recommendation.")}</p>

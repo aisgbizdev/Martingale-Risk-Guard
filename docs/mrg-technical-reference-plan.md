@@ -18,9 +18,10 @@ adalah panduan terpisah, bukan API analisis.
   klaim ketelitian tick instrumen.
 - Buy memilih level berbeda di bawah harga pembanding, terdekat dahulu;
   Sell mencerminkan aturan ini di atas harga pembanding.
-- Maksimal tiga entry, tetapi batas strategi/layer dari konteks lama tetap.
-  Dampak berita belum dinilai berarti Linear maksimal dua layer. Tidak ada
-  penambahan layer ketiga demi memenuhi jumlah.
+- Maksimal tiga entry untuk Linear maupun Martingale, jika struktur teknikal
+  menyediakan level dan batas batal. Berita belum dinilai, tren searah,
+  ketidakpastian, dan kalender tidak lagi menghapus rencana atau mengunci
+  strategi. Tidak ada penambahan layer rekaan demi memenuhi jumlah.
 - Satu level teknikal lebih jauh selalu dicadangkan sebagai batas batal
   ilustratif. Tanpa batas tersebut, jangan membuat entry tambahan.
 - SL/batas batal adalah level teknikal berikutnya, tanpa buffer ATR rekaan.
@@ -52,8 +53,14 @@ dilarang membuka posisi.
 
 ## Pemeriksaan konteks dan snapshot
 
-Pemeriksaan harga/sumber, D1, berita tersedia, serta kalender dan jendela
-penundaan tetap berlaku; no-fit modal model ATR lama tidak memblokir peta baru.
+Pembentukan rencana tidak lagi memanggil kandidat model modal/ATR lama.
+Harga pembanding dan OHLC D1 wajib valid, bertanggal, dan memenuhi pemeriksaan
+sumber. Kalender atau berita tidak tersedia tetap menghasilkan peta teknikal
+dengan status konteks belum lengkap, bukan penilaian pasar lengkap.
+Agenda USD high impact dalam 120 menit sebelum sampai 15 menit sesudah,
+serta waktu/dampak agenda yang belum jelas, menghasilkan status tunggu pada
+rencana yang tetap terlihat. Setelah jendela lewat perlu evaluasi ulang,
+bukan otomatis boleh masuk atau klaim dampak rilis selesai.
 Penilaian editorial yang hilang tetap belum dinilai, bukan netral. Analisis
 aturan berita/kalender tidak mengklaim memahami arah seluruh berita.
 Rencana hanya diganti saat pengguna menghitung ulang. Pergantian modal/data
