@@ -135,8 +135,8 @@ Pengguna menyetujui saran terbatas Linear maksimal dua layer saat dampak berita 
 
 **How to apply:** Pertahankan pemeriksaan harga/D1/kalender/sumber berita dan batas modal. Tiga layer otomatis memerlukan penilaian lengkap dan kondisi/modal yang memenuhi aturan lama; simulasi manual tiga layer tetap tersedia tanpa mengklaim kelayakan. Jangan mengendurkan batas dua layer hanya karena modal besar.
 
-Pengguna memilih “Tetap referensi; perhitungan tetap ATR”, “Klasik; Fibonacci pembanding”, dan “D1 selesai terakhir, otomatis” untuk pivot/Fibonacci.
+Pengguna mengganti arah sebelumnya “Tetap referensi; perhitungan tetap ATR”: Saran MRG kini diminta menyusun kandidat L1–L3, TP, dan SL/batas batal berdasarkan Pivot/Fibonacci. Harga running menentukan posisi terhadap level, konteks teknikal/fundamental menyaring rencana, dan modal digunakan sesudahnya untuk sizing. Isi Manual tetap.
 
-**Why:** Pengguna memilih batas ini setelah ditawari alternatif pemetaan jarak relatif dengan batas ATR. Tidak mengintegrasikan level ke target/jarak/layer adalah keputusan pengguna, bukan pekerjaan yang terlupakan.
+**Why:** Pengguna menjelaskan bahwa penolakan karena batas modal bukan tujuan kalkulator, lalu menyetujui pengerjaan arah baru. Ia mengulangi agar diskusi mendahului build supaya tidak melebar.
 
-**How to apply:** Jangan mengaktifkan pemetaan pivot/Fibonacci ke perhitungan atau mengusulkannya sebagai kewajiban tertunda tanpa persetujuan baru. Pertahankan batas sumber LGD Daily versus XUL10 dan jangan mengasumsikan high/low otomatis sebagai swing pilihan pengguna.
+**How to apply:** Persetujuan arah bukan persetujuan mengarang pemilihan swing, pemetaan level LGD ke XUL10, buffer SL, atau ukuran lot. Sepakati keputusan yang belum jelas sebelum mengaktifkannya. Jangan menjanjikan pembalikan pasti, menganggap widget TradingView API analisis, atau memaksakan semua tiga layer tersedia ketika data/struktur tidak mendukung.
