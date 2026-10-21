@@ -74,19 +74,21 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
       <p className="live-small">{t("Skema level LGD · jarak garis tidak berskala · bukan grafik waktu", "LGD level schematic · lines not to scale · not a time chart")}</p>
       <table className="text-xs w-full" style={{ minWidth: 0 }} data-testid="reference-entries">
         <caption className="text-left live-small pb-1">{t("Level dari rumus Pivot/Fibonacci/High-Low D1", "Levels from Pivot/Fibonacci/High-Low D1 formulas")}</caption>
-        <thead><tr><th className="text-left">Level</th><th className="text-right">{t("Harga", "Price")}</th><th className="text-right">{t("Bobot", "Weight")}</th><th className="text-right">Lot</th></tr></thead>
+        <thead><tr><th className="text-left">Level</th><th className="text-right">{t("Harga", "Price")}</th><th className="text-right" data-testid="reference-size-heading">{plan.firstLot === null
+          ? t("Rasio posisi", "Position ratio")
+          : <>{t("Ukuran posisi", "Position size")}<span className="block text-[10px] font-normal">(lot)</span></>}</th></tr></thead>
         <tbody>
           {plan.entries.map((e, i) => <tr key={e.index} className={e.index <= count ? "" : "text-muted-foreground"} style={e.index <= count ? undefined : { color: "#9ca3af" }}>
             <td>{entryName(e.index)}<span className="block text-[10px]">{e.index <= count ? t("asumsi terisi", "assumed filled") : t("tertunda", "pending")}</span>
               {i > 0 && <span className="block text-[10px]" data-testid={`reference-gap-${e.index}`}>{t(
               `Jarak ${fx(referenceDistance(e.price, plan.entries[i - 1].price))} poin`,
               `Gap ${fx(referenceDistance(e.price, plan.entries[i - 1].price))} points`)}</span>}</td>
-            <td className="text-right live-mono">{fx(e.price)}</td><td className="text-right live-mono">{plan.weights[i]}x</td>
-            <td className="text-right live-mono">{plan.firstLot === null ? "–" : plan.weights[i] * plan.firstLot}</td></tr>)}
-          <tr data-testid="reference-average"><td>{t(`Rata-rata ${count} posisi`, `${count}-entry average`)} <GuideLink topic="rata-rata" compact /></td><td className="text-right live-mono">{fx(stage.average)}</td><td colSpan={2} /></tr>
-          <tr data-testid="reference-tp"><td>{t("TP teknikal", "Technical TP")} <GuideLink topic="tp-batas" compact /></td><td className="text-right live-mono">{fx(stage.target.price)}</td><td colSpan={2} /></tr>
+            <td className="text-right live-mono">{fx(e.price)}</td>
+            <td className="text-right live-mono">{plan.firstLot === null ? `${plan.weights[i]}×` : plan.weights[i] * plan.firstLot}</td></tr>)}
+          <tr data-testid="reference-average"><td>{t(`Rata-rata ${count} posisi`, `${count}-entry average`)} <GuideLink topic="rata-rata" compact /></td><td className="text-right live-mono">{fx(stage.average)}</td><td /></tr>
+          <tr data-testid="reference-tp"><td>{t("TP teknikal", "Technical TP")} <GuideLink topic="tp-batas" compact /></td><td className="text-right live-mono">{fx(stage.target.price)}</td><td /></tr>
           <tr data-testid="reference-stop"><td>{t("Batas batal (tetap)", "Invalidation (fixed)")} <GuideLink topic="tp-batas" compact />
-            <span className="block text-[10px]">{t(`Jarak dari ${entryName(plan.entries.length)}: ${fx(referenceDistance(plan.stop.price, plan.entries.at(-1)!.price))} poin`, `Gap from ${entryName(plan.entries.length)}: ${fx(referenceDistance(plan.stop.price, plan.entries.at(-1)!.price))} points`)}</span></td><td className="text-right live-mono">{fx(plan.stop.price)}</td><td colSpan={2} /></tr>
+            <span className="block text-[10px]">{t(`Jarak dari ${entryName(plan.entries.length)}: ${fx(referenceDistance(plan.stop.price, plan.entries.at(-1)!.price))} poin`, `Gap from ${entryName(plan.entries.length)}: ${fx(referenceDistance(plan.stop.price, plan.entries.at(-1)!.price))} points`)}</span></td><td className="text-right live-mono">{fx(plan.stop.price)}</td><td /></tr>
         </tbody>
       </table>
       {plan.firstLot !== null ? <div data-testid="reference-sizing">
@@ -99,8 +101,8 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
         </dl>
         <p className="live-small">{t("Ilustrasi tanpa spread/biaya; bukan eksekusi XUL10.", "Illustration excluding spread/fees; not XUL10 execution.")} <GuideLink topic="modal-risiko" compact /></p>
       </div> : <p className="live-small" data-testid="reference-no-lot">{t(
-        "Bobot ilustratif saja: belum ada lot utuh yang memenuhi batas modal simulasi. Bukan larangan entry.",
-        "Illustrative weights only: no whole-lot size fits the simulation budget. Not an entry prohibition.")} <GuideLink topic="modal-risiko" compact /></p>}
+        "Rasio saja · alokasi lot dan nominal belum tersedia.",
+        "Ratios only · lot allocation and monetary amounts unavailable.")} <GuideLink topic="modal-risiko" compact /></p>}
     </>}
     <details className="live-details" data-testid="reference-details">
       <summary>{t("Konteks dan sumber", "Context and source")}</summary>

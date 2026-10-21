@@ -63,12 +63,19 @@ async function referenceDiagram(page, side, count = 3, capital = 200000, strateg
   const stage = referenceFillStage(plan, count);
   const table = id(page, "reference-entries");
   await table.waitFor();
+  assert.equal(await table.locator("thead th").count(), 3, "Only one adaptive position-size column");
+  assert.match(await id(page, "reference-size-heading").innerText(),
+    plan.firstLot === null ? /Rasio posisi/ : /Ukuran posisi\s*\(lot\)/);
+  assert.equal(await id(page, "reference-sizing").count(), plan.firstLot === null ? 0 : 1);
   const entries = table.locator("tbody tr").filter({ hasText: /^(Buy|Sell) \d/ });
   assert.equal(await entries.count(), plan.entries.length);
   const labels = await id(page, "reference-diagram").locator("text").allTextContents();
   for (let i = 0; i < plan.entries.length; i++) {
     assert.ok((await entries.nth(i).locator("td").first().innerText()).startsWith(`${side === "buy" ? "Buy" : "Sell"} ${i + 1}`));
     assert.equal(await entries.nth(i).locator("td").nth(1).innerText(), plan.entries[i].price.toFixed(2));
+    assert.equal(await entries.nth(i).locator("td").count(), 3);
+    assert.equal(await entries.nth(i).locator("td").nth(2).innerText(),
+      plan.firstLot === null ? `${plan.weights[i]}×` : String(plan.weights[i] * plan.firstLot));
     assert.ok(labels.includes(plan.entries[i].price.toFixed(2)));
     assert.ok(labels.includes(`${side === "buy" ? "Buy" : "Sell"} ${i + 1}`));
     if (i > 0) assert.ok(Math.abs(Number(plan.entries[i].price.toFixed(2)) - Number(plan.entries[i - 1].price.toFixed(2))) + .00001 >= plan.spacing.minimumGap);
@@ -160,6 +167,20 @@ const cases = [
     await id(page, "reference-no-lot").waitFor();
     await referenceDiagram(page, "buy", 3, 100);
     assert.equal(await id(page, "reference-first-lot").count(), 0);
+    await id(page, "button-language-toggle").click();
+    assert.equal(await id(page, "reference-size-heading").innerText(), "Position ratio");
+    assert.match(await id(page, "reference-no-lot").innerText(), /monetary amounts unavailable/);
+    await id(page, "button-language-toggle").click();
+    await id(page, "input-modal").fill("1000000");
+    assert.equal(await id(page, "reference-size-heading").innerText(), "Rasio posisi", "Editing capital must not silently resize the snapshot");
+    await calculate(page);
+    await referenceDiagram(page, "buy", 3, 1000000);
+    await id(page, "button-language-toggle").click();
+    assert.match(await id(page, "reference-size-heading").innerText(), /Position size\s*\(lot\)/);
+    await id(page, "button-language-toggle").click();
+    await id(page, "input-modal").fill("100");
+    await calculate(page);
+    await referenceDiagram(page, "buy", 3, 100);
   }],
   ["high-impact-calendar-defers", data => data.context.calendar.events.push(highImpactEvent), async page => {
     await start(page); await calculate(page);

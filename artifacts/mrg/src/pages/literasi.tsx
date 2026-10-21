@@ -108,7 +108,7 @@ export default function Literasi() {
                 ["TP", t("Harga target. Manual: rata-rata + target untuk Buy, − target untuk Sell. Saran: level teknikal dari kumpulan target.", "Target price. Manual: average + target for Buy, − target for Sell. Suggestion: a level from the technical target pool.")],
                 [t("Margin", "Margin"), t("Total lot x asumsi margin per lot. Bukan batas kerugian.", "Total lots x assumed margin per lot. Not a loss limit.")],
                 [t("Stress / rugi di batas batal", "Stress / loss at invalidation"), t("Rugi bila harga mencapai titik uji. Bukan kerugian maksimum; gap dan stop-out broker tidak dihitung.", "Loss if price reaches the test point. Not maximum loss; gaps and broker stop-out are excluded.")],
-                [t("Bobot saja", "Weights only"), t("Tidak ada lot utuh yang memenuhi batas simulasi; peta harga tetap tampil. Bukan larangan entry dan bukan penilaian seluruh rekening.", "No whole-lot size fits simulation limits; the price map remains visible. Not an entry prohibition or an account-wide assessment.")],
+                [t("Rasio posisi", "Position ratio"), t("Perbandingan ukuran, bukan jumlah lot. Dipakai jika belum ada lot utuh yang memenuhi batas simulasi; peta harga tetap tampil. Bukan larangan entry atau penilaian seluruh rekening.", "Relative sizes, not lot counts. Used when no whole-lot size fits simulation limits; the price map remains visible. Not an entry prohibition or an account-wide assessment.")],
               ]}
             />
             <Caveat>{t("Biaya, spread, swap, gap pembukaan, dan stop-out broker tidak dihitung di mana pun.", "Fees, spread, swap, opening gaps and broker stop-out are excluded everywhere.")}</Caveat>
@@ -244,6 +244,7 @@ jarak minimum zona / min zone gap
           {/* 7 */}
           <GuideSection id="modal-risiko" number="07" title={t("Modal & ukuran lot", "Capital & lot sizing")}
             lead={t("Asumsi edukatif, bukan spesifikasi broker terverifikasi.", "Educational assumptions, not verified broker specifications.")}>
+            <p>{t("Tabel Saran MRG memakai satu kolom adaptif. Jika lot terhitung, Ukuran posisi (lot) menunjukkan jumlah lot: lot awal 2 dengan Linear berarti 2, 4, 6 lot. Jika belum, Rasio posisi menunjukkan 1×, 2×, 3× saja; margin dan laba/rugi nominal belum tersedia, bukan nol. Rata-rata dan TP tetap memakai rasio posisi yang diasumsikan terisi. Kolom mengikuti snapshot saat tombol hitung ditekan, bukan berubah sendiri mengikuti harga.", "MRG suggestions use one adaptive column. With an allocation, Position size (lot) shows lot counts: a first lot of 2 with Linear means 2, 4, 6 lots. Without an allocation, Position ratio shows only 1×, 2×, 3×; monetary margin and P/L are unavailable, not zero. Average and TP still use assumed-filled position ratios. The column follows the snapshot captured on Calculate, not automatic price movements.")}</p>
             <DataTable
               head={[t("Asumsi", "Assumption"), t("Nilai", "Value")]}
               rows={[
