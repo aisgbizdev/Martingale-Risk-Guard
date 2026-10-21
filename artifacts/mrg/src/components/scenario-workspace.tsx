@@ -5,7 +5,7 @@ import { captureReferencePlan, referenceSnapshotState, type ReferenceStrategy } 
 import { TechnicalReferenceResult } from "@/components/technical-reference-result";
 import { quoteIsFresh } from "@shared/live-types";
 import { resolveScenarioPrice, samePriceQuote } from "@shared/scenario-price";
-import { SCENARIO_BUDGET } from "@shared/scenario-contract";
+import { SCENARIO_BUDGET, CONTRACT_PROFILES, scenarioContract, type ContractProfileId } from "@shared/scenario-contract";
 import type { MarketHook } from "@/hooks/use-market";
 import { useLanguage } from "@/lib/language-context";
 import { useStudy } from "@/lib/study-context";
@@ -64,16 +64,18 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   const { calculatorDraft, setCalculatorDraft } = useStudy();
   const [c, setC] = useState<Controls>(() => calculatorDraft?.controls ?? { side: null, ...DEFAULTS });
   const [inputMode, setInputMode] = useState<"market" | "manual">(() => calculatorDraft?.mode ?? initialMode);
+  const [contractProfile, setContractProfile] = useState<ContractProfileId>(() => calculatorDraft?.contractProfile ?? "regular");
+  const [profileInvalidated, setProfileInvalidated] = useState(false);
   useEffect(() => { onModeChange?.(inputMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
   // Keep unsaved inputs during in-app navigation, never restore a live-result snapshot.
   useEffect(() => {
-    setCalculatorDraft({ controls: c, mode: inputMode });
-  }, [c, inputMode, setCalculatorDraft]);
+    setCalculatorDraft({ controls: c, mode: inputMode, contractProfile });
+  }, [c, inputMode, contractProfile, setCalculatorDraft]);
   const pickMode = (m: "market" | "manual") => {
     if (m === inputMode) return;
     setInputMode(m); setErr(null); onModeChange?.(m);
     // A plan from the other mode must not be shown as this mode's result.
-    setSnap(null); setTechnical(null); setSourceInvalidated(false); setDirectionInvalidated(false);
+    setSnap(null); setTechnical(null); setSourceInvalidated(false); setDirectionInvalidated(false); setProfileInvalidated(false);
   };
   const [snap, setSnap] = useState<{ plan: Scenario; key: string } | null>(null);
   const [technical, setTechnical] = useState<ReturnType<typeof captureReferencePlan> | null>(null);
@@ -97,7 +99,9 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
     online: market.online, connectionRevision: market.connectionRevision,
     ...(historical ? { priceBasis: priceBasis! } : {}),
   };
-  const marketState = technical ? referenceSnapshotState(technical, cap, sources, market.now) : null;
+  const marketState = technical ? referenceSnapshotState(technical, cap, sources, market.now, contractProfile) : null;
+  const contract = scenarioContract(contractProfile);
+  const profileName = (id: ContractProfileId) => id === "regular" ? t("Reguler", "Regular") : id === "micro" ? t("Mikro", "Micro") : "Mini";
   useEffect(() => {
     if (marketState?.dataChanged) setSourceInvalidated(true);
   }, [marketState?.dataChanged]);
@@ -134,9 +138,10 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
       setTechnical(captureReferencePlan(cap, {
         ...sources, quote: basis?.quote ?? null,
         priceBasis: basis?.kind === "historical" ? basis : undefined,
-      }, Date.now(), c.side, referenceStrategy));
+      }, Date.now(), c.side, referenceStrategy, contractProfile));
       setDirectionInvalidated(false);
       setSourceInvalidated(false);
+      setProfileInvalidated(false);
       setErr(null);
     } catch (e) { setErr(e instanceof Error ? e.message : t("Saran tidak valid.", "Invalid suggestion.")); }
   };
@@ -209,6 +214,19 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               <span className="live-small">{scenarioQuote ? `${historical ? t("Acuan historis akhir pekan", "Weekend historical reference") : t("segar", "fresh")} · ${priceTime} · ${scenarioQuote.source}` : t("Harga tidak tersedia atau tidak memenuhi syarat. Studi manual tetap tersedia.", "No eligible price available. Manual study remains available.")}</span>
               {historical && <p className="live-small mt-2" data-testid="historical-price-disclosure">{t("Bukan penutupan resmi. Jadwal sesi belum terverifikasi; ini tidak menyatakan market pasti tutup. Harga pembukaan dapat gap.", "Not an official close. Session hours are unverified; this does not confirm market closure. Opening prices can gap.")}</p>}
             </div>
+            {inputMode === "market" ? <div className="space-y-2">
+              <span className="live-label">{t("Jenis simulasi", "Simulation type")}</span>
+              <div role="group" aria-label={t("Jenis simulasi", "Simulation type")} className="flex gap-2">
+                {(Object.keys(CONTRACT_PROFILES) as ContractProfileId[]).map(id => <button key={id} type="button"
+                  className={seg(contractProfile === id)} aria-pressed={contractProfile === id} data-testid={`profile-${id}`}
+                  onClick={() => {
+                    if (id === contractProfile) return;
+                    if (technical) setProfileInvalidated(true);
+                    setContractProfile(id); setErr(null);
+                  }}>{profileName(id)}</button>)}
+              </div>
+              <p className="live-small" data-testid="profile-assumptions">{profileName(contractProfile)} · {t("margin", "margin")} {money(contract.marginPerLot)}/lot · {money(contract.dollarsPerPointPerLot)}/{t("poin", "point")}/lot <GuideLink topic="modal-risiko" compact /></p>
+            </div> : <p className="live-small" data-testid="manual-profile-note">{t("Manual · Reguler · margin US$1.000/lot · US$100/poin/lot", "Manual · Regular · margin US$1,000/lot · US$100/point/lot")}</p>}
             {capitalField}
             <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className="flex gap-2">
               <button type="button" className={seg(c.side === "buy")} aria-pressed={c.side === "buy"} onClick={() => upd({ side: "buy" })} data-testid="button-side-buy">Buy</button>
@@ -250,7 +268,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
         <div className="live-card min-w-0 lg:col-start-2 lg:row-start-2" aria-live="polite" data-testid="scenario-result">
           <h2>{t("Hasil skenario", "Scenario result")}</h2>
           {inputMode === "market" && technical && <>
-            {(sourceInvalidated || marketState?.dataChanged || cap !== technical.plan.capital) && <p role="status" className="live-error" data-testid="reference-snapshot-stale">{t("Snapshot lama: data atau modal berubah/tidak segar. Hitung ulang; level dan lot tidak bergeser otomatis.", "Old snapshot: data or capital changed/expired. Recalculate; levels and lots never move automatically.")}</p>}
+            {(profileInvalidated || sourceInvalidated || marketState?.dataChanged || marketState?.parametersChanged) && <p role="status" className="live-error" data-testid="reference-snapshot-stale">{t("Snapshot lama: jenis simulasi, data atau modal berubah/tidak segar. Hitung ulang; level dan lot tidak bergeser otomatis.", "Old snapshot: simulation type, data or capital changed/expired. Recalculate; levels and lots never move automatically.")}</p>}
             {(directionInvalidated || technical.plan.side !== c.side) ? <p role="status" className="live-error" data-testid="text-side-invalidated">{t("Arah berubah. Hitung ulang untuk rencana arah yang dipilih.", "Direction changed. Recalculate for the selected side.")}</p> :
               <TechnicalReferenceResult plan={technical.plan} t={t} money={money} />}
           </>}

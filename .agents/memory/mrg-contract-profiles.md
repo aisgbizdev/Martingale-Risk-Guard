@@ -8,3 +8,9 @@ Parameter simulasi yang diminta pengguna: Reguler margin US$1.000 per lot dan US
 **Why:** Pengguna ingin menambahkan pilihan Mini dan Mikro di samping simulasi Reguler, sambil tetap membutuhkan modal, lot, dan simulasi laba/rugi.
 
 **How to apply:** Perlakukan sebagai asumsi produk dari pengguna, bukan bukti spesifikasi broker. Bedakan nilai uang per lot dari harga pasar; perubahan 4500 ke 4501 tetap satu poin. Simpan cakupan implementasi dalam rencana yang disetujui, bukan menganggap permintaan parameter ini izin memperluas fitur.
+
+Jangan memperluas profil Mini/Mikro ke Isi Manual, perbandingan atau skor studi secara otomatis; perlu kesepakatan dan evaluasi tersendiri.
+
+**Why:** Cakupan yang disepakati adalah Saran MRG dahulu. Asumsi moneter studi lama tetap Reguler; mengganti skala nominal tidak membuktikan skor historisnya berlaku untuk kontrak lain.
+
+**How to apply:** Bedakan pilihan kontrak Saran MRG dari asumsi studi Manual. Pengembangan profil lain tidak boleh diam-diam mengubah makna hasil studi yang sudah ada.

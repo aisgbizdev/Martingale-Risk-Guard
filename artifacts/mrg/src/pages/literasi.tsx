@@ -244,28 +244,33 @@ jarak minimum zona / min zone gap
           {/* 7 */}
           <GuideSection id="modal-risiko" number="07" title={t("Modal & ukuran lot", "Capital & lot sizing")}
             lead={t("Asumsi edukatif, bukan spesifikasi broker terverifikasi.", "Educational assumptions, not verified broker specifications.")}>
+            <p>{t("Di Saran MRG, pilih Reguler, Mini atau Mikro sebelum mengisi modal. Pilihan ini mengubah ukuran lot, margin dan laba/rugi nominal, bukan level entry, rata-rata, TP atau batas batal. Isi Manual, Simulasi Dasar, perbandingan dan skor studi tetap memakai Reguler.", "In MRG suggestions, choose Regular, Mini or Micro before entering capital. This changes lot sizing, margin and monetary P/L, not entry levels, average, TP or invalidation. Manual entry, Basic Simulation, comparisons and study scores still use Regular.")}</p>
+            <DataTable head={[t("Profil simulasi", "Simulation profile"), t("Margin/lot (M)", "Margin/lot (M)"), t("Nilai/poin/lot (V)", "Value/point/lot (V)")]}
+              rows={[[t("Reguler (default)", "Regular (default)"), "US$1,000", "US$100"], ["Mini", "US$100", "US$10"], [t("Mikro", "Micro"), "US$10", "US$1"]]} />
+            <Caveat>{t("Mini/Mikro bukan otomatis lebih aman. Pada jumlah lot yang sama nominalnya lebih kecil; pada modal yang sama sizing otomatis bisa menghasilkan sekitar 10×/100× lot sehingga paparan nominal tetap serupa. Batas modal dan pembulatan tetap berlaku.", "Mini/Micro are not automatically safer. For the same lot count the monetary exposure is smaller; with the same capital automatic sizing can produce around 10×/100× as many lots, keeping monetary exposure similar. Capital budgets and flooring still apply.")}</Caveat>
             <p>{t("Tabel Saran MRG memakai satu kolom adaptif. Jika lot terhitung, Ukuran posisi (lot) menunjukkan jumlah lot: lot awal 2 dengan Linear berarti 2, 4, 6 lot. Jika belum, Rasio posisi menunjukkan 1×, 2×, 3× saja; margin dan laba/rugi nominal belum tersedia, bukan nol. Rata-rata dan TP tetap memakai rasio posisi yang diasumsikan terisi. Kolom mengikuti snapshot saat tombol hitung ditekan, bukan berubah sendiri mengikuti harga.", "MRG suggestions use one adaptive column. With an allocation, Position size (lot) shows lot counts: a first lot of 2 with Linear means 2, 4, 6 lots. Without an allocation, Position ratio shows only 1×, 2×, 3×; monetary margin and P/L are unavailable, not zero. Average and TP still use assumed-filled position ratios. The column follows the snapshot captured on Calculate, not automatic price movements.")}</p>
             <DataTable
               head={[t("Asumsi", "Assumption"), t("Nilai", "Value")]}
               rows={[
-                [t("Margin per lot", "Margin per lot"), "US$1,000"],
-                [t("Nilai per poin per lot", "Value per point per lot"), "US$100"],
+                [t("Margin per lot", "Margin per lot"), t("M dari profil terpilih", "M from selected profile")],
+                [t("Nilai per poin per lot", "Value per point per lot"), t("V dari profil terpilih", "V from selected profile")],
                 [t("Batas margin", "Margin budget"), "20% " + t("modal", "capital")],
                 [t("Batas rugi (stress / batas batal)", "Loss budget (stress / invalidation)"), "10% " + t("modal", "capital")],
                 [t("Langkah lot", "Lot step"), t("1 lot utuh", "whole 1 lot")],
                 [t("Lot awal manual", "Manual first lot"), "1"],
               ]}
             />
-            <Formula>{`unit margin = SUM( w(i) ) x 1000                 w = pola lot dengan F = 1
-unit loss   = SUM( d x (entry(i) - batas/stop) x w(i) x 100 )
+            <Formula>{`unit margin = SUM( w(i) ) x M                 w = pola lot dengan F = 1
+unit loss   = SUM( d x (entry(i) - batas/stop) x w(i) x V )
 F = floor( min( 0.20 x modal / unit margin , 0.10 x modal / unit loss ) )
 F < 1  ->  tidak muat / no fit (lot tidak dibulatkan naik)`}</Formula>
-            <Example title={t("Contoh 7: ilustrasi rumus sizing (bukan sizing otomatis mode Manual)", "Example 7: sizing arithmetic illustration (not automatic Manual sizing)")}>
+            <Example title={t("Contoh 7: sizing Reguler (bukan sizing otomatis mode Manual)", "Example 7: Regular sizing (not automatic Manual sizing)")}>
               <p className="live-mono">unit margin = 6 x 1000 = 6,000; unit loss = 30,000</p>
               <p className="live-mono">F = floor( min( 60,000 / 6,000 = 10 , 30,000 / 30,000 = 1 ) ) = 1</p>
               <p className="live-mono">{t("Modal 299,999: min = 0.99997, floor = 0 = tidak muat", "Capital 299,999: min = 0.99997, floor = 0 = no fit")}</p>
               <p className="live-mono">{t("Contoh 6 (rugi 31,284 per F), modal 400,000: min(13.33 ; 1.28) = 1; rugi US$31,284 = 7.82%", "Example 6 (loss 31,284 per F), capital 400,000: min(13.33 ; 1.28) = 1; loss US$31,284 = 7.82%")}</p>
             </Example>
+            <p>{t("Profil dan nilai M/V disimpan bersama snapshot. Mengganti profil tidak mengubah hasil lama: tekan hitung ulang. Pilihan sebagian terisi memakai profil snapshot, bukan pilihan baru. Snapshot lama tanpa profil valid perlu dihitung ulang.", "The profile and its M/V values are captured with the snapshot. Changing profiles does not alter old results: recalculate. Partial fills use the captured profile, not the new selection. Old snapshots without a valid profile must be recalculated.")}</p>
             <p className="live-small">{t("Saran MRG membekukan lot awal dan batas batal dari rencana lengkap. Pilihan sebagian terisi hanya menghitung ulang rata-rata, total lot terisi, margin dan P/L tahap tersebut; bukan sizing baru. Harga dan rata-rata memakai presisi asli, tampilan dua desimal; nominal Manual dibulatkan dua desimal. Rumus ini mengecualikan spread dan biaya.", "MRG suggestions freeze first lot and invalidation from the full plan. Partial-fill choices recalculate average, filled lots, margin and stage P/L only; no re-sizing. Prices and averages retain original precision, displayed at two decimals; Manual monetary amounts round to two decimals. Spread and fees are excluded.")}</p>
             <p>{t("Batas yang lebih ketat biasanya batas rugi, bukan margin. Pembulatan membuat modal berbeda bisa menghasilkan lot sama. Ukuran terbesar di dalam batas bukan jaminan aman; batas ini pilihan simulasi.", "The tighter limit is usually the loss budget, not margin. Flooring can give different capital the same lot. The largest size inside the limits is not a safety guarantee; the limits are simulation choices.")}</p>
           </GuideSection>
@@ -299,7 +304,7 @@ F < 1  ->  tidak muat / no fit (lot tidak dibulatkan naik)`}</Formula>
               {([
                 ["Averaging", "Menambah posisi searah di harga lebih buruk untuk menggeser harga rata-rata.", "Adding same-direction positions at worse prices to move the average."],
                 ["Layer", "Satu tahap pengisian pada harga tertentu.", "One fill stage at a given price."],
-                ["Lot", "Satuan ukuran posisi. Di sini 1 lot = asumsi US$100 per poin.", "Position size unit. Here 1 lot = assumed US$100 per point."],
+                ["Lot", "Satuan ukuran posisi. Nilai per poin/lot: Reguler US$100, Mini US$10, Mikro US$1. Manual tetap Reguler.", "Position size unit. Value per point/lot: Regular US$100, Mini US$10, Micro US$1. Manual remains Regular."],
                 ["Poin / Point", "Selisih harga 1 (4500 ke 4501).", "A price difference of 1 (4500 to 4501)."],
                 ["Margin", "Dana tertahan untuk posisi terbuka; bukan batas rugi.", "Funds held for open positions; not a loss limit."],
                 ["Stress", "Rugi simulasi di titik uji, tanpa gap dan stop-out.", "Simulated loss at a test point, without gaps or stop-out."],

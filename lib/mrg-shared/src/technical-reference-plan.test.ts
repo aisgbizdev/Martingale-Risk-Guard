@@ -7,6 +7,7 @@ import type { ScenarioSide } from "./scenario-plan";
 import { newsmakerLevels } from "./newsmaker-levels";
 import { referenceDistance, referenceSpacing, selectReferenceZones } from "./reference-zones";
 import { resolveScenarioPrice } from "./scenario-price";
+import { CONTRACT_PROFILES, scenarioContract, validScenarioContract } from "./scenario-contract";
 
 function fixture(capital = 100000, unrestricted = false): CapitalSuggestion {
   return {
@@ -267,4 +268,66 @@ test("reference snapshots freeze geometry and flag price expiry, edits, source c
   bad.quote = { ...original.sources.quote! };
   bad.context!.history.analysis!.lastDate = "2026-10-10";
   assert.throws(() => captureReferencePlan(f.capital, bad, now, "buy", "Martingale"), /OHLC/);
+});
+
+test("contract profiles preserve all geometry but size every side, strategy and fill stage using their frozen assumptions", () => {
+  const f = fixture(1000000), source = sources(f), now = Date.parse(f.evaluatedAt);
+  const geometry = (p: ReturnType<typeof buildReferencePlan>) => ({
+    entries: p.entries, stop: p.stop, targets: p.targets, weights: p.weights, spacing: p.spacing, zones: p.zones,
+  });
+  for (const side of ["buy", "sell"] as const) for (const strategy of ["Linear Averaging", "Martingale"] as const) {
+    const regular = buildReferencePlan(f.capital, source, now, side, strategy);
+    assert.deepEqual(regular, buildReferencePlan(f.capital, source, now, side, strategy, "regular"));
+    for (const profile of ["regular", "mini", "micro"] as const) {
+      const plan = buildReferencePlan(f.capital, source, now, side, strategy, profile);
+      assert.deepEqual(geometry(plan), geometry(regular));
+      assert.deepEqual(plan.contract, CONTRACT_PROFILES[profile]);
+      assert.notEqual(plan.contract, CONTRACT_PROFILES[profile], "Capture detached assumptions");
+      const direction = side === "buy" ? 1 : -1;
+      const unitMargin = plan.weights.reduce((s, w) => s + w, 0) * plan.contract.marginPerLot;
+      const unitLoss = plan.entries.reduce((s, e, i) =>
+        s + direction * (e.price - plan.stop.price) * plan.weights[i] * plan.contract.dollarsPerPointPerLot, 0);
+      assert.equal(plan.firstLot, Math.floor(Math.min(.2 * f.capital / unitMargin, .1 * f.capital / unitLoss)));
+      for (let filled = 1; filled <= plan.entries.length; filled++) {
+        const stage = referenceFillStage(plan, filled);
+        const baseline = referenceFillStage(regular, filled);
+        assert.equal(stage.average, baseline.average);
+        assert.deepEqual(stage.target, baseline.target);
+        assert.equal(stage.totalLots, plan.weights.slice(0, filled).reduce((s, w) => s + w, 0) * plan.firstLot!);
+        assert.equal(stage.margin, stage.totalLots! * plan.contract.marginPerLot);
+        assert.equal(stage.lossAtStop, direction * (stage.average - plan.stop.price) * stage.totalLots! * plan.contract.dollarsPerPointPerLot);
+        assert.equal(stage.profitAtTarget, direction * (stage.target.price - stage.average) * stage.totalLots! * plan.contract.dollarsPerPointPerLot);
+        assert.ok(stage.margin! <= .2 * f.capital + 1e-8);
+        assert.ok(stage.lossAtStop! <= .1 * f.capital + 1e-8);
+      }
+      const small = buildReferencePlan(.01, source, now, side, strategy, profile);
+      assert.deepEqual(geometry(small), geometry(plan));
+      assert.equal(small.firstLot, null);
+      const stage = referenceFillStage(small, 1);
+      assert.equal(stage.totalLots, null);
+      assert.equal(stage.margin, null); assert.equal(stage.lossAtStop, null); assert.equal(stage.profitAtTarget, null);
+    }
+  }
+});
+
+test("profile edits, missing or tampered assumptions invalidate snapshots without reinterpreting their quantities", () => {
+  const f = fixture(300000), source = sources(f), now = Date.parse(f.evaluatedAt);
+  for (const profile of ["regular", "mini", "micro"] as const) {
+    const snap = captureReferencePlan(f.capital, source, now, "buy", "Martingale", profile);
+    const before = structuredClone(snap);
+    assert.deepEqual(referenceSnapshotState(snap, f.capital, source, now, profile), { parametersChanged: false, dataChanged: false });
+    const other = profile === "micro" ? "mini" : "micro";
+    assert.deepEqual(referenceSnapshotState(snap, f.capital, source, now, other), { parametersChanged: true, dataChanged: false });
+    assert.deepEqual(snap, before);
+    assert.equal(referenceSnapshotState(snap, f.capital, { ...source, online: false }, now, profile).dataChanged, true);
+    assert.equal(referenceSnapshotState(snap, f.capital, { ...source, connectionRevision: 1 }, now, profile).dataChanged, true);
+    const legacy = structuredClone(snap);
+    delete (legacy.plan as Partial<typeof legacy.plan>).contract;
+    assert.equal(referenceSnapshotState(legacy, f.capital, source, now, profile).dataChanged, true);
+    assert.throws(() => referenceFillStage(legacy.plan, 1), /profil/);
+    assert.equal(validScenarioContract({ ...snap.plan.contract, marginPerLot: 999 }), false);
+  }
+  assert.throws(() => scenarioContract("invalid" as "regular"), /Profil/);
+  assert.equal(scenarioContract("mini").dollarsPerPointPerLot, scenarioContract().dollarsPerPointPerLot / 10);
+  assert.equal(scenarioContract("micro").dollarsPerPointPerLot, scenarioContract().dollarsPerPointPerLot / 100);
 });

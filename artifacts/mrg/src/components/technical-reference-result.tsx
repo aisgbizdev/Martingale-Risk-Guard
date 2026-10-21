@@ -2,6 +2,7 @@ import { useState } from "react";
 import { referenceFillStage, type TechnicalReferencePlan } from "@shared/technical-reference-plan";
 import { referenceDistance } from "@shared/reference-zones";
 import { GuideLink } from "@/components/guide-link";
+import { validScenarioContract } from "@shared/scenario-contract";
 
 type Props = { plan: TechnicalReferencePlan; t: (id: string, en: string) => string; money: (n: number) => string };
 
@@ -17,10 +18,10 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
   const prov = (labels: string[]) => labels.join(" + ");
   // A dev hot update can retain an in-memory snapshot from the old plan schema.
   // Do not silently reprice it or render it as a plan using the new zone rules.
-  if (!plan.spacing || !plan.zones || !plan.previousSelection || !plan.stop?.members) {
+  if (!plan.spacing || !plan.zones || !plan.previousSelection || !plan.stop?.members || !validScenarioContract(plan.contract)) {
     return <p role="alert" className="live-error">{t(
-      "Snapshot memakai aturan lama. Hitung ulang Saran MRG untuk memakai zona D1; hasil lama tidak diubah otomatis.",
-      "This snapshot uses the old rules. Recalculate the MRG suggestion to use D1 zones; old results are never rewritten automatically.")}</p>;
+      "Snapshot belum memuat aturan atau profil simulasi yang valid. Hitung ulang Saran MRG; hasil lama tidak diubah otomatis.",
+      "This snapshot has no valid rules or simulation profile. Recalculate the MRG suggestion; old results are never rewritten automatically.")}</p>;
   }
   // Level ladder: rows ordered by price, no numeric scale, so labels cannot overlap.
   type Row = { key: string; label: string; price: number; color: string; dash?: boolean; note: string };
@@ -38,6 +39,7 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
     `LGD Daily level schematic, not a time chart. ${rows.map(r => `${r.label} ${fx(r.price)}`).join(", ")}`);
   return <section className="min-w-0 space-y-3 live-card" data-testid="technical-reference-result">
      <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">{buy ? "Buy" : "Sell"} · {plan.strategy}</h3><GuideLink topic="strategi" compact /></div>
+     <p className="text-sm font-semibold" data-testid="reference-profile">{t("Simulasi", "Simulation")} {plan.contract.id === "regular" ? t("Reguler", "Regular") : plan.contract.id === "micro" ? t("Mikro", "Micro") : "Mini"}</p>
      <p className="live-small">{plan.source} · D1 {plan.sourceDate}</p>
     <p role="alert" className="live-error" data-testid="reference-warning">{t(
       "Referensi LGD, bukan level XUL10 presisi. Bukan perintah entry.",
@@ -109,6 +111,7 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
       {plan.contextReasons.map((r, i) => <p className="live-small" key={i}>{t(r.id, r.en)}</p>)}
       <p className="live-small">{t("Sumber", "Source")}: {plan.source} · {t("tanggal D1", "D1 date")} {plan.sourceDate} · {t("snapshot", "snapshot")} {String(plan.evaluatedAt)}</p>
       <p className="live-small">{t("Modal snapshot", "Snapshot capital")}: {money(plan.capital)}</p>
+      <p className="live-small" data-testid="reference-contract">{t("Margin", "Margin")} {money(plan.contract.marginPerLot)}/lot · {money(plan.contract.dollarsPerPointPerLot)}/{t("poin", "point")}/lot</p>
       {stage && <p className="live-small">TP {fx(stage.target.price)} · {prov(stage.target.labels)}</p>}
        <p className="live-small">{t("Harga running XUL10 saat evaluasi (hanya pembanding)", "Running XUL10 quote at evaluation (comparison only)")}: {fx(plan.selectionQuote.price)} · {plan.selectionQuote.asOf} · {plan.selectionQuote.source}</p>
       <GuideLink topic="pivot-fibo" />

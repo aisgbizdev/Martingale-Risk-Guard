@@ -27,9 +27,9 @@ for (const args of [["test"], ["run", "test:scenario-ui"]]) {
 const report = JSON.parse(await readFile("generated-artifacts/scenario-ui/report.json", "utf8"));
 assert.ok(Date.parse(report.startedAt) >= startedAt, "Browser report must come from this release check");
 assert.equal(report.scope, "full");
-assert.equal(report.expected, 48);
+assert.equal(report.expected, 54);
 assert.equal(report.complete, true);
-assert.equal(report.passed, 48);
+assert.equal(report.passed, 54);
 assert.equal(report.failed, 0);
-console.log(`Release check PASSED: core tests and 48/48 Chromium cases. Evidence: ${report.evidenceDirectory}`);
+console.log(`Release check PASSED: core tests and 54/54 Chromium cases. Evidence: ${report.evidenceDirectory}`);
 console.log("This is a recorded validation check, not an automatic publishing block. Nothing was published.");

@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Copy, LiveQuote } from "@shared/live-types";
 import type { StudyReference } from "@shared/study-market";
+import type { ContractProfileId } from "@shared/scenario-contract";
 export { paramsKey } from "@shared/study-identity";
 
 export interface StudyDraft {
@@ -38,6 +39,7 @@ export interface CalculatorDraft {
     spacing: number;
   };
   mode: "market" | "manual";
+  contractProfile?: ContractProfileId;
 }
 
 interface Ctx {

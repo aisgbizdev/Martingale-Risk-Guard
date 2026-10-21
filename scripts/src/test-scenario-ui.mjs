@@ -57,9 +57,9 @@ async function limited(page) {
   assert.match(await id(page, "reference-warning").innerText(), /bukan level XUL10 presisi/);
   assert.equal(await id(page, "reference-filled-3").count(), 1);
 }
-async function referenceDiagram(page, side, count = 3, capital = 200000, strategy = "Linear Averaging") {
+async function referenceDiagram(page, side, count = 3, capital = 200000, strategy = "Linear Averaging", profile = "regular") {
   const data = fixture();
-  const plan = technicalReferencePlan(capital, { context: data.context, quote: data.quote.quote, online: true, connectionRevision: 0 }, Date.parse(NOW), side, strategy);
+  const plan = technicalReferencePlan(capital, { context: data.context, quote: data.quote.quote, online: true, connectionRevision: 0 }, Date.parse(NOW), side, strategy, profile);
   const stage = referenceFillStage(plan, count);
   const table = id(page, "reference-entries");
   await table.waitFor();
@@ -86,9 +86,78 @@ async function referenceDiagram(page, side, count = 3, capital = 200000, strateg
   assert.equal(await id(page, "reference-average").locator("td").nth(1).innerText(), stage.average.toFixed(2));
   assert.equal(await id(page, "reference-tp").locator("td").nth(1).innerText(), stage.target.price.toFixed(2));
   assert.equal(await id(page, "reference-stop").locator("td").nth(1).innerText(), plan.stop.price.toFixed(2));
+  assert.equal(await id(page, "reference-profile").innerText(), `Simulasi ${profile === "regular" ? "Reguler" : profile === "micro" ? "Mikro" : "Mini"}`);
+  if (plan.firstLot !== null) {
+    const money = n => new Intl.NumberFormat("id-ID", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n);
+    const text = await id(page, "reference-sizing").innerText();
+    for (const n of [stage.margin, stage.lossAtStop, stage.profitAtTarget]) assert.ok(text.includes(money(n)), `Missing captured ${profile} monetary value: ${money(n)}`);
+  }
   return { plan, stage };
 }
 const cases = [
+  ["contract-profiles-sizing-and-stages", null, async page => {
+    await start(page, "buy", "1000000");
+    assert.equal(await id(page, "profile-regular").getAttribute("aria-pressed"), "true");
+    for (const side of ["buy", "sell"]) for (const strategy of ["Linear Averaging", "Martingale"]) {
+      await id(page, `button-side-${side}`).click();
+      await id(page, `reference-strategy-${strategy === "Martingale" ? "martingale" : "linear"}`).click();
+      let geometry;
+      for (const profile of ["regular", "mini", "micro"]) {
+        await id(page, `profile-${profile}`).click(); await calculate(page);
+        for (let filled = 1; filled <= 3; filled++) {
+          await id(page, `reference-filled-${filled}`).click();
+          const { plan, stage } = await referenceDiagram(page, side, filled, 1000000, strategy, profile);
+          const actual = { entries: plan.entries, stop: plan.stop, average: stage.average, target: stage.target };
+          geometry ??= {};
+          if (geometry[filled]) assert.deepEqual(actual, geometry[filled]); else geometry[filled] = actual;
+        }
+      }
+    }
+    await id(page, "technical-reference-result").screenshot({ path: resolve(screenshots, `${page.viewportSize().width}-micro-result.jpg`) });
+    await id(page, "input-modal").fill("0.01"); await calculate(page);
+    await referenceDiagram(page, "sell", 3, .01, "Martingale", "micro");
+    await id(page, "reference-no-lot").waitFor();
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+  }],
+  ["contract-profile-frozen-guide-and-manual", null, async page => {
+    await start(page, "buy", "300000");
+    await id(page, "profile-mini").click();
+    await id(page, "reference-strategy-martingale").click(); await calculate(page);
+    await id(page, "reference-filled-2").click();
+    await referenceDiagram(page, "buy", 2, 300000, "Martingale", "mini");
+    await id(page, "profile-micro").click();
+    await id(page, "reference-snapshot-stale").waitFor();
+    await referenceDiagram(page, "buy", 2, 300000, "Martingale", "mini");
+    assert.equal(await id(page, "input-modal").inputValue(), "300000");
+    assert.equal(await id(page, "reference-strategy-martingale").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "button-side-buy").getAttribute("aria-pressed"), "true");
+    await id(page, "profile-mini").click();
+    await id(page, "reference-snapshot-stale").waitFor();
+    await id(page, "profile-micro").click(); await calculate(page);
+    await referenceDiagram(page, "buy", 3, 300000, "Martingale", "micro");
+    assert.equal(await id(page, "reference-snapshot-stale").count(), 0);
+    await id(page, "profile-assumptions").getByRole("link").click();
+    await id(page, "section-modal-risiko").waitFor({ state: "visible" });
+    assert.match(await id(page, "section-modal-risiko").innerText(), /Mini\/Mikro bukan otomatis lebih aman/);
+    await page.goBack();
+    assert.equal(await id(page, "profile-micro").getAttribute("aria-pressed"), "true");
+    await referenceDiagram(page, "buy", 3, 300000, "Martingale", "micro");
+    await id(page, "button-language-toggle").click();
+    assert.equal(await id(page, "reference-profile").innerText(), "Simulation Micro");
+    assert.match(await id(page, "profile-assumptions").innerText(), /Micro.*\$10.*\$1/);
+    await id(page, "button-language-toggle").click();
+    await id(page, "mode-manual").click();
+    assert.equal(await id(page, "profile-micro").count(), 0);
+    assert.equal(await id(page, "technical-reference-result").count(), 0);
+    assert.match(await id(page, "manual-profile-note").innerText(), /Reguler.*1.000.*100/);
+    await id(page, "select-market-condition").selectOption("Sideways");
+    await id(page, "button-default-simulation").click();
+    await diagram(page, ["4500.00", "4470.00", "4440.00", "4460.00", "4490.00"], 3);
+    assert.equal(await id(page, "table-scenario").locator("tbody tr").filter({ hasText: /^Layer 3/ }).locator("td").nth(2).innerText(), "3");
+    await id(page, "mode-market").click();
+    assert.equal(await id(page, "profile-micro").getAttribute("aria-pressed"), "true");
+    assert.equal(await id(page, "technical-reference-result").count(), 0, "Mode changes never restore an old profile result");
+  }],
   ["buy-limited", null, async page => {
     assert.equal(await id(page, "button-side-buy").getAttribute("aria-pressed"), "false");
     assert.equal(await id(page, "button-side-sell").getAttribute("aria-pressed"), "false");

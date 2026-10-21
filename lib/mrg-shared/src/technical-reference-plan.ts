@@ -3,7 +3,7 @@ import { calendarIsFresh, quoteIsFresh, type Copy } from "./live-types";
 import { historicalPriceIsEligible } from "./scenario-price";
 import { getStudyReference } from "./study-market";
 import { newsmakerLevels } from "./newsmaker-levels";
-import { SCENARIO_BUDGET, SCENARIO_CONTRACT, scenarioLots } from "./scenario-contract";
+import { SCENARIO_BUDGET, scenarioLots, scenarioContract, validScenarioContract, type ContractProfileId } from "./scenario-contract";
 import type { ScenarioSide } from "./scenario-plan";
 import { referenceSpacing, selectReferenceZones, type ReferenceLevel } from "./reference-zones";
 
@@ -11,7 +11,8 @@ export type { ReferenceLevel } from "./reference-zones";
 export type ReferenceStrategy = "Linear Averaging" | "Martingale";
 
 /** Educational cross-source comparison. No offset, ratio or claim of XUL10 calibration. */
-export function technicalReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy = "Linear Averaging") {
+export function technicalReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy = "Linear Averaging", profile: ContractProfileId = "regular") {
+  const contract = scenarioContract(profile);
   if (!["buy", "sell"].includes(side) || !["Linear Averaging", "Martingale"].includes(strategy)) throw new Error("Arah/strategi tidak valid.");
   if (!Number.isFinite(capital) || capital <= 0 || capital > 1e12) throw new Error("Modal harus positif dan maksimal US$1 triliun.");
   if (!sources.online || !Number.isFinite(now)) throw new Error("Koneksi/waktu evaluasi tidak tersedia. Sambungkan kembali lalu hitung ulang.");
@@ -100,13 +101,13 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
     .sort((x, y) => direction * (x.price - y.price));
   if (!targets.length) throw new Error("Level TP teknikal yang mendukung skenario belum tersedia.");
   const weights = scenarioLots(strategy, count);
-  const unitMargin = weights.reduce((sum, w) => sum + w * SCENARIO_CONTRACT.marginPerLot, 0);
-  const unitLoss = entries.reduce((sum, e, i) => sum + direction * (e.price - stop.price) * weights[i] * SCENARIO_CONTRACT.dollarsPerPointPerLot, 0);
+  const unitMargin = weights.reduce((sum, w) => sum + w * contract.marginPerLot, 0);
+  const unitLoss = entries.reduce((sum, e, i) => sum + direction * (e.price - stop.price) * weights[i] * contract.dollarsPerPointPerLot, 0);
   const firstLot = Math.floor(Math.min(capital * SCENARIO_BUDGET.marginFraction / unitMargin,
     capital * SCENARIO_BUDGET.stressFraction / unitLoss));
   if (!Number.isSafeInteger(firstLot) || firstLot < 0) throw new Error("Ukuran modal menghasilkan perhitungan lot yang tidak valid.");
   return {
-    side, strategy, capital, evaluatedAt: new Date(now).toISOString(),
+    side, strategy, capital, contract: { ...contract }, evaluatedAt: new Date(now).toISOString(),
     source: "LGD Daily" as const, sourceDate: a.lastDate,
     selectionQuote: { ...quote }, entries, stop, targets, weights,
     spacing, zones,
@@ -121,26 +122,29 @@ export function technicalReferencePlan(capital: number, sources: SuggestionSourc
 
 export type TechnicalReferencePlan = ReturnType<typeof technicalReferencePlan>;
 
-export function captureReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy) {
+export function captureReferencePlan(capital: number, sources: SuggestionSources, now: number, side: ScenarioSide, strategy: ReferenceStrategy, profile: ContractProfileId = "regular") {
   const detached = structuredClone(sources);
-  return { plan: technicalReferencePlan(capital, detached, now, side, strategy), sources: detached, sourceKey: JSON.stringify(detached) };
+  return { plan: technicalReferencePlan(capital, detached, now, side, strategy, profile), sources: detached, sourceKey: JSON.stringify(detached) };
 }
 
-export function referenceSnapshotState(snapshot: ReturnType<typeof captureReferencePlan>, capital: number, sources: SuggestionSources, now: number) {
+export function referenceSnapshotState(snapshot: ReturnType<typeof captureReferencePlan>, capital: number, sources: SuggestionSources, now: number, profile: ContractProfileId = "regular") {
   let expired = false;
   try {
-    const current = technicalReferencePlan(snapshot.plan.capital, snapshot.sources, now, snapshot.plan.side, snapshot.plan.strategy);
+    if (!validScenarioContract(snapshot.plan.contract)) throw new Error("Snapshot tanpa profil valid; hitung ulang.");
+    const current = technicalReferencePlan(snapshot.plan.capital, snapshot.sources, now, snapshot.plan.side, snapshot.plan.strategy, snapshot.plan.contract.id);
     const { evaluatedAt: _before, ...before } = snapshot.plan;
     const { evaluatedAt: _after, ...after } = current;
     expired = JSON.stringify(before) !== JSON.stringify(after);
   } catch { expired = true; }
   return {
-    parametersChanged: capital !== snapshot.plan.capital,
+    parametersChanged: capital !== snapshot.plan.capital || profile !== snapshot.plan.contract?.id,
     dataChanged: expired || JSON.stringify(sources) !== snapshot.sourceKey || !sources.online,
   };
 }
 
 export function referenceFillStage(plan: TechnicalReferencePlan, filled: number) {
+  if (!validScenarioContract(plan.contract)) throw new Error("Snapshot tanpa profil valid; hitung ulang.");
+  const contract = plan.contract;
   if (!Number.isInteger(filled) || filled < 1 || filled > plan.entries.length) throw new RangeError("Tahap layer tidak valid.");
   const entries = plan.entries.slice(0, filled);
   const weights = plan.weights.slice(0, filled);
@@ -151,8 +155,8 @@ export function referenceFillStage(plan: TechnicalReferencePlan, filled: number)
   if (!target) throw new Error("TP teknikal belum tersedia untuk tahap ini.");
   // Full-plan sizing and stop stay frozen when exploring a partial fill.
   const totalLots = plan.firstLot === null ? null : weight * plan.firstLot;
-  const margin = totalLots === null ? null : totalLots * SCENARIO_CONTRACT.marginPerLot;
-  const lossAtStop = totalLots === null ? null : direction * (average - plan.stop.price) * totalLots * SCENARIO_CONTRACT.dollarsPerPointPerLot;
-  const profitAtTarget = totalLots === null ? null : direction * (target.price - average) * totalLots * SCENARIO_CONTRACT.dollarsPerPointPerLot;
+  const margin = totalLots === null ? null : totalLots * contract.marginPerLot;
+  const lossAtStop = totalLots === null ? null : direction * (average - plan.stop.price) * totalLots * contract.dollarsPerPointPerLot;
+  const profitAtTarget = totalLots === null ? null : direction * (target.price - average) * totalLots * contract.dollarsPerPointPerLot;
   return { filled, average, target, totalLots, margin, lossAtStop, profitAtTarget };
 }
