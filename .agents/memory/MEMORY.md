@@ -6,3 +6,4 @@
 - [UI regression fixtures](ui-regression-fixtures.md) — preflight entry/summary expectations before browser runs; do not report partially executed checks as a clean matrix.
 - [Browser engine evidence](browser-engine-evidence.md) — distinguish actual engines from Safari/device claims; WebKit's versioned runtime needs more than a successful download.
 - [Panduan dan literasi](mrg-help-presentation.md) — ringkas kalkulator; gabungkan bantuan, glosarium dan edukasi rumus ke Literasi yang sudah ada.
+- [Profil kontrak simulasi](mrg-contract-profiles.md) — parameter Reguler, Mini dan Mikro yang diminta pengguna; asumsi simulasi, bukan verifikasi spesifikasi broker.
