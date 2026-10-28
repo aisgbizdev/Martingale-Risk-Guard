@@ -61,7 +61,7 @@ export type StudySlot = {
   onChange: (patch: Partial<StudyControls>) => void;
   submit: (override?: Partial<StudyControls>) => boolean;
 };
-export function ScenarioWorkspace({ capital, market, study, capitalField, initialMode = "market", onModeChange }: { capital: string; capitalField?: ReactNode; market: MarketHook; study?: StudySlot; initialMode?: "market" | "manual"; onModeChange?: (m: "market" | "manual") => void }) {
+export function ScenarioWorkspace({ capital, market, study, capitalField, initialMode = "market", onModeChange }: { capital: string; capitalField?: (profile: ContractProfileId) => ReactNode; market: MarketHook; study?: StudySlot; initialMode?: "market" | "manual"; onModeChange?: (m: "market" | "manual") => void }) {
   const { t, language } = useLanguage();
   const { calculatorDraft, setCalculatorDraft } = useStudy();
   const [c, setC] = useState<Controls>(() => calculatorDraft?.controls ?? { side: null, ...DEFAULTS });
@@ -69,6 +69,8 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   const [contractProfile, setContractProfile] = useState<ContractProfileId>(() => calculatorDraft?.contractProfile ?? "regular");
   const [profileInvalidated, setProfileInvalidated] = useState(false);
   useEffect(() => { onModeChange?.(inputMode); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // Manual studies always use Regular assumptions, so capital presets follow the profile actually applied.
+  const capitalProfile: ContractProfileId = inputMode === "market" ? contractProfile : "regular";
   // Keep unsaved inputs during in-app navigation, never restore a live-result snapshot.
   useEffect(() => {
     setCalculatorDraft({ controls: c, mode: inputMode, contractProfile });
@@ -243,7 +245,7 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
               </div>
               <p className="live-small" data-testid="profile-assumptions">{profileName(contractProfile)} · {t("margin", "margin")} {money(contract.marginPerLot)}/lot · {money(contract.dollarsPerPointPerLot)}/{t("poin", "point")}/lot <GuideLink topic="modal-risiko" compact /></p>
             </div> : <p className="live-small" data-testid="manual-profile-note">{t("Manual · Reguler · margin US$1.000/lot · US$100/poin/lot", "Manual · Regular · margin US$1,000/lot · US$100/point/lot")}</p>}
-            {capitalField}
+            {capitalField?.(capitalProfile)}
             <div className="space-y-2">
               <span className="live-label">{t("Arah posisi", "Direction")}</span>
               <div role="group" aria-label={t("Arah pilihan Anda", "Your chosen direction")} className={segGroup}>

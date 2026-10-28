@@ -13,6 +13,12 @@ export const CONTRACT_PROFILES = Object.freeze({
 });
 export type ContractProfileId = keyof typeof CONTRACT_PROFILES;
 export type ScenarioContract = (typeof CONTRACT_PROFILES)[ContractProfileId];
+/** Quick capital presets scaled with each profile's margin, so the same preset index sizes alike. */
+export const CAPITAL_PRESETS: Readonly<Record<ContractProfileId, readonly number[]>> = Object.freeze({
+  regular: Object.freeze([100000, 200000, 300000]),
+  mini: Object.freeze([10000, 20000, 30000]),
+  micro: Object.freeze([1000, 2000, 3000]),
+});
 
 export function scenarioContract(profile: ContractProfileId = "regular"): ScenarioContract {
   if (!Object.hasOwn(CONTRACT_PROFILES, profile)) throw new Error("Profil simulasi tidak valid.");

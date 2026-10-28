@@ -16,6 +16,7 @@ import { useStudy, paramsKey, type StudyDraft } from "@/lib/study-context";
 import { PwaInstall } from "@/components/live/pwa-install";
 import { StudyEvidence } from "@/components/study-evidence";
 import { ScenarioWorkspace } from "@/components/scenario-workspace";
+import { CAPITAL_PRESETS, type ContractProfileId } from "@shared/scenario-contract";
 import { studyRequestOptions } from "@/lib/study-request";
 import { GuideLink } from "@/components/guide-link";
 
@@ -229,11 +230,12 @@ export default function Home() {
     </section>
   );
 
-  const capitalField = (
+  const capitalField = (profile: ContractProfileId) => (
           <div className="live-field w-full">
             <label htmlFor="f-modal">{t("Modal skenario (USD)", "Scenario capital (USD)")}</label>
-            <div className="flex gap-2 flex-wrap">
-              {[100000, 200000, 300000].map(v => <Button key={v} type="button" size="sm" variant={Number(draft.modal) === v ? "default" : "outline"} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}>USD {v.toLocaleString("id-ID")}</Button>)}
+            <div className="mrg-segmented flex gap-1 rounded-lg border border-border bg-muted/60 p-1" role="group" aria-label={t("Pilihan modal cepat", "Quick capital presets")}>
+              {CAPITAL_PRESETS[profile].map(v => <button key={v} type="button" aria-pressed={Number(draft.modal) === v} onClick={() => set({ modal: String(v) })} data-testid={`button-modal-${v}`}
+                className={`min-h-[44px] flex-1 whitespace-nowrap rounded-md px-1 text-xs sm:text-sm font-bold transition-colors ${Number(draft.modal) === v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-background hover:text-foreground"}`}>USD {v.toLocaleString("id-ID")}</button>)}
             </div>
             <input id="f-modal" type="number" inputMode="decimal" min="0" max="1000000000000" step="any" value={draft.modal} onChange={e => set({ modal: e.target.value })} placeholder={t("Masukkan modal Anda", "Enter your capital")} data-testid="input-modal" />
           </div>
