@@ -40,8 +40,10 @@ export function NewsmakerReferenceLevels({ market }: { market: MarketHook }) {
         <caption className="text-left font-semibold pb-2">{kind === "retracement" ? "Retracement" : t("Proyeksi", "Projection")}</caption>
         <tbody>{levels![view][kind].map(l => <tr key={l.ratio} className="border-t border-border"><th className="text-left py-2">{(l.ratio * 100).toFixed(1)}%</th><td className="text-right py-2 font-mono">{price(l.price)}</td></tr>)}</tbody>
       </table>)}</div>}
-      {view === "pivot" && <button type="button" onClick={() => setShowAll(v => !v)} aria-expanded={showAll} className="text-xs underline min-h-[44px]">{showAll ? t("Ringkas level", "Fewer levels") : t("Semua level R4–S4", "All levels R4–S4")}</button>}
-      <a className="live-small underline inline-block mt-2" href="https://www.newsmaker.id/id/tools/pivot-fibonacci" target="_blank" rel="noopener noreferrer">{t("Kalkulator sumber Newsmaker", "Newsmaker source calculator")}</a>
+      <div className="flex flex-wrap items-center justify-between gap-x-4">
+        {view === "pivot" && <button type="button" onClick={() => setShowAll(v => !v)} aria-expanded={showAll} className="text-xs font-semibold underline min-h-[44px]">{showAll ? t("Ringkas level", "Fewer levels") : t("Semua level R4–S4", "All levels R4–S4")}</button>}
+        <a className="live-small underline inline-flex items-center min-h-[44px]" href="https://www.newsmaker.id/id/tools/pivot-fibonacci" target="_blank" rel="noopener noreferrer">{t("Kalkulator sumber Newsmaker", "Newsmaker source calculator")}</a>
+      </div>
     </>}
   </section>;
 }

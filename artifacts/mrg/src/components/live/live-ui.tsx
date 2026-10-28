@@ -15,7 +15,7 @@ export function PageIntro({ kicker, title, children, action, compact = false }: 
   </div>;
 }
 export function Panel({ title, eyebrow, action, children, className = "", id, "data-testid": dataTestId }: { title: string; eyebrow?: string; action?: ReactNode; children: ReactNode; className?: string; id?: string; "data-testid"?: string }) {
-  return <section id={id} data-testid={dataTestId} className={`live-card ${className}`}><div className="live-row" style={{ alignItems: "start", marginBottom: 16 }}><div>{eyebrow && <div className="live-kicker" style={{ marginBottom: 6 }}>{eyebrow}</div>}<h2>{title}</h2></div>{action}</div>{children}</section>;
+  return <section id={id} data-testid={dataTestId} className={`live-card ${className}`}><div className="live-row live-panel-head" style={{ alignItems: "start", marginBottom: 16 }}><div className="live-panel-title">{eyebrow && <div className="live-kicker" style={{ marginBottom: 6 }}>{eyebrow}</div>}<h2>{title}</h2></div>{action}</div>{children}</section>;
 }
 export function ErrorBox({ message, retry }: { message: string; retry?: () => void }) {
   const { t } = useLanguage();

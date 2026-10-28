@@ -301,7 +301,7 @@ export default function PositionsPage() {
         <div className="mrg-settings-overview" aria-label={t("Ringkasan batas & preferensi", "Limits and preferences summary")}>
           <div className="mrg-settings-metric"><span>{t("Mata uang", "Currency")}</span><strong>{portfolio.settings.currency}</strong></div>
           <div className="mrg-settings-metric"><span>{t("Modal / ekuitas", "Capital / equity")}</span><strong>{show(portfolio.settings.capital)} / {show(portfolio.settings.equity)} <small>{portfolio.settings.currency}</small></strong></div>
-          <div className="mrg-settings-metric"><span className="live-inline-help">{t("Batas lot / layer", "Lot / layer limit")}<TermHelp term="limits"/><TermHelp term="layers"/></span><strong>{portfolio.settings.maxLots ?? "—"} / {portfolio.settings.maxLayers ?? "—"}</strong></div>
+          <div className="mrg-settings-metric"><span className="live-inline-help">{t("Batas lot / layer", "Lot / layer limit")}<span className="live-term-help-pair"><TermHelp term="limits"/><TermHelp term="layers"/></span></span><strong>{portfolio.settings.maxLots ?? "—"} / {portfolio.settings.maxLayers ?? "—"}</strong></div>
           <div className="mrg-settings-metric"><span>{t("Target / jarak layer", "Target / layer spacing")}</span><strong>{show(portfolio.settings.targetPriceDistance)} / {show(portfolio.settings.layerSpacingPrice)}</strong></div>
         </div>
       </Panel>

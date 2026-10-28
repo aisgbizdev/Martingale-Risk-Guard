@@ -18,7 +18,7 @@ export function LiveShell({ children }: { children: ReactNode }) {
   };
   return (
     <div className="live-shell">
-      <div className="live-container">
+      <div className="live-header-band">
         <header className="live-header">
           <Link href="/" className="live-brand" aria-label="Martingale Risk Guard · Newsmaker home">
             <img src="/newsmaker-logo-white.png" alt="Newsmaker" />
@@ -35,6 +35,8 @@ export function LiveShell({ children }: { children: ReactNode }) {
             </button>
           </div>
         </header>
+      </div>
+      <div className="live-container">
         {!languageStorageAvailable && <div className="live-alert" role="alert">{t("Preferensi bahasa tidak dapat disimpan di browser ini.", "Language preferences cannot be saved in this browser.")}</div>}
         <aside className="live-critical-note" aria-label={t("Pengenalan MRG", "MRG introduction")}>
           <span>{t("Informasi saja · posisi manual · tanpa order · indeks belum dikalibrasi", "Information only · manual positions · no orders · uncalibrated index")}</span>
@@ -47,6 +49,8 @@ export function LiveShell({ children }: { children: ReactNode }) {
         {introStorageError && <div className="live-alert" role="alert">{t("Pilihan pengenalan hanya berlaku selama halaman ini terbuka karena browser menolak penyimpanan.", "This introduction choice lasts only while this page is open because browser storage was denied.")}</div>}
         <PwaInstall toolbarId="mrg-install-toolbar" />
         <main className="live-main">{children}</main>
+      </div>
+      <div className="live-footer-band">
         <footer className="live-footer" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <span className="live-small">MRG · {t("Alat informasi, bukan broker atau layanan transaksi.", "Information tool, not a broker or trading service.")}</span>
           <span style={{ display: "flex", gap: 16 }}><Link className="live-link live-small" href="/literasi">{t("Literasi", "Literacy")}</Link><Link className="live-link live-small" href="/privacy">{t("Privasi", "Privacy")}</Link><Link className="live-link live-small" href="/terms">{t("Ketentuan", "Terms")}</Link></span>

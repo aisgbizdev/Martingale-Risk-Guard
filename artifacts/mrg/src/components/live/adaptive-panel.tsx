@@ -14,6 +14,7 @@ type AdaptivePanelProps = {
   footer: ReactNode;
   closeLabel: string;
   onCloseAutoFocus: (event: Event) => void;
+  note?: string;
 };
 
 type ViewportBox = { top: number; left: number; width: number; height: number };
@@ -38,6 +39,7 @@ export function AdaptivePanel({
   footer,
   closeLabel,
   onCloseAutoFocus,
+  note,
 }: AdaptivePanelProps) {
   const { t } = useLanguage();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -98,7 +100,7 @@ export function AdaptivePanel({
               <DialogPrimitive.Description id={`${testId}-description`} className="mrg-panel-description">
                 {description}
               </DialogPrimitive.Description>
-              <p className="live-small" role="note">{t("Posisi manual · tanpa order · indeks belum dikalibrasi", "Manual positions · no orders · uncalibrated index")}</p>
+              <p className="live-small" role="note">{note ?? t("Posisi manual · tanpa order · indeks belum dikalibrasi", "Manual positions · no orders · uncalibrated index")}</p>
             </div>
             <DialogPrimitive.Close asChild>
               <button className="live-icon-btn mrg-panel-dismiss" type="button" aria-label={closeLabel}>

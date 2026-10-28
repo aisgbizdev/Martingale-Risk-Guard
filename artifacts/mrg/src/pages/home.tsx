@@ -182,6 +182,21 @@ export default function Home() {
     </section>
   );
 
+  const statusLabel = (status: string) => status === "AMAN" ? t("Risiko relatif rendah", "Relatively low risk") : status === "BERISIKO" ? t("Berisiko", "Risky") : t("Tidak layak (aturan studi)", "Not viable (study rules)");
+  const statusTone = (status: string) => status === "AMAN" ? "is-low" : status === "BERISIKO" ? "is-mid" : "is-high";
+  const studySummary = !submitted ? null : (
+    <div className="mrg-study-summary" data-testid="study-summary">
+      <span className="live-label">{t("Skor studi (aturan lama)", "Study score (original rules)")}</span>
+      {stale ? <p role="status" className="live-error" data-testid="text-summary-stale">{t("Input berubah. Hasil sebelumnya tidak berlaku lagi; hitung ulang.", "Inputs changed. The earlier result no longer applies; recalculate.")}</p>
+        : calc.isError ? <p className="live-error">{t("Gagal menghitung risiko. Tidak ada hasil pengganti.", "Failed to calculate. No substitute result.")}</p>
+        : !calc.data ? <p className="live-small">{t("Menghitung...", "Calculating...")}</p>
+        : <div className="mrg-study-score">
+            <strong className="live-mono">{calc.data.score}<small>/100</small></strong>
+            <span className={`mrg-status-chip ${statusTone(calc.data.status)}`}>{statusLabel(calc.data.status)}</span>
+          </div>}
+    </div>
+  );
+
   const glance = (
     <section className="mrg-market-helper rounded-lg border border-border p-3" data-testid="market-glance">
       <strong>{t("Konteks pasar saat ini", "Current market context")}</strong>
@@ -239,16 +254,17 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
-          <div className="mt-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+        <div className="mrg-page-intro mb-5">
+          <h1 className="text-[28px] leading-tight sm:text-4xl font-bold">{t("Martingale vs Linear Averaging", "Martingale vs Linear Averaging")}</h1>
+          <p className="mt-2 max-w-2xl text-sm sm:text-base text-muted-foreground">{t("Bandingkan pola penambahan layer XUL10 dan lihat margin, titik stress, serta target dalam simulasi edukasi.", "Compare XUL10 layer-adding patterns and see margin, stress point and target in an educational simulation.")}</p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/70 bg-amber-50 px-3 py-1 text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-300">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs">{t("Edukasi risiko · bukan sinyal atau transaksi broker", "Risk education · not trading signals or broker orders")}</span>
+            <span className="text-xs font-semibold">{t("Edukasi risiko · bukan sinyal atau transaksi broker", "Risk education · not trading signals or broker orders")}</span>
           </div>
         </div>
 
         <ScenarioWorkspace capital={draft.modal} capitalField={capitalField} market={market} initialMode={manual ? "manual" : "market"} onModeChange={(m) => setManual(m === "manual")} study={{
-          fields: studyFields, result: studyResult, glance,
+          fields: studyFields, result: studyResult, summary: studySummary, glance,
           values: { strategy: draft.strategy === "Martingale" ? "Martingale" : "Linear Averaging", targetPoin: draft.targetPoin, maxLayer: draft.maxLayer, experience: draft.experience },
           defaults: { strategy: "Linear Averaging", targetPoin: "30", maxLayer: "3", experience: "Pemula" },
           onChange: (patch) => set(patch),
@@ -258,10 +274,10 @@ export default function Home() {
           <p className="text-xs text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4">
             {t("Aplikasi ini untuk edukasi, literasi risiko, dan mitigasi risiko. Keputusan pengguna adalah tanggung jawab masing-masing.", "This app is for education, risk literacy, and risk mitigation. User decisions are their own responsibility.")}
           </p>
-          <div className="flex justify-center gap-4 text-xs flex-wrap">
-            <GuideLink />
-            <Link href="/privacy" className="text-muted-foreground hover:text-foreground underline" data-testid="link-privacy">{t("Kebijakan Privasi", "Privacy Policy")}</Link>
-            <Link href="/terms" className="text-muted-foreground hover:text-foreground underline" data-testid="link-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Link>
+          <div className="flex justify-center items-center gap-x-5 gap-y-1 text-xs flex-wrap">
+            <Link href="/literasi#cara-pakai" className="inline-flex items-center min-h-[44px] text-muted-foreground hover:text-foreground underline">{t("Panduan & Literasi", "Guide & Literacy")}</Link>
+            <Link href="/privacy" className="inline-flex items-center min-h-[44px] text-muted-foreground hover:text-foreground underline" data-testid="link-privacy">{t("Kebijakan Privasi", "Privacy Policy")}</Link>
+            <Link href="/terms" className="inline-flex items-center min-h-[44px] text-muted-foreground hover:text-foreground underline" data-testid="link-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">© 2025 Martingale Risk Guard. {t("Hak cipta dilindungi.", "All rights reserved.")}</p>
         </div>
