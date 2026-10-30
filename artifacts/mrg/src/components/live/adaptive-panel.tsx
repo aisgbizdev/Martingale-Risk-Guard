@@ -15,6 +15,7 @@ type AdaptivePanelProps = {
   closeLabel: string;
   onCloseAutoFocus: (event: Event) => void;
   note?: string;
+  wide?: boolean;
 };
 
 type ViewportBox = { top: number; left: number; width: number; height: number };
@@ -40,6 +41,7 @@ export function AdaptivePanel({
   closeLabel,
   onCloseAutoFocus,
   note,
+  wide,
 }: AdaptivePanelProps) {
   const { t } = useLanguage();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ export function AdaptivePanel({
         <DialogPrimitive.Content
           id={panelId}
           data-testid={testId}
-          className="mrg-adaptive-panel"
+          className={wide ? "mrg-adaptive-panel mrg-panel-wide" : "mrg-adaptive-panel"}
           style={viewportStyle}
           aria-describedby={`${testId}-description`}
           ref={contentRef}

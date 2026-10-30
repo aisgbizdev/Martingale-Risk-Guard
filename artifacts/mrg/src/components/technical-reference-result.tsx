@@ -37,7 +37,8 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
   const label = t(
     `Skema level LGD Daily, bukan grafik waktu. ${rows.map(r => `${r.label} ${fx(r.price)}`).join(", ")}`,
     `LGD Daily level schematic, not a time chart. ${rows.map(r => `${r.label} ${fx(r.price)}`).join(", ")}`);
-  return <section className="min-w-0 space-y-3 live-card" data-testid="technical-reference-result">
+  return <section className="min-w-0 space-y-3 live-card mrg-tr-split" data-testid="technical-reference-result">
+    <div className="min-w-0 space-y-3">
      <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-bold">{buy ? "Buy" : "Sell"} · {plan.strategy}</h3><GuideLink topic="strategi" compact /></div>
      <p className="text-sm font-semibold" data-testid="reference-profile">{t("Simulasi", "Simulation")} {plan.contract.id === "regular" ? t("Reguler", "Regular") : plan.contract.id === "micro" ? t("Mikro", "Micro") : "Mini"}</p>
      <p className="live-small">{plan.source} · D1 {plan.sourceDate}</p>
@@ -64,7 +65,7 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
     </div>
     <p className="live-small">{t("Asumsi posisi terisi · bukan deteksi transaksi", "Assumed fills · not transaction detection")} <GuideLink topic="rata-rata" compact /></p>
     {!stage ? <p role="alert" className="live-error">{t("Tahap ini tidak punya TP teknikal. Pilih tahap lain.", "This stage has no technical TP. Choose another stage.")}</p> : <>
-      <svg viewBox={`0 0 320 ${h}`} width="100%" role="img" aria-label={label} data-testid="reference-diagram" style={{ maxWidth: 480 }}>
+      <svg viewBox={`0 0 320 ${h}`} width="100%" role="img" aria-label={label} data-testid="reference-diagram" style={{ maxWidth: 360 }}>
         <title>{label}</title>
         <line x1="100" y1="2" x2="100" y2={h - 2} stroke="#9ca3af" strokeWidth="1" />
         {rows.map((r, i) => <g key={r.key}>
@@ -74,6 +75,10 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
         </g>)}
       </svg>
       <p className="live-small">{t("Skema level LGD · jarak garis tidak berskala · bukan grafik waktu", "LGD level schematic · lines not to scale · not a time chart")}</p>
+    </>}
+    </div>
+    <div className="min-w-0 space-y-3">
+    {stage && <>
       <table className="text-xs w-full" style={{ minWidth: 0 }} data-testid="reference-entries">
         <caption className="text-left live-small pb-1">{t("Level dari rumus Pivot/Fibonacci/High-Low D1", "Levels from Pivot/Fibonacci/High-Low D1 formulas")}</caption>
         <thead><tr><th className="text-left">Level</th><th className="text-right">{t("Harga", "Price")}</th><th className="text-right" data-testid="reference-size-heading">{plan.firstLot === null
@@ -122,5 +127,6 @@ export function TechnicalReferenceResult({ plan, t, money }: Props) {
           </p>)}
         </div>
     </details>
+    </div>
   </section>;
 }

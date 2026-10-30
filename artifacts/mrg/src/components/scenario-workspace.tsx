@@ -176,6 +176,51 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
   const hasDetail = (inputMode === "market" && !!technical && !technicalInvalid) || (inputMode === "manual" && (!!study?.summary || (!!plan && !sideChanged)));
   let technicalStage: ReturnType<typeof referenceFillStage> | null = null;
   try { if (technical?.plan.stop) technicalStage = referenceFillStage(technical.plan, technical.plan.entries.length); } catch { /* the full result explains a missing stage */ }
+  const planLevels = (plan: Scenario) => <>
+            {plan.mode === "market" && <div className="rounded-lg border border-border p-3" data-testid="market-sizing-summary">
+              <strong>{t("Lot awal hasil hitung", "Calculated first lot")}: {plan.entries[0].lots} lot</strong>
+              <p className="live-small mt-1">{t("Ukuran seluruh basket dibatasi margin 20% dan stress 10% modal, dibulatkan ke bawah per 1 lot. Bukan jaminan aman; modal berbeda bisa menghasilkan lot sama.", "The entire basket is capped at 20% capital margin and 10% stress, rounded down in 1-lot increments. Not a safety guarantee; different capital can produce the same lot size.")}</p>
+              <p className="live-small mt-1">{t("L1 adalah harga acuan snapshot XUL10, bukan perintah entry sekarang. Layer berikutnya memakai jarak ATR referensi D1; bukan timing intraday atau level Pivot/Fibo XUL10.", "L1 is the XUL10 snapshot reference, not an instruction to enter now. Later layers use D1 reference ATR spacing, not intraday timing or XUL10 Pivot/Fibo levels.")}</p>
+            </div>}
+            <div className={changed ? "opacity-60" : ""}><LevelDiagram plan={plan} t={t} /></div>
+            <div className="overflow-x-auto"><table className="text-xs w-full" data-testid="table-scenario">
+              <caption className="text-left live-small pb-1">{t("Level skenario, basis XUL10. Sumbu adalah harga, bukan waktu.", "Scenario levels, XUL10 basis. The axis is price, not time.")}</caption>
+              <thead><tr><th className="text-left">{t("Level", "Level")}</th><th className="text-right">{t("Harga", "Price")}</th><th className="text-right">Lot</th></tr></thead>
+              <tbody>
+                {plan.entries.map(e => <tr key={e.index}><td>Layer {e.index}</td><td className="text-right live-mono">{e.price.toFixed(2)}</td><td className="text-right live-mono">{e.lots}</td></tr>)}
+                <tr><td>{t("Rata-rata basket", "Basket average")}</td><td className="text-right live-mono">{plan.average.toFixed(2)}</td><td className="text-right live-mono">{plan.totalLots}</td></tr>
+                <tr><td>TP</td><td className="text-right live-mono">{plan.tp.toFixed(2)}</td><td /></tr>
+                <tr><td>{t("Titik stress", "Stress point")}</td><td className="text-right live-mono">{plan.stressPrice.toFixed(2)}</td><td /></tr>
+              </tbody></table></div>
+  </>;
+  const planMoney = (plan: Scenario) => <>
+            <dl className="text-sm grid grid-cols-2 gap-2">
+              <dt>{t("Margin", "Margin")}</dt><dd>{money(plan.margin)} ({plan.marginPercent.toFixed(1)}%)</dd>
+              <dt>{t("Rugi stress", "Stress loss")}</dt><dd>{money(plan.stressLoss)} ({plan.stressPercent.toFixed(1)}%)</dd>
+              <dt>{t("Profit di TP", "Profit at TP")}</dt><dd>{money(plan.targetProfit)}</dd>
+            </dl>
+  </>;
+  const planNotes = (plan: Scenario) => <>
+            {comparison.length > 0 && <details className="live-details" data-testid="manual-strategy-comparison">
+              <summary>{t("Bandingkan Linear dan Martingale", "Compare Linear and Martingale")}</summary>
+              <p className="live-small mt-2">{t("Modal, arah, harga awal, jarak, target dan jumlah layer sama. Hanya pola lot yang berbeda; ini bukan saran strategi.", "Same capital, direction, starting price, spacing, target and layer count. Only lot sizing differs; this is not a strategy recommendation.")}</p>
+              <div className="overflow-x-auto mt-2"><table className="w-full text-xs">
+                <thead><tr><th className="text-left">{t("Strategi", "Strategy")}</th><th className="text-right">Lot</th><th className="text-right">Margin</th><th className="text-right">{t("Rugi stress", "Stress loss")}</th></tr></thead>
+                <tbody>{comparison.map(item => <tr key={item.strategy}>
+                  <th className="text-left">{item.strategy === "Linear Averaging" ? "Linear" : "Martingale"}</th>
+                  <td className="text-right">{item.totalLots}</td><td className="text-right whitespace-nowrap">{money(item.margin)}</td><td className="text-right whitespace-nowrap">{money(item.stressLoss)}</td>
+                </tr>)}</tbody>
+              </table></div>
+              <p className="live-small mt-2">{t("Margin bukan batas rugi; stress bukan kerugian maksimum. Batas simulasi tetap margin 20% dan stress 10% modal.", "Margin is not a loss limit; stress is not maximum loss. Simulation limits remain 20% capital margin and 10% stress loss.")}</p>
+            </details>}
+            {plan.mode === "manual" && comparison.length === 0 && <p role="status" className="live-small">{t("Perbandingan strategi tidak tersedia: parameter menghasilkan level harga alternatif yang tidak valid.", "Strategy comparison unavailable: these parameters produce invalid alternative price levels.")}</p>}
+            {(plan.marginPercent > SCENARIO_BUDGET.marginFraction * 100 || plan.stressPercent > SCENARIO_BUDGET.stressFraction * 100) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
+            <p className="live-small">{plan.mode === "market"
+              ? t("TP mengikuti asumsi layer terisi yang Anda pilih, bukan target order otomatis. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP follows your chosen assumed filled layers, not an automatic order target. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")
+              : t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
+  </>;
+  // Manual study and plan detail sit side by side in the wide result panel.
+  const splitDetail = inputMode === "manual" && !!study?.summary && !!plan && !sideChanged;
   const formatTime = (iso: string) => new Intl.DateTimeFormat(language === "id" ? "id-ID" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(iso)) + " WIB";
   const openDetailButton = <Button type="button" variant="outline" className="w-full min-h-[44px] gap-2" onClick={() => setDetailOpen(true)} data-testid="button-open-scenario-result">
     <Maximize2 className="w-4 h-4" aria-hidden="true" />{t("Lihat hasil lengkap", "View full result")}
@@ -342,49 +387,19 @@ export function ScenarioWorkspace({ capital, market, study, capitalField, initia
           title={t("Hasil skenario", "Scenario result")}
           description={plan ? `${plan.side === "buy" ? "Buy" : "Sell"} · ${plan.strategy} · ${t("harga masuk", "entry")} ${plan.entry.toFixed(2)}` : `${c.side === "buy" ? "Buy" : "Sell"} · ${referenceStrategy} · ${profileName(contractProfile)}`}
           note={t("Simulasi edukasi · bukan sinyal atau order broker", "Educational simulation · not a signal or broker order")}
-          testId="scenario-result-panel" closeLabel={t("Tutup hasil skenario", "Close scenario result")}
+          testId="scenario-result-panel" wide closeLabel={t("Tutup hasil skenario", "Close scenario result")}
           footer={<button type="button" className="live-button primary" onClick={() => setDetailOpen(false)} data-testid="button-close-scenario-result">{t("Tutup", "Close")}</button>}>
           {inputMode === "market" && technical && !technicalInvalid && <TechnicalReferenceResult plan={technical.plan} t={t} money={money} />}
-          {inputMode === "manual" && study?.summary && <div className="mb-4">{study.result}</div>}
-          {plan && !sideChanged && <div className="live-stack">
-            {plan.mode === "market" && <div className="rounded-lg border border-border p-3" data-testid="market-sizing-summary">
-              <strong>{t("Lot awal hasil hitung", "Calculated first lot")}: {plan.entries[0].lots} lot</strong>
-              <p className="live-small mt-1">{t("Ukuran seluruh basket dibatasi margin 20% dan stress 10% modal, dibulatkan ke bawah per 1 lot. Bukan jaminan aman; modal berbeda bisa menghasilkan lot sama.", "The entire basket is capped at 20% capital margin and 10% stress, rounded down in 1-lot increments. Not a safety guarantee; different capital can produce the same lot size.")}</p>
-              <p className="live-small mt-1">{t("L1 adalah harga acuan snapshot XUL10, bukan perintah entry sekarang. Layer berikutnya memakai jarak ATR referensi D1; bukan timing intraday atau level Pivot/Fibo XUL10.", "L1 is the XUL10 snapshot reference, not an instruction to enter now. Later layers use D1 reference ATR spacing, not intraday timing or XUL10 Pivot/Fibo levels.")}</p>
-            </div>}
-            <div className={changed ? "opacity-60" : ""}><LevelDiagram plan={plan} t={t} /></div>
-            <div className="overflow-x-auto"><table className="text-xs w-full" data-testid="table-scenario">
-              <caption className="text-left live-small pb-1">{t("Level skenario, basis XUL10. Sumbu adalah harga, bukan waktu.", "Scenario levels, XUL10 basis. The axis is price, not time.")}</caption>
-              <thead><tr><th className="text-left">{t("Level", "Level")}</th><th className="text-right">{t("Harga", "Price")}</th><th className="text-right">Lot</th></tr></thead>
-              <tbody>
-                {plan.entries.map(e => <tr key={e.index}><td>Layer {e.index}</td><td className="text-right live-mono">{e.price.toFixed(2)}</td><td className="text-right live-mono">{e.lots}</td></tr>)}
-                <tr><td>{t("Rata-rata basket", "Basket average")}</td><td className="text-right live-mono">{plan.average.toFixed(2)}</td><td className="text-right live-mono">{plan.totalLots}</td></tr>
-                <tr><td>TP</td><td className="text-right live-mono">{plan.tp.toFixed(2)}</td><td /></tr>
-                <tr><td>{t("Titik stress", "Stress point")}</td><td className="text-right live-mono">{plan.stressPrice.toFixed(2)}</td><td /></tr>
-              </tbody></table></div>
-            <dl className="text-sm grid grid-cols-2 gap-2">
-              <dt>{t("Margin", "Margin")}</dt><dd>{money(plan.margin)} ({plan.marginPercent.toFixed(1)}%)</dd>
-              <dt>{t("Rugi stress", "Stress loss")}</dt><dd>{money(plan.stressLoss)} ({plan.stressPercent.toFixed(1)}%)</dd>
-              <dt>{t("Profit di TP", "Profit at TP")}</dt><dd>{money(plan.targetProfit)}</dd>
-            </dl>
-            {comparison.length > 0 && <details className="live-details" data-testid="manual-strategy-comparison">
-              <summary>{t("Bandingkan Linear dan Martingale", "Compare Linear and Martingale")}</summary>
-              <p className="live-small mt-2">{t("Modal, arah, harga awal, jarak, target dan jumlah layer sama. Hanya pola lot yang berbeda; ini bukan saran strategi.", "Same capital, direction, starting price, spacing, target and layer count. Only lot sizing differs; this is not a strategy recommendation.")}</p>
-              <div className="overflow-x-auto mt-2"><table className="w-full text-xs">
-                <thead><tr><th className="text-left">{t("Strategi", "Strategy")}</th><th className="text-right">Lot</th><th className="text-right">Margin</th><th className="text-right">{t("Rugi stress", "Stress loss")}</th></tr></thead>
-                <tbody>{comparison.map(item => <tr key={item.strategy}>
-                  <th className="text-left">{item.strategy === "Linear Averaging" ? "Linear" : "Martingale"}</th>
-                  <td className="text-right">{item.totalLots}</td><td className="text-right whitespace-nowrap">{money(item.margin)}</td><td className="text-right whitespace-nowrap">{money(item.stressLoss)}</td>
-                </tr>)}</tbody>
-              </table></div>
-              <p className="live-small mt-2">{t("Margin bukan batas rugi; stress bukan kerugian maksimum. Batas simulasi tetap margin 20% dan stress 10% modal.", "Margin is not a loss limit; stress is not maximum loss. Simulation limits remain 20% capital margin and 10% stress loss.")}</p>
-            </details>}
-            {plan.mode === "manual" && comparison.length === 0 && <p role="status" className="live-small">{t("Perbandingan strategi tidak tersedia: parameter menghasilkan level harga alternatif yang tidak valid.", "Strategy comparison unavailable: these parameters produce invalid alternative price levels.")}</p>}
-            {(plan.marginPercent > SCENARIO_BUDGET.marginFraction * 100 || plan.stressPercent > SCENARIO_BUDGET.stressFraction * 100) && <p role="alert" className="live-error" data-testid="scenario-budget-warning">{t("Melewati batas simulasi: margin 20% atau rugi stress 10% modal. Contoh ini tidak lolos saringan MRG.", "Exceeds simulation limits: 20% capital margin or 10% stress loss. This example does not pass MRG filters.")}</p>}
-            <p className="live-small">{plan.mode === "market"
-              ? t("TP mengikuti asumsi layer terisi yang Anda pilih, bukan target order otomatis. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP follows your chosen assumed filled layers, not an automatic order target. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")
-              : t("TP mengasumsikan semua layer terisi. Margin bukan batas kerugian; stress bukan kerugian maksimum. Biaya dan spread belum dihitung.", "TP assumes all layers filled. Margin is not a loss limit; stress is not maximum loss. Fees and spread are excluded.")}</p>
-          </div>}
+          {splitDetail && plan ? <div className="mrg-result-split">
+            <div className="mrg-result-split-study live-stack">
+              {study?.result}
+              {planMoney(plan)}
+            </div>
+            <div className="live-stack">{planLevels(plan)}{planNotes(plan)}</div>
+          </div> : <>
+            {inputMode === "manual" && study?.summary && <div className="mrg-result-split-study">{study.result}</div>}
+            {plan && !sideChanged && <div className="live-stack">{planLevels(plan)}{planMoney(plan)}{planNotes(plan)}</div>}
+          </>}
         </AdaptivePanel>
         </div>
       </div>

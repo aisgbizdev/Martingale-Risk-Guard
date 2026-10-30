@@ -1025,3 +1025,22 @@ footer.live-footer .live-link:hover { color:#fff; }
 .mrg-status-chip.is-low { color:#1f6f4a; background:#e7f5ee; border-color:#b8e0cb; }
 .mrg-status-chip.is-mid { color:#8a5300; background:#fdf3df; border-color:#f2d59b; }
 .mrg-status-chip.is-high { color:#a12a2a; background:#fbe9e9; border-color:#f0c2c2; }
+
+/* Wide scenario result: two columns on desktop so the whole result fits without scrolling. */
+@media (min-width: 768px) {
+  .mrg-adaptive-panel.mrg-panel-wide { width: min(1280px, calc(100vw - 48px)); max-width: 1280px; max-height: calc(var(--mrg-vv-height, 100dvh) - 32px); }
+  .mrg-panel-wide .mrg-panel-header { padding: 14px 24px 12px; }
+  .mrg-panel-wide .mrg-panel-body { padding: 16px 24px 18px; }
+}
+.mrg-result-split-study { margin-bottom: 16px; }
+@media (min-width: 1024px) {
+  .mrg-result-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .mrg-result-split-study { margin-bottom: 0; }
+  .mrg-panel-wide .mrg-tr-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+  .mrg-panel-wide .mrg-tr-split > * { margin-top: 0 !important; }
+  .mrg-panel-wide [data-testid="scenario-diagram"] { max-height: 260px; }
+  /* The header close button is enough on desktop; the footer only repeats it. */
+  .mrg-panel-wide .mrg-panel-footer { display: none; }
+  .mrg-panel-wide .mrg-panel-title { font-size: 24px; }
+  .mrg-panel-wide .mrg-panel-description { margin-top: 3px; }
+}
